@@ -109,6 +109,7 @@ def measure(triple, offset=None):
     """ Returns a measure of Tbon notation of the form "3 4 1 z | " """
     if offset is None:
         totaloffset = triple.offset
+        print("{} {} {}".format(triple.nums, triple.excursion, triple.offset))
     else:
         totaloffset = offset
     m = [str(n) for n in triple.nums]
@@ -149,7 +150,7 @@ def bins(triples):
 def etude(triples, directives="K=E@ T=120", countin="z - - - |"):
     """ Return lines of Tbon notation, one line for each possible triple."""
     e = [directives, countin]
-    constrain(triples, 0, 0)
+    constrain(triples, -1, 1)
     for t in triples:
         e.append(line(t))
     return "\n\n".join(e)
