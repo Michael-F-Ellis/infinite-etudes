@@ -123,14 +123,17 @@ def line(triple):
 
 
 def bins(triples):
-    """ Return tuple with 4 lists of triples:
+    """ Return tuple with 5 lists of triples:
           0. Pentatonic only (1 2 3 5 6)
           1. Degree 4 but not degree 7
           2. Degree 7 but not 4
           3. Contains 4 and 7
+          4. Degree 5 (to be sharped for harmonic minor)
     """
-    result = ([], [], [], [],)
+    result = ([], [], [], [], [])
     for t in triples:
+        if 5 in t.nums:
+            result[4].append(t)
         if set((4,7)).issubset(set(t.nums)):
             result[3].append(t)
             continue
@@ -146,23 +149,29 @@ def bins(triples):
     return result
 
 
-def etude(triples, directives="K=E@ T=120", countin="z - - - |"):
+def etude(triples, directives="K=E@ T=120", countin="z - - - |", hminor=False):
     """ Return lines of Tbon notation, one line for each possible triple."""
     e = [directives, countin]
     constrain(triples, 0, 0)
     for t in triples:
-        e.append(line(t))
+        l = line(t)
+        if hminor:
+            l = l.replace("5", "#5")
+        e.append(l)
     return "\n\n".join(e)
+
 
 def mkEtudes(directives="K=E@ T=120", countin="z - - - |"):
     """ Return 4 etudes, 1 for each bin """
     triples = shuffledTriples()
     tbins = bins(triples)
-    return [etude(tbin, directives, countin) for tbin in tbins]
+    etudes = [etude(tbin, directives, countin) for tbin in tbins[0:4]]
+    etudes.append(etude(tbins[4], directives, countin, hminor=True))
+    return etudes
 
 
 if __name__ == "__main__":
-    outfiles = ("pentatonic.tbn", "plus4.tbn", "plus7.tbn", "both47.tbn")
+    outfiles = ("pentatonic.tbn", "plus4.tbn", "plus7.tbn", "both47.tbn", "harmonic.tbn")
     for outname, etd in zip(outfiles, mkEtudes()):
         with open(outname, 'w') as f:
             print(etd, file=f)
