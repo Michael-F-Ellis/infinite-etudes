@@ -172,7 +172,12 @@ def mkEtudes(directives="K=E@ T=120", countin="z - - - |"):
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Etude Generator")
+    parser.add_argument('-d', "--directives", type=str, default="K=E@ T=120",
+                        help='Tbon directives. Default="K=E@ T=120"')
+    args = parser.parse_args()
     outfiles = ("pentatonic.tbn", "plus4.tbn", "plus7.tbn", "both47.tbn", "harmonic.tbn")
-    for outname, etd in zip(outfiles, mkEtudes()):
+    for outname, etd in zip(outfiles, mkEtudes(directives=args.directives)):
         with open(outname, 'w') as f:
             print(etd, file=f)
