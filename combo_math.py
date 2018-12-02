@@ -6,7 +6,7 @@ in the diatonic and harmonic minor scales.
 """
 from itertools import combinations
 chrom = [c for c in combinations(range(12), 3)]
-print("There {} possible 3-note combinations in the chromatic scale.".format(len(chrom)))
+print("There {} unique 3-note combinations in the chromatic scale.".format(len(chrom)))
 
 ## Make sequences containing the diatonic and harmonic scale patterns
 ## as elements of a 12-tone chromatic scale.
@@ -27,7 +27,7 @@ for i in range(12):
         if c in chrom:
             found.append(c)
 
-print("There {} possible 3-note combinations in the diatonic scales.".format(len(set(found))))
+print("There {} unique 3-note combinations in the diatonic scales.".format(len(set(found))))
 
 ## Next, we include all the combos from harmonic minor scales.
 for i in range(12):
@@ -36,4 +36,11 @@ for i in range(12):
         if c in chrom:
             found.append(c)
 
-print("There {} possible 3-note combinations in the diatonic + harmonic minor scales.".format(len(set(found))))
+nfound = len(set(found))
+print("There {} unique 3-note combinations in the diatonic + harmonic minor scales.".format(nfound))
+
+## Finally, print the chromatic combinations not found in diatonic + harmonic minor
+print("There are {} chromatic combinations not found in the combined scales.".format(len(chrom) - nfound))
+for c in chrom:
+    if c not in found:
+        print(c)
