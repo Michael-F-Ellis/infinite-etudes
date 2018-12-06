@@ -129,13 +129,18 @@ def bins(triples):
           1. Degree 4 but not degree 7
           2. Degree 7 but not 4
           3. Contains 4 and 7
-          4. Degree 5 (to be sharped for harmonic minor)
+          4. Pentatonic with Degree 5 (to be sharped for harmonic minor)
+          5. Degree 5 with at least one of (4,7)
     """
-    result = ([], [], [], [], [])
+    result = ([], [], [], [], [], [])
     for t in triples:
+        tset = set(t.nums)
         if 5 in t.nums:
-            result[4].append(t)
-        if set((4,7)).issubset(set(t.nums)):
+            if set((4,7)).intersection(tset) == set():
+                result[4].append(t)
+            else:
+                result[5].append(t)
+        if set((4,7)).issubset(tset):
             result[3].append(t)
             continue
         if 4 in t.nums:
@@ -168,6 +173,7 @@ def mkEtudes(directives="K=E@ T=120", countin="z - - - |"):
     tbins = bins(triples)
     etudes = [etude(tbin, directives, countin) for tbin in tbins[0:4]]
     etudes.append(etude(tbins[4], directives, countin, hminor=True))
+    etudes.append(etude(tbins[5], directives, countin, hminor=True))
     return etudes
 
 
@@ -177,7 +183,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', "--directives", type=str, default="K=E@ T=120",
                         help='Tbon directives. Default="K=E@ T=120"')
     args = parser.parse_args()
-    outfiles = ("pentatonic.tbn", "plus4.tbn", "plus7.tbn", "both47.tbn", "harmonic.tbn")
+    outfiles = ("pentatonic.tbn", "plus4.tbn", "plus7.tbn", "both47.tbn", "harmonic5.tbn", "harmonic47.tbn")
     for outname, etd in zip(outfiles, mkEtudes(directives=args.directives)):
         with open(outname, 'w') as f:
             print(etd, file=f)
