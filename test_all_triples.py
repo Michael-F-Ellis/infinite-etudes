@@ -8,11 +8,17 @@ def test_excursion():
     assert excursion((1,3,5)) == 5
     assert excursion((1,3,5,7)) == 7
     assert excursion((1,5,3)) == -6
-    assert excursion((1,4,1)) == 0
-    assert excursion((1,5,1)) == 0
+    assert excursion((1,4,1)) == 1
+    assert excursion((1,5,1)) == 1
     assert excursion((1,5,3,1)) == -8
     assert excursion((1,3,5,1)) == 8
     assert excursion((1,3,5,1,3)) == 10
+    assert excursion((1,6,2)) == 2
+
+def test_excursionMinMax():
+    assert excursionMinMax((1,3,5)) == (1,5)
+    assert excursionMinMax((1,5,3)) == (-6,1)
+    assert excursionMinMax((1,6,2)) == (-3,2)
 
 def test_repetitionOffset():
     assert repetitionOffset(4) == 0

@@ -36,18 +36,29 @@ def intervalReduced(p1, p2):
     i = intervalAsc(p1, p2)
     return i if i <= 4 else -(9 - i)
 
+def excursionMinMax(pitches):
+    """ Return a tuple of min and max excursions of a sequence of pitches. """
+    x = 0
+    xmin = 0
+    xmax = 0
+    #print("p ir x xmin xmax")
+    for i, p in enumerate(pitches[0:-1]):
+        ir = intervalReduced(p, pitches[i+1])
+        x = x + (ir-1) if ir > 0 else x + (ir + 1)
+        xmax = max(x, xmax)
+        xmin = min(x, xmin)
+        #print(p, ir, x, xmin, xmax)
+    xmax = xmax + 1 if xmax >= 0 else xmax - 1
+    xmin = xmin + 1 if xmin >= 0 else xmin - 1
+    return (xmin, xmax)
+
 def excursion(pitches):
     """ Return the intervallic excursion of a sequence of pitches """
     x = 0
     for i, p in enumerate(pitches[0:-1]):
         ir = intervalReduced(p, pitches[i+1])
-        if ir > 1:
-            x = x + ir - 1 if x != 0 else ir
-        elif ir < 1:
-            x = x + ir + 1 if x != 0 else ir
-    if x in(-1,1):
-        x = 0
-    return x
+        x = x + (ir-1) if ir > 0 else x + (ir + 1)
+    return x + 1 if x >= 0 else x - 1
 
 def sequenceFromTriples(triples):
     """ Catenate the pitch numbers from a list of triples """
@@ -71,16 +82,14 @@ def constrain(triples, lo8=-2, hi8=2):
     for i, _ in enumerate(triples):
         sublist = triples[0:i+1]
         seq = sequenceFromTriples(sublist)
-        x = excursion(seq)
+        xmin, xmax = excursionMinMax(seq)
         so = sumOfOffsets(sublist)
-        xtrial = x + so * 8
-        # print("{}: {}, {}, {}".format(i,x,so,xtrial))
-        if lo <= xtrial <= hi:
-            continue # still in bounds
-        if xtrial < lo:
+        xlo = xmin + so * 8
+        xhi = xmax + so * 8
+        print("{}: {}, {}, {}, {}, {}".format(i,xmin, xmax, so,xlo,xhi))
+        if xlo < lo:
             triples[i].offset += 1 # raise last triple by one octave
-            continue
-        else:
+        elif xhi > hi:
             triples[i].offset -= 1 # lower last triple by one octave
 
 
