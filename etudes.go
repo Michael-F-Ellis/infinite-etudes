@@ -15,13 +15,15 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/binary"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"math/rand"
 	"os"
-	"sort"
 	"strings"
 	"time"
 )
@@ -71,6 +73,23 @@ const description = `
 	
 `
 
+type midiTriple [3]int
+
+type etudeSequence struct {
+	seq        []midiTriple
+	midilo     int
+	midihi     int
+	tempo      int
+	instrument int
+	keyname    string
+	filename   string
+}
+
+var keyNames = []string{"c", "dflat", "d", "eflat", "e", "f", "gflat", "g", "aflat", "a", "bflat", "b"}
+
+// for midi key sig sharps are positive, flats negative,
+var keySharps = map[string]int{"c": 0, "dflat": -5, "d": 2, "eflat": -3, "e": 4, "f": -1, "gflat": -6, "g": 1, "aflat": -4, "a": 3, "bflat": -2, "b": 5}
+
 // Global map of output filenames and file objects.
 var _gOutputs = make(map[string]*os.File)
 
@@ -104,11 +123,6 @@ func main() {
 	var instrument int
 	flag.IntVar(&instrument, "i", 0, "General Midi instrument number: 0 ... 127")
 
-	var keyname string
-	keynames := []string{"c", "dflat", "d", "eflat", "e", "f", "gflat", "g", "aflat", "a", "bflat", "b"}
-	h := fmt.Sprintf("Key name: one of %v", keynames)
-	flag.StringVar(&keyname, "k", "c", h)
-
 	var midilo int
 	flag.IntVar(&midilo, "l", 36, "Lowest desired Midi pitch")
 
@@ -123,17 +137,6 @@ func main() {
 	// validate flags
 	if !within(0, instrument, 127) {
 		log.Fatalln("instrument must be in range 0 to 127")
-	}
-
-	keynum := -1
-	for i, name := range keynames {
-		if keyname == name {
-			keynum = i
-			break
-		}
-	}
-	if keynum == -1 {
-		log.Fatalf("invalid key name %s", keyname)
 	}
 
 	if !within(0, midilo, 93) {
@@ -171,8 +174,8 @@ func usage() {
 // mkEtudes generates the six files associated with keynum where
 // 0->c, 1->dflat, 2->d, ... 11->b
 func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int, instrument int) {
-	for _, sequence := range generateSequences(keynum) {
-		mkMidi(&sequence, midilo, midihi, tempo, instrument)
+	for _, sequence := range generateSequences(keynum, midilo, midihi, tempo, instrument) {
+		mkMidi(&sequence)
 	}
 }
 
@@ -184,15 +187,8 @@ func getScale(keynum int, isminor bool) []int {
 	for i, p := range scale {
 		scale[i] = (p + keynum) % 12
 	}
-	sort.Ints(scale)
+	// sort.Ints(scale)
 	return scale
-}
-
-type midiTriple [3]int
-
-type midiTripleSequence struct {
-	seq  []midiTriple
-	name string
 }
 
 func permute3(scale []int) []midiTriple {
@@ -214,10 +210,9 @@ func permute3(scale []int) []midiTriple {
 	return permutations
 }
 
-func generateSequences(keynum int) []midiTripleSequence {
+func generateSequences(keynum int, midilo int, midihi int, tempo int, instrument int) []etudeSequence {
 	// Look up the keyname string
-	keynames := []string{"c", "dflat", "d", "eflat", "e", "f", "gflat", "g", "aflat", "a", "bflat", "b"}
-	keyname := keynames[keynum]
+	keyname := keyNames[keynum]
 	// Get the major and harmonic minor scales as midi numbers in the range 0 - 11
 	midiMajorScaleNums := getScale(keynum, false)
 	midiMinorScaleNums := getScale(keynum, true)
@@ -225,13 +220,61 @@ func generateSequences(keynum int) []midiTripleSequence {
 	majors := permute3(midiMajorScaleNums)
 	minors := permute3(midiMinorScaleNums)
 
+	sname, err := gmSoundName(instrument)
+	if err != nil {
+		panic("instrument number should have already been validated")
+	}
+	iname := gmSoundFileNamePrefix(sname)
+
 	// declare the sequences
-	pentatonic := midiTripleSequence{name: keyname + "_pentatonic"}
-	plusFour := midiTripleSequence{name: keyname + "_plus_four"}
-	plusSeven := midiTripleSequence{name: keyname + "_plus_seven"}
-	fourAndSeven := midiTripleSequence{name: keyname + "_four_and_seven"}
-	raisedFive := midiTripleSequence{name: keyname + "_raised_five"}
-	raisedFiveWithFourOrSeven := midiTripleSequence{name: keyname + "_raised_five_with_four_or_seven"}
+	pentatonic := etudeSequence{
+		filename:   keyname + "_pentatonic" + "_" + iname + ".mid",
+		midilo:     midilo,
+		midihi:     midihi,
+		tempo:      tempo,
+		instrument: instrument,
+		keyname:    keyname,
+	}
+	plusFour := etudeSequence{
+		filename:   keyname + "_plus_four" + "_" + iname + ".mid",
+		midilo:     midilo,
+		midihi:     midihi,
+		tempo:      tempo,
+		instrument: instrument,
+		keyname:    keyname,
+	}
+	plusSeven := etudeSequence{
+		filename:   keyname + "_plus_seven" + "_" + iname + ".mid",
+		midilo:     midilo,
+		midihi:     midihi,
+		tempo:      tempo,
+		instrument: instrument,
+		keyname:    keyname,
+	}
+	fourAndSeven := etudeSequence{
+		filename:   keyname + "_four_and_seven" + "_" + iname + ".mid",
+		midilo:     midilo,
+		midihi:     midihi,
+		tempo:      tempo,
+		instrument: instrument,
+		keyname:    keyname,
+	}
+	raisedFive := etudeSequence{
+		filename:   keyname + "_raised_five" + "_" + iname + ".mid",
+		midilo:     midilo,
+		midihi:     midihi,
+		tempo:      tempo,
+		instrument: instrument,
+		keyname:    keyname,
+	}
+	raisedFiveWithFourOrSeven := etudeSequence{
+		filename:   keyname + "_raised_five_with_four_or_seven" + "_" + iname + ".mid",
+		midilo:     midilo,
+		midihi:     midihi,
+		tempo:      tempo,
+		instrument: instrument,
+		keyname:    keyname,
+	}
 
 	// scale degree midi values for this key
 	four := midiMajorScaleNums[3]
@@ -329,7 +372,7 @@ func generateSequences(keynum int) []midiTripleSequence {
 	}
 
 	// create the slice of sequences
-	sequences := []midiTripleSequence{
+	sequences := []etudeSequence{
 		pentatonic, plusFour, plusSeven, fourAndSeven,
 		raisedFive, raisedFiveWithFourOrSeven}
 
@@ -339,18 +382,7 @@ func generateSequences(keynum int) []midiTripleSequence {
 // mkMidi shuffles the sequence and then offsets themreplicates each triple 3 times so that
 // the expanded sequence will play each item 4 times.
 //
-func mkMidi(sequence *midiTripleSequence, midilo int, midihi int, tempo int, instrument int) {
-	// check for programming errors
-	if tempo < 20 || tempo > 300 {
-		msg := fmt.Sprintf("refusing ridiculous tempo value of %d beats per minute", tempo)
-		panic(msg)
-	}
-	if instrument > 127 {
-		msg := fmt.Sprintf("expected midi instrument number <= 127, got %d", instrument)
-		panic(msg)
-	}
-	// Note: first call to constrain will check pitch limits
-
+func mkMidi(sequence *etudeSequence) {
 	// Shuffle the sequence
 	shuffle(sequence.seq)
 
@@ -359,11 +391,11 @@ func mkMidi(sequence *midiTripleSequence, midilo int, midihi int, tempo int, ins
 	seqlen := len(sequence.seq)
 	for i := 0; i < seqlen; i++ {
 		t := &(sequence.seq[i])
-		constrain(t, prior, midilo, midihi)
+		constrain(t, prior, sequence.midilo, sequence.midihi)
 		prior = t[2]
 	}
 	// Write the etude
-	writeMidiFile(sequence, tempo, instrument)
+	writeMidiFile(sequence)
 
 }
 
@@ -377,24 +409,263 @@ func shuffle(slc []midiTriple) {
 	}
 }
 
-func writeMidiFile(sequence *midiTripleSequence, tempo int, instrument int) {
-	// compose the file name
-
-	// open the file
-
-	// write the header
-
-	// write the tempo track
-
-	// write the sequence
-
-	// compose the metronome track
-
-	// write the metronome track
+// low3 returns a 3 byte array representing the lower
+// 3 bytes of n, e.g. as a 24 bit number
+func low3(n uint32) (u24 [3]byte) {
+	u24[0] = byte((n & 0x00FFFFFF) >> 16)
+	u24[1] = byte((n & 0x0000FFFF) >> 8)
+	u24[2] = byte((n & 0x000000FF))
+	return u24
 }
 
-func composeFileName(sequence *midiTripleSequence, instrument int) string {
-	front := sequence.name
+func writeMidiFile(sequence *etudeSequence) {
+	// open the file
+	fd, err := os.Create(sequence.filename)
+	if err != nil {
+		msg := fmt.Sprintf("Couldn't open output file %s", sequence.filename)
+		panic(msg)
+	}
+	defer fd.Close()
+	// write the header "MThd len=6, format=1, tracks=6, ticks=960"
+	header := []byte{0x4d, 0x54, 0x68, 0x64, 0, 0, 0, 6, 0, 1, 0, 3, 3, 192}
+	n, err := fd.Write(header)
+	if err != nil {
+		panic(err)
+	}
+	if n != len(header) {
+		panic("failed to write header")
+	}
+	// write the tempo track
+	microseconds := low3(uint32(60000000 / sequence.tempo)) //microseconds per beat
+	var record = []interface{}{
+		// Time signature event
+		byte(0),                // delta time
+		low3(uint32(0xFF5804)), // tempo event
+		byte(4),                // beats per measure
+		byte(2),                // quarter note beat (because 2^2 = 4)
+		byte(24),               // clocks per tick
+		byte(8),                // 32nd's per quarter note
+		// Tempo event
+		byte(0),                // delta time
+		low3(uint32(0xFF5103)), // tempo event
+		microseconds,
+		// EOT event
+		byte(0),                // delta time
+		low3(uint32(0xFF2F00)), // End of track
+	}
+	// write the track data to a temporary buffer
+	// so we can compute its length
+	buf := new(bytes.Buffer)
+	for _, v := range record {
+		err = binary.Write(buf, binary.BigEndian, v)
+		if err != nil {
+			panic(err)
+		}
+	}
+	// prepend the track header.
+	var track = []interface{}{
+		[]byte{'M', 'T', 'r', 'k'},
+		uint32(buf.Len()), // length of track data
+		buf.Bytes(),
+	}
+	// write tempo track to file
+	for _, v := range track {
+		err = binary.Write(fd, binary.BigEndian, v)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	// write the instrument track
+	buf = new(bytes.Buffer)
+	record = []interface{}{
+		keySignature(sequence),
+		byte(0x9e), // four beats hi byte
+		byte(0x00), // four beats lo byte
+	}
+	for _, v := range record {
+		err = binary.Write(buf, binary.BigEndian, v)
+		if err != nil {
+			panic(err)
+		}
+	}
+	for _, t := range sequence.seq {
+		music := fourBarsMusic(t).Bytes()
+		err = binary.Write(buf, binary.BigEndian, music)
+		if err != nil {
+			panic(err)
+		}
+	}
+	// end of track
+	eot := []byte{0x00, 0xff, 0x2f, 0x00}
+	err = binary.Write(buf, binary.BigEndian, eot)
+	if err != nil {
+		panic(err)
+	}
+	// prepend the track header.
+	track = []interface{}{
+		[]byte{'M', 'T', 'r', 'k'},
+		uint32(buf.Len()), // length of track data
+		buf.Bytes(),
+	}
+	// write instrument track to file
+	for _, v := range track {
+		err = binary.Write(fd, binary.BigEndian, v)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	// compose the metronome track
+	buf = new(bytes.Buffer)
+	err = binary.Write(buf, binary.BigEndian, byte(0x00))
+	if err != nil {
+		panic(err)
+	}
+	for i := 0; i < len(sequence.seq); i++ {
+		var music []byte
+		switch i {
+		case 0:
+			music = metronomeBars(5).Bytes()
+		default:
+			music = metronomeBars(4).Bytes()
+		}
+		err = binary.Write(buf, binary.BigEndian, music)
+		if err != nil {
+			panic(err)
+		}
+	}
+	// end of track
+	err = binary.Write(buf, binary.BigEndian, eot)
+	if err != nil {
+		panic(err)
+	}
+
+	// write the metronome track
+	// prepend the track header.
+	track = []interface{}{
+		[]byte{'M', 'T', 'r', 'k'},
+		uint32(buf.Len()), // length of track data
+		buf.Bytes(),
+	}
+	// write metronome track to file
+	for _, v := range track {
+		err = binary.Write(fd, binary.BigEndian, v)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+}
+func fourBarsMusic(t midiTriple) *bytes.Buffer {
+	// These are the only variable length delta times we need.
+	noBeats := byte(0x00)
+	oneBeatHi := byte(0x87)
+	oneBeatLo := byte(0x40)
+	// fourBeats := []byte{0x9e, 0x00}
+
+	velocity1 := byte(0x65) // downbeat
+	velocity2 := byte(0x51) // other beats
+
+	on := byte(0x90)  // Note On, channel 1
+	off := byte(0x80) // Note off, channel 1.
+
+	buf := new(bytes.Buffer)
+	check := func(e error) {
+		if e != nil {
+			panic(e)
+		}
+	}
+	// mkBeat writes MIDI for one beat with note on and off events.
+	mkBeat := func(buf *bytes.Buffer, pitch byte, velocity byte, after int) {
+		var b []byte
+		switch after {
+		case 0:
+			b = []byte{on, pitch, velocity, oneBeatHi, oneBeatLo, off, pitch, velocity, noBeats}
+		case 1:
+			b = []byte{on, pitch, velocity, oneBeatHi, oneBeatLo, off, pitch, velocity, oneBeatHi, oneBeatLo}
+		default:
+			panic(errors.New("programming error: arg after must be 0 or 1"))
+		}
+
+		check(binary.Write(buf, binary.BigEndian, b))
+	}
+
+	// write all 4 bars for this triple
+	for i := 0; i < 4; i++ {
+		// first beat
+		pitch := byte(t[0])
+		mkBeat(buf, pitch, velocity1, 0)
+		// 2nd beat
+		pitch = byte(t[1])
+		mkBeat(buf, pitch, velocity2, 0)
+		// 3rd beat (4th beat is a rest, so we append a one beat delay after the Note Off event.
+		pitch = byte(t[2])
+		mkBeat(buf, pitch, velocity2, 1)
+	}
+	return buf
+}
+
+func metronomeBars(n int) *bytes.Buffer {
+	// These are the only variable length delta times we need.
+	noBeats := byte(0x00)
+	oneBeatHi := byte(0x87)
+	oneBeatLo := byte(0x40)
+	// fourBeats := []byte{0x9e, 0x00}
+
+	velocity1 := byte(0x65) // downbeat
+	velocity2 := byte(0x51) // other beats
+
+	on := byte(0x99)  // Note On, channel 10
+	off := byte(0x89) // Note off, channel 10
+
+	wbh := byte(0x4c) // wood block hi for downbeats
+	wbl := byte(0x4d) // wood block lo for other beats
+
+	buf := new(bytes.Buffer)
+	check := func(e error) {
+		if e != nil {
+			panic(e)
+		}
+	}
+	// mkBeat writes MIDI for one beat with note on and off events.
+	mkBeat := func(buf *bytes.Buffer, pitch byte, velocity byte, after int) {
+		var b []byte
+		switch after {
+		case 0:
+			b = []byte{on, pitch, velocity, oneBeatHi, oneBeatLo, off, pitch, velocity, noBeats}
+		case 1:
+			b = []byte{on, pitch, velocity, oneBeatHi, oneBeatLo, off, pitch, velocity, oneBeatHi, oneBeatLo}
+		default:
+			panic(errors.New("programming error: arg after must be 0 or 1"))
+		}
+
+		check(binary.Write(buf, binary.BigEndian, b))
+	}
+
+	// write as many bars as requested
+	for i := 0; i < n; i++ {
+		// first beat
+		mkBeat(buf, wbh, velocity1, 0)
+		// 2nd beat
+		mkBeat(buf, wbl, velocity2, 0)
+		// 3rd beat
+		mkBeat(buf, wbl, velocity2, 0)
+		// 4th beat
+		mkBeat(buf, wbl, velocity2, 0)
+	}
+	return buf
+}
+
+func keySignature(s *etudeSequence) []byte {
+	sharps := keySharps[s.keyname]
+	sf := byte(sharps & 0xFF) // because flats are negative ints
+	mi := byte(0)             // always major in this code
+	return []byte{0x0, 0xFF, 0x59, 0x02, sf, mi}
+}
+
+func composeFileName(sequence *etudeSequence, instrument int) string {
+	front := sequence.filename
 	sname, err := gmSoundName(instrument)
 	if err != nil {
 		msg := fmt.Sprintf("couldn't get instrument name: %v", err)

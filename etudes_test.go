@@ -43,12 +43,12 @@ func TestPermute3(t *testing.T) {
 }
 
 func TestGenerateSequences(t *testing.T) {
-	s := generateSequences(0)
+	s := generateSequences(0, 36, 84, 120, 0)
 	if len(s) != 6 {
 		t.Errorf("expected 6 sequences, got %d", len(s))
 	}
-	if s[0].name != "c_pentatonic" {
-		t.Errorf("expected name of first sequence to be c_pentatonic, got %s", s[0].name)
+	if s[0].filename != "c_pentatonic_acoustic_grand_piano.mid" {
+		t.Errorf("expected name of first sequence to be c_pentatonic, got %s", s[0].filename)
 	}
 	// verify that all 300 permutations are accounted for
 	n := 0
@@ -107,13 +107,17 @@ func TestConstrain(t *testing.T) {
 }
 
 func TestMkMidi(t *testing.T) {
-	var x midiTripleSequence
-	var exp midiTripleSequence
-	var exp2 midiTripleSequence
+	var x etudeSequence
+	var exp etudeSequence
+	var exp2 etudeSequence
 	x.seq = []midiTriple{{1, 2, 3}, midiTriple{4, 5, 6}}
+	x.tempo = 120
+	x.midilo = 36
+	x.midihi = 84
+	x.filename = "/tmp/testmkmidi.mid"
 	exp.seq = []midiTriple{{61, 62, 63}, midiTriple{64, 65, 66}}
 	exp2.seq = []midiTriple{{64, 65, 66}, midiTriple{61, 62, 63}}
-	mkMidi(&x, 36, 84, 120, 1)
+	mkMidi(&x)
 	if !(reflect.DeepEqual(x.seq, exp.seq) || reflect.DeepEqual(x.seq, exp2.seq)) {
 		t.Errorf("expected %v or %v, got %v", exp.seq, exp2.seq, x.seq)
 	}
@@ -121,8 +125,8 @@ func TestMkMidi(t *testing.T) {
 }
 
 func TestShuffle(t *testing.T) {
-	var x midiTripleSequence
-	var y midiTripleSequence
+	var x etudeSequence
+	var y etudeSequence
 	x.seq = []midiTriple{{1, 2, 3}, midiTriple{4, 5, 6}, midiTriple{7, 8, 9}, midiTriple{10, 11, 12}, midiTriple{13, 14, 15}}
 	y.seq = []midiTriple{{1, 2, 3}, midiTriple{4, 5, 6}, midiTriple{7, 8, 9}, midiTriple{10, 11, 12}, midiTriple{13, 14, 15}}
 	shuffle(x.seq)
@@ -152,13 +156,50 @@ func TestGMSoundFileNamePrefix(t *testing.T) {
 }
 
 func TestComposeFileName(t *testing.T) {
-	s := midiTripleSequence{name: "eflat_pentatonic"}
+	s := etudeSequence{filename: "eflat_pentatonic"}
 	exp := "eflat_pentatonic_electric_grand_piano.mid"
 	x := composeFileName(&s, 2)
 	if x != exp {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
 
+}
+
+func TestFourBarsMusic(t *testing.T) {
+	pitches := midiTriple{1, 2, 3}
+	// just the first bar
+	exp := []byte{0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00, 0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00, 0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40}
+	x := fourBarsMusic(pitches)
+	if !reflect.DeepEqual(x.Bytes()[:len(exp)], exp) {
+		t.Errorf("expected % x, got % x", exp, x)
+	}
+	n := len(x.Bytes())
+	if n != 4*len(exp) {
+		t.Errorf("expected %d bytes, got %d", 4*len(exp), n)
+	}
+
+}
+func TestMetronomeBars(t *testing.T) {
+	// just the first bar
+	exp := []byte{0x99, 0x4c, 0x65, 0x87, 0x40, 0x89, 0x4c, 0x65, 0x00, 0x99, 0x4d, 0x51, 0x87, 0x40, 0x89, 0x4d, 0x51, 0x00, 0x99, 0x4d, 0x51, 0x87, 0x40, 0x89, 0x4d, 0x51, 0x00, 0x99, 0x4d, 0x51, 0x87, 0x40, 0x89, 0x4d, 0x51, 0x00}
+	x := metronomeBars(4)
+	if !reflect.DeepEqual(x.Bytes()[:len(exp)], exp) {
+		t.Errorf("expected % x, got % x", exp, x)
+	}
+	n := len(x.Bytes())
+	if n != 4*len(exp) {
+		t.Errorf("expected %d bytes, got %d", 4*len(exp), n)
+	}
+
+}
+
+func TestKeySignature(t *testing.T) {
+	exp := []byte{0x0, 0xFF, 0x59, 0x02, 0xfe, 0x00}
+	s := etudeSequence{keyname: "bflat"}
+	x := keySignature(&s)
+	if !reflect.DeepEqual(x, exp) {
+		t.Errorf("expected %v, got %v", exp, x)
+	}
 }
 
 //func TestExtractFileNames(t *testing.T) {
