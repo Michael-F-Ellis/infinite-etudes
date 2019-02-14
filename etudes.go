@@ -14,17 +14,14 @@ Command line usage is
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/binary"
 	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -87,11 +84,12 @@ type etudeSequence struct {
 
 var keyNames = []string{"c", "dflat", "d", "eflat", "e", "f", "gflat", "g", "aflat", "a", "bflat", "b"}
 
-// for midi key sig sharps are positive, flats negative,
-var keySharps = map[string]int{"c": 0, "dflat": -5, "d": 2, "eflat": -3, "e": 4, "f": -1, "gflat": -6, "g": 1, "aflat": -4, "a": 3, "bflat": -2, "b": 5}
-
-// Global map of output filenames and file objects.
-var _gOutputs = make(map[string]*os.File)
+// for midi key signatures sharps are positive, flats are negative.
+var keySharps = map[string]int{
+	"c": 0, "dflat": -5, "d": 2, "eflat": -3,
+	"e": 4, "f": -1, "gflat": -6, "g": 1,
+	"aflat": -4, "a": 3, "bflat": -2, "b": 5,
+}
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
@@ -103,20 +101,6 @@ func within(lo int, val int, hi int) bool {
 }
 
 func main() {
-	// Ensure we exit with an error code and log message
-	// when needed after deferred cleanups have run.
-	// Credit: https://tinyurl.com/ycv9zpbn
-	var err error
-	defer func() {
-		if err != nil {
-			removeOutputFiles()
-			log.Fatalln(err)
-		}
-	}()
-
-	// Close any opened output files on exit.
-	defer closeOutputFiles()
-
 	// Parse command line
 	flag.Usage = usage
 
@@ -155,7 +139,7 @@ func main() {
 		log.Fatalln("tempo must be between 20 and 300 bpm")
 	}
 
-	// Create and write all the output files
+	// Create and write all the output files for all 12 key signatures
 	for i := 0; i < 12; i++ {
 		mkKeyEtudes(i, midilo, midihi, tempo, instrument)
 	}
@@ -179,6 +163,8 @@ func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int, instrument int) 
 	}
 }
 
+// getScale returns the major or harmonic minor
+// scale in the specified key signature.
 func getScale(keynum int, isminor bool) []int {
 	scale := []int{0, 2, 4, 5, 7, 9, 11}
 	if isminor {
@@ -187,10 +173,12 @@ func getScale(keynum int, isminor bool) []int {
 	for i, p := range scale {
 		scale[i] = (p + keynum) % 12
 	}
-	// sort.Ints(scale)
 	return scale
 }
 
+// permute3 returns a slice of midiTriple containing
+// all possible permutations of 3 distinct notes in the
+// scale.
 func permute3(scale []int) []midiTriple {
 	var permutations []midiTriple
 	for i, p := range scale {
@@ -210,6 +198,7 @@ func permute3(scale []int) []midiTriple {
 	return permutations
 }
 
+// generateSequences returns a slice of six etudeSequences as described in the usage instructions.
 func generateSequences(keynum int, midilo int, midihi int, tempo int, instrument int) []etudeSequence {
 	// Look up the keyname string
 	keyname := keyNames[keynum]
@@ -379,9 +368,10 @@ func generateSequences(keynum int, midilo int, midihi int, tempo int, instrument
 	return sequences
 }
 
-// mkMidi shuffles the sequence and then offsets themreplicates each triple 3 times so that
-// the expanded sequence will play each item 4 times.
-//
+// mkMidi shuffles a sequence and then offsets each triple as needed to keep
+// the pitches within the limits specified in the sequence. Finally, it calls
+// writeMidi file to convert the data to Standard Midi form and write it to
+// disk.
 func mkMidi(sequence *etudeSequence) {
 	// Shuffle the sequence
 	shuffle(sequence.seq)
@@ -399,7 +389,8 @@ func mkMidi(sequence *etudeSequence) {
 
 }
 
-// Fisher-Yates shuffle
+// shuffle puts a slice of midiTriple in random order using the Fisher-Yates
+// algorithm,
 func shuffle(slc []midiTriple) {
 	N := len(slc)
 	for i := 0; i < N; i++ {
@@ -418,6 +409,11 @@ func low3(n uint32) (u24 [3]byte) {
 	return u24
 }
 
+// writeMidiFile creates a midi file from an etudeSequence.
+// Each midiTriple in the sequence is placed on beats 1, 2, 3 of
+// a 4/4 measure with rest on beat 4. Each measure is played
+// 4 times accompanied by a metronome track.  The etude begins
+// with a one-bar count-in.
 func writeMidiFile(sequence *etudeSequence) {
 	// open the file
 	fd, err := os.Create(sequence.filename)
@@ -557,6 +553,9 @@ func writeMidiFile(sequence *etudeSequence) {
 	}
 
 }
+
+// fourBarMusic returns a byte buffer containing four bars of  one midiTriple
+// as described in function comment for writeMidiFile.
 func fourBarsMusic(t midiTriple) *bytes.Buffer {
 	// These are the only variable length delta times we need.
 	noBeats := byte(0x00)
@@ -606,6 +605,8 @@ func fourBarsMusic(t midiTriple) *bytes.Buffer {
 	return buf
 }
 
+// metronomeBars returns a byte buffer containing n bars of metronome click.
+// Downbeats use a High Wood Block sound. Other beats use a Low Wood Block,
 func metronomeBars(n int) *bytes.Buffer {
 	// These are the only variable length delta times we need.
 	noBeats := byte(0x00)
@@ -657,6 +658,7 @@ func metronomeBars(n int) *bytes.Buffer {
 	return buf
 }
 
+// keySignature returns a MIDI KeySignature event preceeded by zero delta time.
 func keySignature(s *etudeSequence) []byte {
 	sharps := keySharps[s.keyname]
 	sf := byte(sharps & 0xFF) // because flats are negative ints
@@ -664,6 +666,9 @@ func keySignature(s *etudeSequence) []byte {
 	return []byte{0x0, 0xFF, 0x59, 0x02, sf, mi}
 }
 
+// composeFileName returns a string containing a filename of the form
+// key_scaledescription_intrument.mid, e.g
+// "gflat_pentatonic_acoustic_grand_piano.mid"
 func composeFileName(sequence *etudeSequence, instrument int) string {
 	front := sequence.filename
 	sname, err := gmSoundName(instrument)
@@ -674,44 +679,6 @@ func composeFileName(sequence *etudeSequence, instrument int) string {
 	iname := gmSoundFileNamePrefix(sname)
 	extension := ".mid"
 	return front + "_" + iname + extension
-}
-
-// extractFileNames parses a line of text. If the line doesn't contain the
-// delimiter, it returns an empty slice and a nil error to indicate that this
-// line is to be output to whatever file targets are currently in effect.
-// Otherwise it splits the line on whitespace. Each field after the delimiter
-// is presumed to to be a file name and is appended to the names slice. Non-nil
-// errors are returned unless the delimiter is found in exactly one field and
-// there is at least on field following it.
-func extractFileNames(delimiter string, line string) (names []string, err error) {
-	// Short circuit if line doesn't contain delimiter
-	if !strings.Contains(line, delimiter) {
-		return
-	}
-	fields := strings.Fields(line)
-	dfound := false
-	for _, field := range fields {
-		if !dfound {
-			if field == delimiter {
-				dfound = true
-			}
-			continue
-		}
-		if field == delimiter {
-			err = fmt.Errorf("found more than one delimiter %s in line", delimiter)
-			return names, err
-		}
-		names = append(names, field)
-	}
-	switch dfound {
-	case false:
-		err = fmt.Errorf("Delimiter %s must be surrounded by whitespace", delimiter)
-	case true:
-		if len(names) == 0 {
-			err = fmt.Errorf("No file names found after delimiter %s", delimiter)
-		}
-	}
-	return names, err
 }
 
 // adjustSuccessor returns a pitch adjusted to be within
@@ -736,6 +703,11 @@ func tighten(t *midiTriple) {
 	t[2] = adjustSuccessor(t[1], t[2])
 }
 
+// constrain applies tighten to a midiTriple, then adjusts its octave
+// so that the first pitch is as close as possible to the last pitch
+// of a previous triple. Then it checks to see if any of the adjusted
+// pitches are above midihi or below midilow and re-adjusts the octave
+// as needed to keep the pitches within the limits.
 func constrain(t *midiTriple, prior int, midilo int, midihi int) {
 	if midilo > 127 || midihi > 127 || midihi-midilo < 24 {
 		msg := fmt.Sprintf("Invalid midi limits %v, %v", midilo, midihi)
@@ -758,99 +730,4 @@ func constrain(t *midiTriple, prior int, midilo int, midihi int) {
 		t[1] -= 12
 		t[2] -= 12
 	}
-}
-
-// openOutputFiles is called with results from extractFileNames. For each name
-// in the list, It checks the outputs map to see if the file is already opened.
-// If so, it ignores the name and moves on to the next one.  Otherwise it
-// attempts to open the file for writing, truncating it if it exists. If
-// successful it adds it to outputs map. On failure, it returns the error from
-// os.Create immediately without attempting to open any further files from the
-// names list.
-func openOutputFiles(names []string) error {
-	var err error
-	for _, name := range names {
-		isnew := true
-		for oname := range _gOutputs {
-			if oname == name {
-				isnew = false
-				break
-			}
-		}
-		if isnew {
-			fd, err := os.Create(name)
-			if err != nil {
-				return err
-			}
-			_gOutputs[name] = fd
-		}
-	}
-	return err
-}
-
-// closeOutputFiles is used as a deferred call in main to ensure that all
-// output files are closed on exit.
-func closeOutputFiles() {
-	for _, fd := range _gOutputs {
-		fd.Close()
-	}
-}
-
-// removeOutputFiles is used in main to ensure that all output files are
-// removed if an error has occurred.
-func removeOutputFiles() {
-	for name := range _gOutputs {
-		os.Remove(name)
-	}
-}
-
-// processInputFile reads every line from fd and scans to see
-// if it contains delimiter. If not, the line is output to
-// all currently active target files. If the line contains delimiter
-// it parses the remainder of the line as a list of space-delimited
-// filenames for output. These are passed to openOutputFiles() to be
-// opened if they haven't been opened already. If openOutputFiles()
-// succeeds, the files are set as the current output targets for
-// following lines until the next delimiter line is encountered.
-//
-// If parsing fails, the error from extractFileNames() is returned.
-// Similarly, processing ends if openOutputFiles() fails.
-// Processing ends normally when all lines in the file have been
-// read and processed.
-func processInputFile(fd *os.File, delimiter string) error {
-	defer fd.Close()
-	var err error
-	reader := bufio.NewReader(fd)
-	var targets = make([]*os.File, 0)
-	var line string
-	for {
-		line, err = reader.ReadString('\n')
-		if err == io.EOF {
-			err = nil
-			break
-		}
-		if err != nil {
-			return err
-		}
-		names, err := extractFileNames(delimiter, line)
-		if err != nil {
-			return err
-		}
-		if len(names) == 0 {
-			// lineout := line + "\n"
-			for _, f := range targets {
-				f.WriteString(line)
-			}
-		} else {
-			err = openOutputFiles(names)
-			if err != nil {
-				return err
-			}
-			targets = make([]*os.File, 0)
-			for _, name := range names {
-				targets = append(targets, _gOutputs[name])
-			}
-		}
-	}
-	return err
 }

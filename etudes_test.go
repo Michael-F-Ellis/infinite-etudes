@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -23,7 +22,7 @@ func TestGetScale(t *testing.T) {
 	}
 
 	keynum = 11
-	expected = []int{1, 3, 4, 6, 8, 10, 11}
+	expected = []int{11, 1, 3, 4, 6, 8, 10}
 	isminor = false
 	got = getScale(keynum, isminor)
 	if !reflect.DeepEqual(got, expected) {
@@ -133,8 +132,6 @@ func TestShuffle(t *testing.T) {
 	if reflect.DeepEqual(x.seq, y.seq) {
 		t.Errorf("shuffle did not change sequence, could be chance, so try again")
 	}
-	fmt.Printf("%v", x.seq)
-
 }
 
 func TestGMSoundName(t *testing.T) {
@@ -201,78 +198,3 @@ func TestKeySignature(t *testing.T) {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
 }
-
-//func TestExtractFileNames(t *testing.T) {
-//	// Good lines
-//	line := "// FTEE foo.bar baz.txt"
-//	expected := []string{"foo.bar", "baz.txt"}
-//	names, err := extractFileNames("FTEE", line)
-//	if err != nil {
-//		t.Errorf("unexpected error \"%q\" parsing \"%s\"", err, line)
-//	}
-//	if !reflect.DeepEqual(names, expected) {
-//		t.Errorf("expected %s got %s", expected, names)
-//	}
-//	// Output lines (no FTEE)
-//	line = "lorem ipsum sit amet ..."
-//	names, err = extractFileNames("FTEE", line)
-//	if err != nil {
-//		t.Errorf("unexpected error \"%q\" parsing \"%s\"", err, line)
-//	}
-//
-//	// Bad lines
-//	line = "//FTEE foo.bar baz.txt"
-//	errexp := fmt.Errorf("delimiter FTEE must be surrounded by whitespace")
-//	names, err = extractFileNames("FTEE", line)
-//	if !reflect.DeepEqual(err, errexp) {
-//		t.Errorf("expected %q got %q", errexp, err)
-//	}
-//	line = "// FTEE foo.bar FTEE baz.txt"
-//	errexp = fmt.Errorf("found more than one delimiter FTEE in line")
-//	names, err = extractFileNames("FTEE", line)
-//	if !reflect.DeepEqual(err, errexp) {
-//		t.Errorf("Expected %q got %q", errexp, err)
-//	}
-//	line = "// FTEE"
-//	errexp = fmt.Errorf("no file names found after delimiter FTEE")
-//	names, err = extractFileNames("FTEE", line)
-//	if !reflect.DeepEqual(err, errexp) {
-//		t.Errorf("expected %q got %q", errexp, err)
-//	}
-//
-//}
-//
-//func TestOpenOutputFiles(t *testing.T) {
-//	//outputs := make(map[string]*os.File)
-//	names := []string{"/tmp/foo.txt", "/tmp/bar.txt"}
-//	err := openOutputFiles(names)
-//	if err != nil {
-//		t.Errorf("unexpected error: %q", err)
-//	}
-//	if len(_gOutputs) != 2 {
-//		t.Errorf("expected 2 opened files, got %d", len(_gOutputs))
-//	}
-//	err = openOutputFiles(names)
-//	if err != nil {
-//		t.Errorf("unexpected error: %q", err)
-//	}
-//	if len(_gOutputs) != 2 {
-//		t.Errorf("expected 2 opened files, got %d", len(_gOutputs))
-//	}
-//	closeOutputFiles()
-//	removeOutputFiles()
-//}
-//
-//func BenchmarkProcessInputFile(b *testing.B) {
-//	// includes file I/O
-//	for n := 0; n < b.N; n++ {
-//		infd, err := os.Open("bigfile.txt")
-//		if err != nil {
-//			err = fmt.Errorf("couldn't open input file: %q", err)
-//			return
-//		}
-//		processInputFile(infd, "FTEE")
-//		infd.Close()
-//		removeOutputFiles()
-//	}
-//}
