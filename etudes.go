@@ -105,7 +105,7 @@ func main() {
 	flag.Usage = usage
 
 	var instrument int
-	flag.IntVar(&instrument, "i", 0, "General Midi instrument number: 0 ... 127")
+	flag.IntVar(&instrument, "i", 1, "General Midi instrument number: 1 ... 128")
 
 	var midilo int
 	flag.IntVar(&midilo, "l", 36, "Lowest desired Midi pitch")
@@ -119,9 +119,10 @@ func main() {
 	flag.Parse()
 
 	// validate flags
-	if !within(0, instrument, 127) {
-		log.Fatalln("instrument must be in range 0 to 127")
+	if !within(1, instrument, 128) {
+		log.Fatalln("instrument must be in range 1 to 128")
 	}
+	instrument-- // convert to 0 indexed
 
 	if !within(0, midilo, 93) {
 		log.Fatalln("midilo must be between 0 and 93")
@@ -476,6 +477,7 @@ func writeMidiFile(sequence *etudeSequence) {
 	buf = new(bytes.Buffer)
 	record = []interface{}{
 		keySignature(sequence),
+		trackInstrument(sequence),
 		byte(0x9e), // four beats hi byte
 		byte(0x00), // four beats lo byte
 	}
@@ -664,6 +666,12 @@ func keySignature(s *etudeSequence) []byte {
 	sf := byte(sharps & 0xFF) // because flats are negative ints
 	mi := byte(0)             // always major in this code
 	return []byte{0x0, 0xFF, 0x59, 0x02, sf, mi}
+}
+
+// trackInstrument returns a Program Change event with the instrument specified
+// in s preceeded by 0 delta time,
+func trackInstrument(s *etudeSequence) []byte {
+	return []byte{0x00, 0xC0, byte(s.instrument)}
 }
 
 // composeFileName returns a string containing a filename of the form

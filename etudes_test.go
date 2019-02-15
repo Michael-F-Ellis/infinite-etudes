@@ -198,3 +198,19 @@ func TestKeySignature(t *testing.T) {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
 }
+
+func TestTrackInstrument(t *testing.T) {
+	exp := []byte{0x00, 0xC0, 0x00}
+	s := etudeSequence{instrument: 0}
+	x := trackInstrument(&s)
+	if !reflect.DeepEqual(x, exp) {
+		t.Errorf("expected %v, got %v", exp, x)
+	}
+	s.instrument = 41 // viola
+	exp = []byte{0x00, 0xC0, 0x29}
+	x = trackInstrument(&s)
+	if !reflect.DeepEqual(x, exp) {
+		t.Errorf("expected %v, got %v", exp, x)
+	}
+
+}
