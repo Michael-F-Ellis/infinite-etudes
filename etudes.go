@@ -494,8 +494,8 @@ func writeMidiFile(sequence *etudeSequence) {
 			panic(err)
 		}
 	}
-	// end of track
-	eot := []byte{0x00, 0xff, 0x2f, 0x00}
+	// end of track (note last delta is already in place)
+	eot := []byte{0xff, 0x2f, 0x00}
 	err = binary.Write(buf, binary.BigEndian, eot)
 	if err != nil {
 		panic(err)
