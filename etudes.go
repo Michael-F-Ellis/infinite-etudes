@@ -343,7 +343,7 @@ func generateSequences(keynum int, midilo int, midihi int, tempo int, instrument
 		}
 		// if we get to here, t[0] is not sharpfive
 		if t[1] == sharpfive {
-			if t[2] == four || t[2] == seven {
+			if t[0] == four || t[0] == seven || t[2] == four || t[2] == seven {
 				raisedFiveWithFourOrSeven.seq = append(raisedFiveWithFourOrSeven.seq, t)
 				continue
 			} else {
@@ -354,7 +354,11 @@ func generateSequences(keynum int, midilo int, midihi int, tempo int, instrument
 
 		// if we get to here, neither t[0] or t[1] are sharpfive
 		if t[2] == sharpfive {
-			raisedFive.seq = append(raisedFive.seq, t)
+			if t[0] == four || t[0] == seven || t[1] == four || t[1] == seven {
+				raisedFiveWithFourOrSeven.seq = append(raisedFiveWithFourOrSeven.seq, t)
+			} else {
+				raisedFive.seq = append(raisedFive.seq, t)
+			}
 		}
 		// we don't care about any other triples because they've all been
 		// accounted for by processing the majors.

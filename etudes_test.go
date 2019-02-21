@@ -55,7 +55,22 @@ func TestGenerateSequences(t *testing.T) {
 		n += len(seq.seq)
 	}
 	if n != 300 {
-		t.Errorf("expected 210 midiTriples total, got %d", n)
+		t.Errorf("expected 300 midiTriples total, got %d", n)
+	}
+	// verify that no triple in Raised5 contains 4 or 7
+	midiMajorScaleNums := getScale(0, false)
+	four := midiMajorScaleNums[3]
+	seven := midiMajorScaleNums[6]
+	r5 := s[4]
+	if r5.filename != "c_raised_five_acoustic_grand_piano.mid" {
+		t.Errorf("expected fifth sequence filename to start with 'c_raised_5', got %s", s[0].filename)
+	}
+	for _, x := range r5.seq {
+		for i, v := range x {
+			if v == four || v == seven {
+				t.Errorf("raised5 triples should not contain fourth or seventh scale degrees, found %v at index %d", x, i)
+			}
+		}
 	}
 }
 
