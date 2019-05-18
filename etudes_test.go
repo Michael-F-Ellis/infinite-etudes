@@ -41,8 +41,8 @@ func TestPermute3(t *testing.T) {
 	}
 }
 
-func TestGenerateSequences(t *testing.T) {
-	s := generateSequences(0, 36, 84, 120, 0)
+func TestGenerateKeySequences(t *testing.T) {
+	s := generateKeySequences(0, 36, 84, 120, 0)
 	if len(s) != 6 {
 		t.Errorf("expected 6 sequences, got %d", len(s))
 	}
@@ -71,6 +71,24 @@ func TestGenerateSequences(t *testing.T) {
 				t.Errorf("raised5 triples should not contain fourth or seventh scale degrees, found %v at index %d", x, i)
 			}
 		}
+	}
+}
+
+func TestGenerateFinalSequences(t *testing.T) {
+	s := generateFinalSequences(36, 84, 120, 0)
+	if len(s) != 12 {
+		t.Errorf("expected 6 sequences, got %d", len(s))
+	}
+	if s[0].filename != "c_final_acoustic_grand_piano.mid" {
+		t.Errorf("expected name of first sequence to be c_final, got %s", s[0].filename)
+	}
+	// verify that all 1320 permutations are accounted for
+	n := 0
+	for _, seq := range s {
+		n += len(seq.seq)
+	}
+	if n != 1320 {
+		t.Errorf("expected 1320 midiTriples total, got %d", n)
 	}
 }
 

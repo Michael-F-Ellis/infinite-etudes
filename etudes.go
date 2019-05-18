@@ -144,6 +144,7 @@ func main() {
 	for i := 0; i < 12; i++ {
 		mkKeyEtudes(i, midilo, midihi, tempo, instrument)
 	}
+	mkFinalEtudes(midilo, midihi, tempo, instrument)
 
 }
 
@@ -156,10 +157,18 @@ func usage() {
 
 }
 
-// mkEtudes generates the six files associated with keynum where
+// mkKeyEtudes generates the six files associated with keynum where
 // 0->c, 1->dflat, 2->d, ... 11->b
 func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int, instrument int) {
-	for _, sequence := range generateSequences(keynum, midilo, midihi, tempo, instrument) {
+	for _, sequence := range generateKeySequences(keynum, midilo, midihi, tempo, instrument) {
+		mkMidi(&sequence)
+	}
+}
+
+// mkFinalEtudes generates the 12 files associated with pitch numbers where
+// 0->c, 1->dflat, 2->d, ... 11->b
+func mkFinalEtudes(midilo int, midihi int, tempo int, instrument int) {
+	for _, sequence := range generateFinalSequences(midilo, midihi, tempo, instrument) {
 		mkMidi(&sequence)
 	}
 }
@@ -175,6 +184,12 @@ func getScale(keynum int, isminor bool) []int {
 		scale[i] = (p + keynum) % 12
 	}
 	return scale
+}
+
+// getChromaticScale returns the chromatic scale
+func getChromaticScale() (scale []int) {
+	scale = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+	return
 }
 
 // permute3 returns a slice of midiTriple containing
@@ -199,8 +214,44 @@ func permute3(scale []int) []midiTriple {
 	return permutations
 }
 
-// generateSequences returns a slice of six etudeSequences as described in the usage instructions.
-func generateSequences(keynum int, midilo int, midihi int, tempo int, instrument int) []etudeSequence {
+// generateFinalSequences returns a slice of 12 etudeSequences as described in the usage instructions.
+// Each sequence consists of all possible triples with a final pitch corresponding to pitchnum.
+func generateFinalSequences(midilo int, midihi int, tempo int, instrument int) (sequences []etudeSequence) {
+	// Get the chromatic scale as midi numbers in the range 0 - 11
+	midiChromaticScaleNums := getChromaticScale()
+	// Generate all 3 note permutations
+	triples := permute3(midiChromaticScaleNums)
+
+	sname, err := gmSoundName(instrument)
+	if err != nil {
+		panic("instrument number should have already been validated")
+	}
+	iname := gmSoundFileNamePrefix(sname)
+
+	// construct the sequences
+	for pitch := 0; pitch < 12; pitch++ {
+		pitchname := keyNames[pitch]
+		sequences = append(sequences, etudeSequence{
+			filename:   pitchname + "_final" + "_" + iname + ".mid",
+			midilo:     midilo,
+			midihi:     midihi,
+			tempo:      tempo,
+			instrument: instrument,
+			keyname:    pitchname,
+		})
+	}
+
+	// filter the triples into the corresponding etude sequences
+	// starting with majors
+	for _, t := range triples {
+		final := t[2]
+		sequences[final].seq = append(sequences[final].seq, t)
+	}
+	return
+}
+
+// generateKeySequences returns a slice of six etudeSequences as described in the usage instructions.
+func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrument int) []etudeSequence {
 	// Look up the keyname string
 	keyname := keyNames[keynum]
 	// Get the major and harmonic minor scales as midi numbers in the range 0 - 11
