@@ -100,9 +100,13 @@ func within(lo int, val int, hi int) bool {
 	return lo <= val && val <= hi
 }
 
+var debug bool // enables some diagnostic output when true
+
 func main() {
 	// Parse command line
 	flag.Usage = usage
+
+	flag.BoolVar(&debug, "d", true, "Enable diagnostic output")
 
 	var instrument int
 	flag.IntVar(&instrument, "i", 1, "General Midi instrument number: 1 ... 128")
@@ -162,6 +166,9 @@ func usage() {
 func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int, instrument int) {
 	for _, sequence := range generateKeySequences(keynum, midilo, midihi, tempo, instrument) {
 		mkMidi(&sequence)
+		if debug {
+			fmt.Println(pitchHistogram(sequence))
+		}
 	}
 }
 
@@ -170,6 +177,9 @@ func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int, instrument int) 
 func mkFinalEtudes(midilo int, midihi int, tempo int, instrument int) {
 	for _, sequence := range generateFinalSequences(midilo, midihi, tempo, instrument) {
 		mkMidi(&sequence)
+		if debug {
+			fmt.Println(pitchHistogram(sequence))
+		}
 	}
 }
 
@@ -432,8 +442,8 @@ func mkMidi(sequence *etudeSequence) {
 	// Shuffle the sequence
 	shuffle(sequence.seq)
 
-	// Constrain the sequence assuming a prior pitch of middle C (60)
-	prior := 60
+	// Constrain the sequence assuming a prior pitch halfway between the limits.
+	prior := (sequence.midilo + sequence.midihi) / 2
 	seqlen := len(sequence.seq)
 	for i := 0; i < seqlen; i++ {
 		t := &(sequence.seq[i])
@@ -776,11 +786,16 @@ func constrain(t *midiTriple, prior int, midilo int, midihi int) {
 		msg := fmt.Sprintf("Invalid midi limits %v, %v", midilo, midihi)
 		panic(msg) // Programming error. Bad limits should be rejected at startup
 	}
-	// Adjust first pitch relative to prior.
-	t[0] = adjustSuccessor(prior, t[0])
-	// Tighten remaining pitches
+	// Tighten the triple to close position
 	tighten(t)
-	// Shift pitches by octaves until all are between midilo and midihi inclusive.
+
+	// Shift tightened triple so that first pitch is as
+	// close as possible to prior.
+	offset := adjustSuccessor(prior, t[0]) - t[0]
+	for i := 0; i < len(t); i++ {
+		t[i] += offset
+	}
+	// If needed, shift pitches by octaves until all are between midilo and midihi inclusive.
 	lo := int(midilo)
 	for t[0] < lo || t[1] < lo || t[2] < lo {
 		t[0] += 12
@@ -793,4 +808,24 @@ func constrain(t *midiTriple, prior int, midilo int, midihi int) {
 		t[1] -= 12
 		t[2] -= 12
 	}
+}
+
+// pitchHistorgram counts the pitches in each octave and returns a string with
+// the filename followed by the counts in octaves 0-11. It panics if any pitch
+// is outside the valid midi range 0-127. This func is primarily a debug tool
+// to verify that the pitch distribution is roughly uniform over the desired
+// octave range.
+func pitchHistogram(e etudeSequence) (histo string) {
+	var counts [11]int
+	for _, triple := range e.seq {
+		for _, p := range triple {
+			bin := p / 12
+			if bin < 0 || bin > 11 {
+				panic(fmt.Sprintf("impossible midi pitch %d in sequence for file %s", p, e.filename))
+			}
+			counts[bin]++
+		}
+		histo = fmt.Sprintf("%s %v", e.filename, counts)
+	}
+	return
 }
