@@ -44,14 +44,22 @@ func TestGoodEtudeRequest(t *testing.T) {
 }
 
 func TestBadEtudeRequest(t *testing.T) {
-	url := "http://" + testhost + "/etude/aflat/pentatonic/fromix_horn"
-	resp, err := http.Get(url)
-	if err != nil {
-		t.Errorf("GET failed: %v", err)
+	badRequests := []string{
+		"/etude/hsharp/pentatonic/trumpet",
+		"/etude/aflat/schizotonic/trumpet",
+		"/etude/aflat/pentatonic/fromix_horn",
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Errorf("Expected status code %v, got %v", http.StatusBadRequest, resp.StatusCode)
+	for _, path := range badRequests {
+		url := "http://" + testhost + path
+		resp, err := http.Get(url)
+		if err != nil {
+			t.Errorf("GET failed: %v", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("%s : xpected status code %v, got %v",
+				path, http.StatusBadRequest, resp.StatusCode)
+		}
 	}
 }
 

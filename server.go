@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // serveEtudes serves etude midi files from the current working directory.
@@ -47,9 +49,50 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 	}
 	if !validEtudeRequest(what[2:]) {
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
+	filename := strings.Join(what[2:], "_") + ".mid"
+	makeEtudesIfNeeded(filename, what[2])
+	http.ServeFile(w, r, filename)
 }
 
+// makeEtudesIfNeeded generates a full set of etudes in the current
+// working directory if the requested file doesn't exist or is older
+// than the age limit set by serveEtudes in os.Environ. Otherwise
+// it does nothing.
+func makeEtudesIfNeeded(filename, instrument string) {
+	var exists = true // initial assumption
+	finfo, err := os.Stat(filename)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			// something's really wrong
+			panic(fmt.Sprintf("error statting %s: %v", filename, err))
+		}
+		exists = false
+	}
+	// if file exists, we need to check its age
+	if exists {
+		maxage, e := strconv.Atoi(os.Getenv("ETUDE_MAX_AGE"))
+		if e != nil {
+			panic("programming error. can't convert ETUDE_MAX_AGE to integer")
+		}
+
+		maxduration := time.Duration(maxage) * time.Second
+		modtime := finfo.ModTime()
+		if time.Now().Sub(modtime) < maxduration {
+			// nothing to do
+			return
+		}
+	}
+	// need to generate if we get to here
+	// stubbed for testing ...
+	txt := []byte("PHONY")
+	err = ioutil.WriteFile(filename, txt, 0644)
+
+}
+
+// validEtudeRequest returns true if the request is correctly formed
+// and references a valid etude file.
 func validEtudeRequest(ksi []string) (ok bool) {
 	if len(ksi) != 3 {
 		return
