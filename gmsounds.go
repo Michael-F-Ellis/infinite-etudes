@@ -5,7 +5,8 @@ import (
 	"strings"
 )
 
-var gmSoundNameToNum = map[string]int{"Acoustic Grand Piano": 0,
+// Note: The instrument numbers in this file are 0-indexed.
+var gmSoundNameToNum0 = map[string]int{"Acoustic Grand Piano": 0,
 	"Bright Acoustic Piano":   1,
 	"Electric Grand Piano":    2,
 	"Honky-tonk Piano":        3,
@@ -134,11 +135,23 @@ var gmSoundNameToNum = map[string]int{"Acoustic Grand Piano": 0,
 	"Applause":                126,
 	"Gunshot":                 127}
 
+var gmFileNamePrefixToNum = make(map[string]int)
+
+// Fill in the map that lets us look up midi instrument
+// numbers from the alternate instrument names we use
+// in etude file names.
+func init() {
+	for name, num := range gmSoundNameToNum0 {
+		pfx := gmSoundFileNamePrefix(name)
+		gmFileNamePrefixToNum[pfx] = num
+	}
+}
+
 // gmSoundName looks up the sound name from the number.
 // We do it with a loop since this is an infrequent operation.
 func gmSoundName(num int) (string, error) {
 	var err error
-	for name, number := range gmSoundNameToNum {
+	for name, number := range gmSoundNameToNum0 {
 		if num == number {
 			return name, err
 		}

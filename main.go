@@ -80,7 +80,8 @@ func main() {
 	// Parse command line
 	flag.Usage = usage
 
-	flag.BoolVar(&debug, "d", true, "Enable diagnostic output")
+	// Command mode flags
+	flag.BoolVar(&debug, "d", false, "Enable diagnostic output")
 
 	var instrument int
 	flag.IntVar(&instrument, "i", 1, "General Midi instrument number: 1 ... 128")
@@ -94,7 +95,16 @@ func main() {
 	var tempo int
 	flag.IntVar(&tempo, "t", 120, "tempo in beats per minute")
 
+	// server mode flags
+	var serve bool
+	flag.BoolVar(&serve, "s", false, "Run applications as a server.")
+
+	var hostport string
+	flag.StringVar(&hostport, "p", "localhost:8080", "hostname (or IP) and port to serve on.")
 	flag.Parse()
+
+	var expireSeconds int
+	flag.IntVar(&expireSeconds, "x", 3600, "Maximum age in seconds for generated files")
 
 	// validate flags
 	if !within(1, instrument, 128) {
@@ -118,11 +128,13 @@ func main() {
 		log.Fatalln("tempo must be between 20 and 300 bpm")
 	}
 
-	// Create and write all the output files for all 12 key signatures
-	for i := 0; i < 12; i++ {
-		mkKeyEtudes(i, midilo, midihi, tempo, instrument)
+	if serve {
+		log.Printf("serving on %s\n", hostport)
+		serveEtudes(hostport, expireSeconds)
+	} else {
+		// create the midi files
+		mkAllEtudes(midilo, midihi, tempo, instrument)
 	}
-	mkFinalEtudes(midilo, midihi, tempo, instrument)
 
 }
 
@@ -133,6 +145,18 @@ func usage() {
 	flag.PrintDefaults()
 	fmt.Println(description)
 
+}
+
+// mkAllEtudes creates in the current directory all the etude files we support
+// for the specified instrument. The arguments are assumed to be previously
+// vetted and are not checked.
+func mkAllEtudes(midilo, midihi, tempo, instrument int) {
+	// Create and write all the tonal output files for all 12 key signatures
+
+	for i := 0; i < 12; i++ {
+		mkKeyEtudes(i, midilo, midihi, tempo, instrument)
+	}
+	mkFinalEtudes(midilo, midihi, tempo, instrument)
 }
 
 // mkKeyEtudes generates the six files associated with keynum where

@@ -1,12 +1,14 @@
 package main
 
 import (
-	"fmt"
+	"bytes"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"testing"
+	"time"
 )
 
 var testhost = "localhost:8080"
@@ -32,6 +34,7 @@ func TestGETIndex(t *testing.T) {
 }
 
 func TestGoodEtudeRequest(t *testing.T) {
+	var err error
 	url := "http://" + testhost + "/etude/aflat/pentatonic/trumpet"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -41,6 +44,28 @@ func TestGoodEtudeRequest(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status code %v, got %v", http.StatusOK, resp.StatusCode)
 	}
+	exp, _ := ioutil.ReadFile("aflat_pentatonic_trumpet.mid")
+	got, _ := ioutil.ReadAll(resp.Body)
+	if !bytes.Equal(got, exp) {
+		t.Errorf("response didn't match the file content")
+	}
+	// now test the age check
+	maxage, _ := strconv.Atoi(os.Getenv("ETUDE_MAX_AGE"))
+	maxduration := time.Duration(maxage) * time.Second
+	time.Sleep(maxduration)
+	resp2, err := http.Get(url)
+	if err != nil {
+		t.Errorf("GET failed: %v", err)
+	}
+	defer resp2.Body.Close()
+	if resp2.StatusCode != http.StatusOK {
+		t.Errorf("Expected status code %v, got %v", http.StatusOK, resp2.StatusCode)
+	}
+	got, _ = ioutil.ReadAll(resp2.Body)
+	if bytes.Equal(got, exp) { // exp is unchanged and should not match got.
+		t.Errorf("file did not update")
+	}
+
 }
 
 func TestBadEtudeRequest(t *testing.T) {
@@ -66,13 +91,9 @@ func TestBadEtudeRequest(t *testing.T) {
 func TestMain(m *testing.M) {
 	// call flag.Parse() here if TestMain uses flags
 	os.Mkdir("test", 0777) // set up a temporary dir for generated files
-	var err error
-	html := []byte("<html></html>")
-	err = ioutil.WriteFile("test/index.html", html, 0644)
-	if err != nil {
-		fmt.Printf("could not write test/index.html : %v", err)
-		os.Exit(1)
-	}
+	//var err error
+	//html := []byte("<html></html>")
+	//err = ioutil.WriteFile("test/index.html", html, 0644)
 
 	// Run all tests and clean up
 	wd, _ := os.Getwd()

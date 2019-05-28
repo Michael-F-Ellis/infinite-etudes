@@ -12,7 +12,12 @@ import (
 )
 
 // serveEtudes serves etude midi files from the current working directory.
-func serveEtudes(hostport string, maxAgeSeconds int64) {
+func serveEtudes(hostport string, maxAgeSeconds int) {
+	var err error
+	err = mkWebPages()
+	if err != nil {
+		log.Fatalf("could not write web pages: %v", err)
+	}
 	os.Setenv("ETUDE_MAX_AGE", fmt.Sprintf("%d", maxAgeSeconds))
 	defer os.Unsetenv("ETUDE_MAX_AGE")
 	http.Handle("/", http.HandlerFunc(indexHndlr))
@@ -45,14 +50,14 @@ func indexHndlr(w http.ResponseWriter, r *http.Request) {
 func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 	what := strings.Split(r.URL.Path, "/")
 	if what[1] != "etude" {
-		panic("programming error. got request path that didn't start with 'etude'")
+		log.Fatalf("programming error. got request path that didn't start with 'etude': %s", r.URL.Path)
 	}
 	if !validEtudeRequest(what[2:]) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	filename := strings.Join(what[2:], "_") + ".mid"
-	makeEtudesIfNeeded(filename, what[2])
+	makeEtudesIfNeeded(filename, what[4])
 	http.ServeFile(w, r, filename)
 }
 
@@ -60,13 +65,13 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 // working directory if the requested file doesn't exist or is older
 // than the age limit set by serveEtudes in os.Environ. Otherwise
 // it does nothing.
-func makeEtudesIfNeeded(filename, instrument string) {
+func makeEtudesIfNeeded(filename, instrumentName string) {
 	var exists = true // initial assumption
 	finfo, err := os.Stat(filename)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			// something's really wrong
-			panic(fmt.Sprintf("error statting %s: %v", filename, err))
+			log.Fatalf("error statting %s: %v", filename, err)
 		}
 		exists = false
 	}
@@ -74,7 +79,7 @@ func makeEtudesIfNeeded(filename, instrument string) {
 	if exists {
 		maxage, e := strconv.Atoi(os.Getenv("ETUDE_MAX_AGE"))
 		if e != nil {
-			panic("programming error. can't convert ETUDE_MAX_AGE to integer")
+			log.Fatalf("programming error. can't convert ETUDE_MAX_AGE '%s' to integer", os.Getenv("ETUDE_MAX_AGE"))
 		}
 
 		maxduration := time.Duration(maxage) * time.Second
@@ -85,10 +90,13 @@ func makeEtudesIfNeeded(filename, instrument string) {
 		}
 	}
 	// need to generate if we get to here
-	// stubbed for testing ...
-	txt := []byte("PHONY")
-	err = ioutil.WriteFile(filename, txt, 0644)
-
+	iInfo, _ := getSupportedInstrumentByName(instrumentName) // already validated. ignore err value
+	// fmt.Printf("%v %s\n", iInfo, filename)
+	instrument := iInfo.gmnumber - 1
+	midilo := iInfo.midilo
+	midihi := iInfo.midihi
+	tempo := 120
+	mkAllEtudes(midilo, midihi, tempo, instrument)
 }
 
 // validEtudeRequest returns true if the request is correctly formed
@@ -137,12 +145,9 @@ func validScaleName(name string) (ok bool) {
 // validInstrumentName returns true if the instrument name is in the ones we
 // support.
 func validInstrumentName(name string) (ok bool) {
-	InstrumentNames := []string{"acoustic_grand_piano", "trumpet"}
-	for _, i := range InstrumentNames {
-		if i == name {
-			ok = true
-			break
-		}
+	_, err := getSupportedInstrumentByName(name)
+	if err == nil {
+		ok = true
 	}
 	return
 }
