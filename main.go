@@ -17,6 +17,9 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
+	"path/filepath"
+	"runtime"
 	"time"
 )
 
@@ -74,6 +77,19 @@ func within(lo int, val int, hi int) bool {
 	return lo <= val && val <= hi
 }
 
+// userHomeDir returns the user's home directory name on Windows, Linux or Mac.
+// Credit: https://stackoverflow.com/a/7922977/426853
+func userHomeDir() string {
+	if runtime.GOOS == "windows" {
+		home := os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
+		if home == "" {
+			home = os.Getenv("USERPROFILE")
+		}
+		return home
+	}
+	return os.Getenv("HOME")
+}
+
 var debug bool // enables some diagnostic output when true
 
 func main() {
@@ -98,6 +114,9 @@ func main() {
 	// server mode flags
 	var serve bool
 	flag.BoolVar(&serve, "s", false, "Run applications as a server.")
+
+	var midijsPath string
+	flag.StringVar(&midijsPath, "m", filepath.Join(userHomeDir(), "go", "src", "github.com", "Michael-F-Ellis", "infinite-etudes", "midijs"), "Path to midijs files on your host")
 
 	var hostport string
 	flag.StringVar(&hostport, "p", "localhost:8080", "hostname (or IP) and port to serve on.")
@@ -129,13 +148,25 @@ func main() {
 	}
 
 	if serve {
-		log.Printf("serving on %s\n", hostport)
-		serveEtudes(hostport, expireSeconds)
+		serveEtudes(hostport, expireSeconds, midijsPath)
 	} else {
 		// create the midi files
 		mkAllEtudes(midilo, midihi, tempo, instrument)
 	}
 
+}
+
+// validDirPath returns a non-nil error if path is not a directory on the host.
+func validDirPath(path string) (err error) {
+	finfo, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("invalid path %s: %v", path, err)
+		return
+	}
+	if !finfo.Mode().IsDir() {
+		err = fmt.Errorf("%s is not a directory", path)
+	}
+	return
 }
 
 // usage extends the flag package's default help message.

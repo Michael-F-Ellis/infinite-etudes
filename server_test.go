@@ -2,10 +2,11 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
@@ -31,6 +32,29 @@ func TestGETIndex(t *testing.T) {
 		t.Errorf("\nexp: %v\ngot: %v", exp, got)
 	}
 
+}
+
+func TestMidijsRequest(t *testing.T) {
+	url := "http://" + testhost + "/midijs/pat/arachno-0.pat"
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Errorf("GET failed: %v", err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Errorf("Error reading response body: %v", err)
+	}
+	fmt.Println(len(body))
+
+	//exp := 0
+	//got, err := what()
+	//if err != nil {
+	//	t.Errorf("describe: %v", err)
+	//}
+	//if got != exp {
+	//	t.Errorf("\nexp: %v\ngot: %v", exp, got)
+	//}
 }
 
 func TestGoodEtudeRequest(t *testing.T) {
@@ -97,8 +121,9 @@ func TestMain(m *testing.M) {
 
 	// Run all tests and clean up
 	wd, _ := os.Getwd()
-	os.Chdir(path.Join(wd, "test"))
-	go serveEtudes(testhost, 1) // max etude age = 1 second so we don't wait forever while testing.
+	midijspath := filepath.Join(wd, "midijs")
+	os.Chdir(filepath.Join(wd, "test"))
+	go serveEtudes(testhost, 1, midijspath) // max etude age = 1 second so we don't wait forever while testing.
 	exitcode := m.Run()
 	os.Chdir(wd)
 	os.RemoveAll("test") // remove the directory and its contents.

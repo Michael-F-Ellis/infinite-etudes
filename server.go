@@ -2,26 +2,35 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 )
 
 // serveEtudes serves etude midi files from the current working directory.
-func serveEtudes(hostport string, maxAgeSeconds int) {
+func serveEtudes(hostport string, maxAgeSeconds int, midijsPath string) {
 	var err error
 	err = mkWebPages()
 	if err != nil {
 		log.Fatalf("could not write web pages: %v", err)
 	}
+	err = validDirPath(midijsPath)
+	if err != nil {
+		log.Fatalf("invalid midijs path: %v", err)
+	}
+	os.Setenv("MIDIJS", midijsPath)
+	defer os.Unsetenv("MIDIJS")
 	os.Setenv("ETUDE_MAX_AGE", fmt.Sprintf("%d", maxAgeSeconds))
 	defer os.Unsetenv("ETUDE_MAX_AGE")
 	http.Handle("/", http.HandlerFunc(indexHndlr))
 	http.Handle("/etude/", http.HandlerFunc(etudeHndlr))
+	http.Handle("/midijs/", http.HandlerFunc(midijsHndlr))
+	log.Printf("midijs path is %s", os.Getenv("MIDIJS"))
+	log.Printf("serving on %s\n", hostport)
 	if err := http.ListenAndServe(hostport, nil); err != nil {
 		log.Fatalf("Could not listen on port %s", hostport)
 	}
@@ -29,12 +38,22 @@ func serveEtudes(hostport string, maxAgeSeconds int) {
 
 // indexHndlr returns index.html
 func indexHndlr(w http.ResponseWriter, r *http.Request) {
-	text, err := ioutil.ReadFile("index.html")
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
+	http.ServeFile(w, r, "index.html")
+}
+
+// midijsHndlr returns files from the MIDIJS directory.
+func midijsHndlr(w http.ResponseWriter, r *http.Request) {
+	what := strings.Split(r.URL.Path, "/")
+	if what[1] != "midijs" {
+		log.Fatalf("programming error. got request path that didn't start with 'midijs': %s", r.URL.Path)
 	}
-	w.Write(text)
+
+	dir := os.Getenv("MIDIJS")
+	pathelements := append([]string{dir}, what[2:]...)
+	path := filepath.Join(pathelements...)
+	log.Println(path)
+	http.ServeFile(w, r, path)
+
 }
 
 // etudeHndlr returns a midi file that matches the get request or a 404 for
