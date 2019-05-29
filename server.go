@@ -51,7 +51,6 @@ func midijsHndlr(w http.ResponseWriter, r *http.Request) {
 	dir := os.Getenv("MIDIJS")
 	pathelements := append([]string{dir}, what[2:]...)
 	path := filepath.Join(pathelements...)
-	log.Println(path)
 	http.ServeFile(w, r, path)
 
 }
