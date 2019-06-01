@@ -28,11 +28,18 @@ func getSupportedInstrumentByName(name string) (iInfo instrumentInfo, err error)
 // Here are the instruments we currently support.
 var supportedInstruments = []instrumentInfo{
 	{
-		displayName: "Bass",
+		displayName: "Bass, Acoustic",
 		gmnumber:    33,
 		name:        "acoustic_bass",
 		midilo:      28,
 		midihi:      55,
+	},
+	{
+		displayName: "Bass, Electric",
+		gmnumber:    34,
+		name:        "electric_bass_finger",
+		midilo:      28,
+		midihi:      67,
 	},
 	{
 		displayName: "Bassoon",
@@ -56,20 +63,6 @@ var supportedInstruments = []instrumentInfo{
 		midihi:      79,
 	},
 	{
-		displayName: "Electric Bass",
-		gmnumber:    34,
-		name:        "electric_bass_finger",
-		midilo:      28,
-		midihi:      67,
-	},
-	{
-		displayName: "Electric Guitar",
-		gmnumber:    27,
-		name:        "electric_guitar_jazz",
-		midilo:      40,
-		midihi:      88,
-	},
-	{
 		displayName: "Flute",
 		gmnumber:    74,
 		name:        "flute",
@@ -77,11 +70,18 @@ var supportedInstruments = []instrumentInfo{
 		midihi:      98,
 	},
 	{
-		displayName: "Guitar",
+		displayName: "Guitar, Acoustic",
 		gmnumber:    26,
 		name:        "acoustic_guitar_steel",
 		midilo:      44,
 		midihi:      76,
+	},
+	{
+		displayName: "Guitar, Electric",
+		gmnumber:    27,
+		name:        "electric_guitar_jazz",
+		midilo:      40,
+		midihi:      88,
 	},
 	{
 		displayName: "Piano",
@@ -89,6 +89,34 @@ var supportedInstruments = []instrumentInfo{
 		name:        "acoustic_grand_piano",
 		midilo:      36,
 		midihi:      96,
+	},
+	{
+		displayName: "Sax, Soprano",
+		gmnumber:    65,
+		name:        "soprano_sax",
+		midilo:      56,
+		midihi:      87,
+	},
+	{
+		displayName: "Sax, Alto",
+		gmnumber:    66,
+		name:        "alto_sax",
+		midilo:      49,
+		midihi:      80,
+	},
+	{
+		displayName: "Sax, Tenor",
+		gmnumber:    67,
+		name:        "tenor_sax",
+		midilo:      44,
+		midihi:      75,
+	},
+	{
+		displayName: "Sax, Baritone",
+		gmnumber:    68,
+		name:        "baritone_sax",
+		midilo:      36,
+		midihi:      68,
 	},
 	{
 		displayName: "Trombone",

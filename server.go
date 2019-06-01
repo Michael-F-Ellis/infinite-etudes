@@ -137,10 +137,30 @@ func validEtudeRequest(ksi []string) (ok bool) {
 	return
 }
 
+type nameInfo struct {
+	fileName string
+	uiName   string
+}
+
+var keyInfo = []nameInfo{
+	{"c", "C"},
+	{"dflat", "D♭"},
+	{"d", "D"},
+	{"eflat", "E♭"},
+	{"e", "E"},
+	{"f", "F"},
+	{"gflat", "G♭"},
+	{"g", "G"},
+	{"aflat", "A♭"},
+	{"a", "A"},
+	{"bflat", "B♭"},
+	{"b", "B"},
+}
+
 // validKeyName returns true if the key name is in the ones we support.
 func validKeyName(name string) (ok bool) {
-	for _, k := range keyNames {
-		if k == name {
+	for _, k := range keyInfo {
+		if k.fileName == name {
 			ok = true
 			break
 		}
@@ -148,11 +168,20 @@ func validKeyName(name string) (ok bool) {
 	return
 }
 
+var scaleInfo = []nameInfo{
+	{"pentatonic", "Pentatonic"},
+	{"final", "Chromatic Final"},
+	{"plus_four", "Plus Four"},
+	{"plus_seven", "Plus Seven"},
+	{"four_and_seven", "Four and Seven"},
+	{"raised_five", "Harmonic Minor 1"},
+	{"raised_five_with_four_or_seven", "Harmonic Minor 2"},
+}
+
 // validScaleName returns true if the scale name is in the ones we support.
 func validScaleName(name string) (ok bool) {
-	scaleNames := []string{"final", "pentatonic"}
-	for _, s := range scaleNames {
-		if s == name {
+	for _, s := range scaleInfo {
+		if s.fileName == name {
 			ok = true
 			break
 		}
