@@ -85,18 +85,19 @@ func permute3(scale []int) []midiTriple {
 
 // generateFinalSequences returns a slice of 12 etudeSequences as described in the usage instructions.
 // Each sequence consists of all possible triples with a final pitch corresponding to pitchnum.
-func generateFinalSequences(midilo int, midihi int, tempo int, instrument int) (sequences []etudeSequence) {
+func generateFinalSequences(midilo int, midihi int, tempo int, instrument int, iname string) (sequences []etudeSequence) {
 	// Get the chromatic scale as midi numbers in the range 0 - 11
 	midiChromaticScaleNums := getChromaticScale()
 	// Generate all 3 note permutations
 	triples := permute3(midiChromaticScaleNums)
 
-	sname, err := gmSoundName(instrument)
-	if err != nil {
-		panic("instrument number should have already been validated")
+	if iname == "" {
+		sname, err := gmSoundName(instrument)
+		if err != nil {
+			panic("instrument number should have already been validated")
+		}
+		iname = gmSoundFileNamePrefix(sname)
 	}
-	iname := gmSoundFileNamePrefix(sname)
-
 	// construct the sequences
 	for pitch := 0; pitch < 12; pitch++ {
 		pitchname := keyNames[pitch]
@@ -120,7 +121,7 @@ func generateFinalSequences(midilo int, midihi int, tempo int, instrument int) (
 }
 
 // generateKeySequences returns a slice of six etudeSequences as described in the usage instructions.
-func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrument int) []etudeSequence {
+func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrument int, iname string) []etudeSequence {
 	// Look up the keyname string
 	keyname := keyNames[keynum]
 	// Get the major and harmonic minor scales as midi numbers in the range 0 - 11
@@ -130,11 +131,13 @@ func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrum
 	majors := permute3(midiMajorScaleNums)
 	minors := permute3(midiMinorScaleNums)
 
-	sname, err := gmSoundName(instrument)
-	if err != nil {
-		panic("instrument number should have already been validated")
+	if iname == "" {
+		sname, err := gmSoundName(instrument)
+		if err != nil {
+			panic("instrument number should have already been validated")
+		}
+		iname = gmSoundFileNamePrefix(sname)
 	}
-	iname := gmSoundFileNamePrefix(sname)
 
 	// declare the sequences
 	pentatonic := etudeSequence{

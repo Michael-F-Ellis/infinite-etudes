@@ -151,7 +151,7 @@ func main() {
 		serveEtudes(hostport, expireSeconds, midijsPath)
 	} else {
 		// create the midi files
-		mkAllEtudes(midilo, midihi, tempo, instrument)
+		mkAllEtudes(midilo, midihi, tempo, instrument, "")
 	}
 
 }
@@ -181,19 +181,19 @@ func usage() {
 // mkAllEtudes creates in the current directory all the etude files we support
 // for the specified instrument. The arguments are assumed to be previously
 // vetted and are not checked.
-func mkAllEtudes(midilo, midihi, tempo, instrument int) {
+func mkAllEtudes(midilo, midihi, tempo, instrument int, iname string) {
 	// Create and write all the tonal output files for all 12 key signatures
 
 	for i := 0; i < 12; i++ {
-		mkKeyEtudes(i, midilo, midihi, tempo, instrument)
+		mkKeyEtudes(i, midilo, midihi, tempo, instrument, iname)
 	}
-	mkFinalEtudes(midilo, midihi, tempo, instrument)
+	mkFinalEtudes(midilo, midihi, tempo, instrument, iname)
 }
 
 // mkKeyEtudes generates the six files associated with keynum where
 // 0->c, 1->dflat, 2->d, ... 11->b
-func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int, instrument int) {
-	for _, sequence := range generateKeySequences(keynum, midilo, midihi, tempo, instrument) {
+func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int, instrument int, iname string) {
+	for _, sequence := range generateKeySequences(keynum, midilo, midihi, tempo, instrument, iname) {
 		mkMidi(&sequence)
 		if debug {
 			fmt.Println(pitchHistogram(sequence))
@@ -203,8 +203,8 @@ func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int, instrument int) 
 
 // mkFinalEtudes generates the 12 files associated with pitch numbers where
 // 0->c, 1->dflat, 2->d, ... 11->b
-func mkFinalEtudes(midilo int, midihi int, tempo int, instrument int) {
-	for _, sequence := range generateFinalSequences(midilo, midihi, tempo, instrument) {
+func mkFinalEtudes(midilo int, midihi int, tempo int, instrument int, iname string) {
+	for _, sequence := range generateFinalSequences(midilo, midihi, tempo, instrument, iname) {
 		mkMidi(&sequence)
 		if debug {
 			fmt.Println(pitchHistogram(sequence))

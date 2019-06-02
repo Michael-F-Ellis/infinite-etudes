@@ -79,6 +79,8 @@ func indexBody() (body *ElementTree) {
 		Div("", playBtn, stopBtn, downloadBtn),
 		quickStart(),
 		forTheCurious(),
+		intervalsOctavesRanges(),
+		tempo(),
 		biblio(),
 		coda(),
 	)
@@ -102,9 +104,9 @@ func forTheCurious() (div *ElementTree) {
 	heading := SC("For the curious")
 	p1 := SC(`Infinite Etudes is a program that generates ear/finger training
 	etudes for instrumentalists. All the etudes follow a simple four bar
-	pattern: a sequence of 3 different notes played on beats 1, 2, and 3 and a
-	rest on beat 4. Each bar is played four times before moving to the next
-	pattern -- so you have 3 chances to play the pattern after the first
+	form: a sequence of 3 different notes is played on beats 1, 2, and 3 and a
+	rest on beat 4. Each bar is played four times before moving on
+	 -- so you have 3 chances to play the sequence after the first
 	hearing.
 	`)
 
@@ -131,25 +133,30 @@ func forTheCurious() (div *ElementTree) {
 	universal across history and cultures, this is it. There are 60 possible
 	3-note sequences in each key.  Each etude takes 8 minutes to play.`)
 
-	p6 := SC(`<strong>Chromatic Final:</strong> This one's different. It's
+	p6 := SC(`<strong>Chromatic Final:</strong> This one's special. It's
 	composed of all the sequences that end on the note you choose with the
-	'key' selector without regard for any particular scale. It's the longest
+	'key' selector without regard for any particular scale or key. It's the longest
 	and most challenging of the patterns. For any given final note, there are
 	110 possible sequences. Each etude takes just under 15 minutes to play.`)
 
 	p7 := SC(`The good news is that this pattern is most efficient way to play
 	every possible sequence because there's no overlap between the etudes for
-	different final notes. <strong><em>In fact, you could stop reading right here and
-	just start playing this one with a different final note every day.</em></strong> The
-	other scale patterns don't introduce any new sequences. You may find
-	them useful, though, for for developing a sense of how the sequences
-	function in a tonal context.`)
+	different final notes. <strong><em>In fact, you could stop reading right
+	here and just start playing this pattern with a different final note every
+	day.</em></strong> In 12 days that will take you through every possible 3-note chord
+	in every inversion and every possible 3 note fragment of every possible
+	scale. Not bad for only 15 minutes a day.`)
+
+	p7a := SC(`The other scale patterns don't introduce any new sequences.
+	They're included because you may find them useful for developing a sense of
+	how the sequences function in a tonal context.`)
 
 	p8 := SC(`<strong>Plus Four, Plus Seven, Four and Seven:</strong> These
 	patterns connect the pentatonic scale to the major scale (and its relative
 	minor). In music-speak, the pentatonic scale is degrees 1,2,3,5,6 of the
 	major scale that starts on the same note. So C pentatonic is C D E G A and
-	C major is C D E <strong>F</strong> G A <strong>B</strong>.`)
+	C major is C D E <strong>F</strong> G A <strong>B</strong>. F and B are 4 and 7
+	in C major.`)
 
 	p9 := SC(`<strong>Plus Four</strong> contains all the sequences that
 	consist of 4 and any two of 1,2,3,5,6. As there are 60 such sequences, the
@@ -183,12 +190,58 @@ func forTheCurious() (div *ElementTree) {
 		P("", p5),
 		P("", p6),
 		P("", p7),
+		P("", p7a),
 		P("", p8),
 		P("", p9),
 		P("", p10),
 		P("", p11),
 		P("", p12),
 		P("", p13),
+	)
+	return
+}
+
+func intervalsOctavesRanges() (div *ElementTree) {
+	p1 := SC(`What I said earlier about covering all possible sequences of
+	notes needs some clarification.  First, the program puts the notes of every
+	sequence in close voicing so that each note is no more than 6 semitones
+	from the note that came before it.`)
+
+	p2 := SC(`For example, the sequences 'E G C' and 'C G E' will always be
+	voiced so that the E is the lowest note and the C is the highest. The same
+	rule applies between the last note of a sequence and the first note of the
+	next. If the program generates 'E G C' followed by 'E F D' the E in the
+	second sequence will be an octave above the E in the first sequence.`)
+
+	p3 := SC(`If you find that explanation confusing, don't worry. What's going
+	on will be obvious after a few minutes of playing along.`)
+
+	p4 := SC(`The voicing rule has a couple of good consequences: The
+	notes of each sequence will always fit within one octave and the sequences,
+	being randomly chosen, will wander over the entire pitch range of your
+	instrument. The normal limits of each instrument are known to the program
+	and it will keep everything within the bounds of what's playable.`)
+
+	div = Div("",
+		H3("", SC("Intervals, Octaves, Ranges")),
+		P("", p1),
+		P("", p2),
+		P("", p3),
+		P("", p4),
+	)
+	return
+}
+
+func tempo() (div *ElementTree) {
+	p1 := SC(`This web demo generates MIDI files in 4/4 time with the tempo fixed
+	at 120 beats per minute. If you need it slower or faster, the easiest solution
+	is to use the download button to save a local copy of a file and play it with
+	a program that allows you to adjust the tempo.  I recommend QMidi for Mac. I don't
+	know what's good on PC but a little Googling should turn up something appropriate. Downloading
+	also allows you to play the files through better equipment for more realistic sound.`)
+	div = Div("",
+		H3("", SC("Tempo")),
+		P("", p1),
 	)
 	return
 }

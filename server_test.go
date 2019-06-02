@@ -92,6 +92,25 @@ func TestGoodEtudeRequest(t *testing.T) {
 
 }
 
+func TestVocalEtudeRequest(t *testing.T) {
+	// because multiple vocal parts are mapped to the same midi number
+	var err error
+	url := "http://" + testhost + "/etude/aflat/pentatonic/choir_aahs_tenor"
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Errorf("GET failed: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status code %v, got %v", http.StatusOK, resp.StatusCode)
+	}
+	exp, _ := ioutil.ReadFile("aflat_pentatonic_choir_aahs_tenor.mid")
+	got, _ := ioutil.ReadAll(resp.Body)
+	if !bytes.Equal(got, exp) {
+		t.Errorf("response didn't match the file content")
+	}
+}
+
 func TestBadEtudeRequest(t *testing.T) {
 	badRequests := []string{
 		"/etude/hsharp/pentatonic/trumpet",

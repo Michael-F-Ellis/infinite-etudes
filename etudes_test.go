@@ -42,7 +42,7 @@ func TestPermute3(t *testing.T) {
 }
 
 func TestGenerateKeySequences(t *testing.T) {
-	s := generateKeySequences(0, 36, 84, 120, 0)
+	s := generateKeySequences(0, 36, 84, 120, 0, "")
 	if len(s) != 6 {
 		t.Errorf("expected 6 sequences, got %d", len(s))
 	}
@@ -75,7 +75,7 @@ func TestGenerateKeySequences(t *testing.T) {
 }
 
 func TestGenerateFinalSequences(t *testing.T) {
-	s := generateFinalSequences(36, 84, 120, 0)
+	s := generateFinalSequences(36, 84, 120, 0, "")
 	if len(s) != 12 {
 		t.Errorf("expected 6 sequences, got %d", len(s))
 	}

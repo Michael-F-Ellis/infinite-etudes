@@ -73,7 +73,7 @@ var supportedInstruments = []instrumentInfo{
 		displayName: "Guitar, Acoustic",
 		gmnumber:    26,
 		name:        "acoustic_guitar_steel",
-		midilo:      44,
+		midilo:      40,
 		midihi:      76,
 	},
 	{
@@ -82,6 +82,13 @@ var supportedInstruments = []instrumentInfo{
 		name:        "electric_guitar_jazz",
 		midilo:      40,
 		midihi:      88,
+	},
+	{
+		displayName: "Oboe",
+		gmnumber:    69,
+		name:        "oboe",
+		midilo:      58,
+		midihi:      92,
 	},
 	{
 		displayName: "Piano",
@@ -145,5 +152,33 @@ var supportedInstruments = []instrumentInfo{
 		name:        "viola",
 		midilo:      48,
 		midihi:      84,
+	},
+	{
+		displayName: "Vocal, Soprano",
+		gmnumber:    53,
+		name:        "choir_aahs_soprano",
+		midilo:      60,
+		midihi:      84,
+	},
+	{
+		displayName: "Vocal, Alto",
+		gmnumber:    53,
+		name:        "choir_aahs_alto",
+		midilo:      52,
+		midihi:      76,
+	},
+	{
+		displayName: "Vocal, Tenor",
+		gmnumber:    53,
+		name:        "choir_aahs_tenor",
+		midilo:      46,
+		midihi:      72,
+	},
+	{
+		displayName: "Vocal, Bass",
+		gmnumber:    53,
+		name:        "choir_aahs_bass",
+		midilo:      40,
+		midihi:      64,
 	},
 }
