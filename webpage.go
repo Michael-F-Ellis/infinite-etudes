@@ -214,9 +214,12 @@ func intervalsOctavesRanges() (div *ElementTree) {
 	second sequence will be an octave above the E in the first sequence.`)
 
 	p3 := SC(`If you find that explanation confusing, don't worry. What's going
-	on will be obvious after a few minutes of playing along.`)
+	on will be obvious after a few minutes of playing along. Just be aware that
+	none of the sequences presented will contain leaps of a 5th (7 semitones) or larger.
+	A simple way to incorporate larger leaps is to play one of the notes an octave higher
+	or lower.`)
 
-	p4 := SC(`The voicing rule has a couple of good consequences: The
+	p4 := SC(`This voicing rule has a couple of good consequences: The
 	notes of each sequence will always fit within one octave and the sequences,
 	being randomly chosen, will wander over the entire pitch range of your
 	instrument. The normal limits of each instrument are known to the program
@@ -225,9 +228,9 @@ func intervalsOctavesRanges() (div *ElementTree) {
 	div = Div("",
 		H3("", SC("Intervals, Octaves, Ranges")),
 		P("", p1),
+		P("", p4),
 		P("", p2),
 		P("", p3),
-		P("", p4),
 	)
 	return
 }

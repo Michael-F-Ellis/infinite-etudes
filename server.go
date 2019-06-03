@@ -30,10 +30,45 @@ func serveEtudes(hostport string, maxAgeSeconds int, midijsPath string) {
 	http.Handle("/etude/", http.HandlerFunc(etudeHndlr))
 	http.Handle("/midijs/", http.HandlerFunc(midijsHndlr))
 	log.Printf("midijs path is %s", os.Getenv("MIDIJS"))
-	log.Printf("serving on %s\n", hostport)
-	if err := http.ListenAndServe(hostport, nil); err != nil {
-		log.Fatalf("Could not listen on port %s", hostport)
+	var serveSecure bool
+	var certpath, certkeypath string
+	if hostport == ":443" {
+		certpath, certkeypath, err = getCertPaths()
+		if err != nil {
+			log.Printf("Can't find SSL certificates: %v", err)
+			hostport = ":80"
+		}
+		serveSecure = true
 	}
+	log.Printf("serving on %s\n", hostport)
+	switch serveSecure {
+	case true:
+		if err := http.ListenAndServeTLS(hostport, certpath, certkeypath, nil); err != nil {
+			log.Fatalf("Could not listen on port %s", hostport)
+		}
+	default:
+		if err := http.ListenAndServe(hostport, nil); err != nil {
+			log.Fatalf("Could not listen on port %s", hostport)
+		}
+	}
+}
+
+// getCert attempts to retrieve a certficate and key for use with
+// ListenAndServeTLS. It returns an error if either item cannot be found but
+// does not otherwise attempt to validate them. That is left up to
+// ListenAndServeTLS.
+func getCertPaths() (certpath string, keypath string, err error) {
+	certpath = os.Getenv("IETUDE_CERT_PATH")
+	if certpath == "" {
+		err = fmt.Errorf("no environment variable IETUDE_CERT_PATH")
+		return
+	}
+	keypath = os.Getenv("IETUDE_CERTKEY_PATH")
+	if keypath == "" {
+		err = fmt.Errorf("no environment variable IETUDE_CERTKEY_PATH")
+		return
+	}
+	return
 }
 
 // indexHndlr returns index.html
