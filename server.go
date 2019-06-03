@@ -44,11 +44,11 @@ func serveEtudes(hostport string, maxAgeSeconds int, midijsPath string) {
 	switch serveSecure {
 	case true:
 		if err := http.ListenAndServeTLS(hostport, certpath, certkeypath, nil); err != nil {
-			log.Fatalf("Could not listen on port %s", hostport)
+			log.Fatalf("Could not listen on port %s : %v", hostport, err)
 		}
 	default:
 		if err := http.ListenAndServe(hostport, nil); err != nil {
-			log.Fatalf("Could not listen on port %s", hostport)
+			log.Fatalf("Could not listen on port %s : %v", hostport, err)
 		}
 	}
 }
