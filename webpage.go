@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	. "github.com/Michael-F-Ellis/infinite-etudes/internal/ht"
+	. "github.com/Michael-F-Ellis/infinite-etudes/internal/ht" // dot import makes sense here
 )
 
 // mkWebPages constructs the application web pages in the current working
@@ -102,7 +102,7 @@ func quickStart() (div *ElementTree) {
 
 func forTheCurious() (div *ElementTree) {
 	heading := SC("For the curious")
-	p1 := SC(`Infinite Etudes is a program that generates ear/finger training
+	p1 := SC(`Infinite Etudes generates ear/finger training
 	etudes for instrumentalists. All the etudes follow a simple four bar
 	form: a sequence of 3 different notes is played on beats 1, 2, and 3 and a
 	rest on beat 4. Each bar is played four times before moving on
@@ -114,9 +114,10 @@ func forTheCurious() (div *ElementTree) {
 	the chosen scale pattern. The sequences are presented in random order. New
 	etudes are generated every hour. The program is called 'Infinite Etudes'
 	because the number of possible orderings of the sequences easily exceeds
-	the number of stars in the universe. Luckily, you only need to learn to
-	recognize and play the individual 3-note sequences. That turns out to be a much
-	more reasonable task.
+	the number of stars in the universe. Luckily, the goal is to learn to
+	recognize and play the individual 3-note sequences. That turns out to be a
+	much more reasonable task (and the infinite sequence orderings are actually
+	helpful because they prevent you from relying on muscle memory.)
     `)
 
 	p3 := SC(`So how many sequences are there? Well, there are 12 pitches in
@@ -127,11 +128,13 @@ func forTheCurious() (div *ElementTree) {
 	sequence would take just under 3 hours at 120 bpm. I think you'd have to be
 	a little crazy to do that, but who am I to rein in your passion? For the
 	rest of us, breaking it down into keys and scale patterns allows practicing
-	in chunks that are a little more manageable.`)
+	in manageable.`)
 
 	p5 := SC(`<strong>Pentatonic:</strong> If any scale can be said to be
-	universal across history and cultures, this is it. There are 60 possible
-	3-note sequences in each key.  Each etude takes 8 minutes to play.`)
+	universal across history and cultures, this is it. This pattern is also the
+	easiest because you're only dealing with 5 pitches at a time. There are 60
+	possible 3-note sequences in each key.  Each etude takes 8 minutes to
+	play.`)
 
 	p6 := SC(`<strong>Chromatic Final:</strong> This one's special. It's
 	composed of all the sequences that end on the note you choose with the
@@ -253,7 +256,7 @@ func coda() (div *ElementTree) {
 	p1 := SC(`I wrote Infinite Etudes for two reasons: First, as a tool for my
 	own practice on piano and viola; second as a small project to develop a
 	complete application in the Go programming language. I'm happy with it on
-	both counts and hope you will find it useful. The source code is available
+	both counts and I hope you find it useful also. The source code is available
 	on <a href="https://github.com/Michael-F-Ellis/infinite-etudes">GitHub.</a>
 	<br><br>Mike Ellis<br>Weaverville NC<br>May 2019`)
 	div = Div("",
@@ -281,8 +284,8 @@ func biblio() (div *ElementTree) {
         Press, 2014.`,
 			`An exceedingly readable and practical summary of what works and doesn't
 	   work for efficient learning.  I've attempted to incorporate the core
-	   principles: frequent low stakes testing, interleaving and spaced
-	   repetition into the design of Infinite Etudes.`),
+	   principles (frequent low stakes testing, interleaving and spaced
+	   repetition) into the design of Infinite Etudes.`),
 
 		cite(`Huron, David. Sweet Anticipation: Music and the Psychology of
 		Expectation.  Cambridge, Massachusetts : The MIT Press, 2006`,

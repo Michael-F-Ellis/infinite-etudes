@@ -29,43 +29,64 @@ code is governed by an MIT-style license that can be found in the LICENSE
 file.
 `
 const description = `
-	etudes generates a set of 6 midi files for each of 12 key signature. Each set
-	covers all possible combinations of 3 pitches within the key. 
-  
-    The file names for each are structured as follows:
-		
-		eflat_pentatonic.mid
-		eflat_plus_four.mid
-		eflat_plus_seven.mid
-		eflat_four_and_seven.mid
-		eflat_raised_five.mid
-		eflat_raised_five_with_four_or_seven.mid
+infinite-etudes generates ear training exercises for instrumentalists.
 
-	Each file name begins with keyname. The 12 keynames used are:
+You can run it from the command line (cli mode) or as a web server (server mode).
 
-		a, b_flat, b, c, dflat, d, eflat, e, f, gflat, g, aflat
+In cli mode, infinite-etudes generates a set of 7 midi files for each of 12 key
+signatures. Each set covers all possible combinations of 3 pitches within the
+key. The files are generated in the current working directory.
 
-	The remainder of the file name describes the scale degrees used.
+In server mode, infinite-etudes is a high-performance self-contained web server
+that provides a simple user interface that allows the user to choose a key, a
+scale pattern and an instrument sound and play a freshly-generated etude in
+the web browser. A publically available instance is running at 
 
-		pentatonic
-			all 3 note permutations of [1, 2, 3, 5, 6]
+https://etudes.ellisandgrant.com
 
-        plus_four
-			all 3 note permutations of [1, 2, 3, 4, 5, 6] that contain 4
+See the file server.go for details including environment variables needed
+for https service.
 
-        plus_seven
-			all 3 note permutations of [1, 2, 3, 5, 6, 7] that contain 7
-
-        four_and_seven
-			all 3 note permutations of [1, 2, 3, 4, 5, 6, 7] that contain 4 and 7
-
-		raised_five
-			all 3 note permutations of [1, 2, 3, #5, 6] that contain #5
-
-        raised_five_with_four_or_seven
-			all 3 note permutations of [1, 2, 3, 4, #5, 6, 7] that contain #5 and
-			at least one of [4, 7]
+The midi file names structure is '<key>_<scalepattern>_<instrument>.mid'. For example,
 	
+	eflat_pentatonic_trumpet.mid
+	eflat_final_trumpet.mid
+	eflat_plus_four_trumpet.mid
+	eflat_plus_seven_trumpet.mid
+	eflat_four_and_seven_trumpet.mid
+	eflat_raised_five_trumpet.mid
+	eflat_raised_five_with_four_or_seven_trumpet.mid
+
+The 12 keynames used are:
+
+	a, b_flat, b, c, dflat, d, eflat, e, f, gflat, g, aflat
+
+The scale pattern describes the scale degrees used.
+
+	pentatonic
+		all 3 note permutations of [1, 2, 3, 5, 6]
+
+	final
+		all 3 note permutations from the chromatic scale that end
+		on the tonic of the key.
+
+    plus_four
+		all 3 note permutations of [1, 2, 3, 4, 5, 6] that contain 4
+
+    plus_seven
+		all 3 note permutations of [1, 2, 3, 5, 6, 7] that contain 7
+
+    four_and_seven
+		all 3 note permutations of [1, 2, 3, 4, 5, 6, 7] that contain 4 and 7
+
+	raised_five
+		all 3 note permutations of [1, 2, 3, #5, 6] that contain #5
+
+    raised_five_with_four_or_seven
+		all 3 note permutations of [1, 2, 3, 4, #5, 6, 7] that contain #5 and
+		at least one of [4, 7]
+	
+The instrument names correspond to the names in the General Midi Sound Set.
 `
 
 func init() {
@@ -113,17 +134,17 @@ func main() {
 
 	// server mode flags
 	var serve bool
-	flag.BoolVar(&serve, "s", false, "Run applications as a server.")
+	flag.BoolVar(&serve, "s", false, "Run application as a server.")
 
 	var midijsPath string
-	flag.StringVar(&midijsPath, "m", filepath.Join(userHomeDir(), "go", "src", "github.com", "Michael-F-Ellis", "infinite-etudes", "midijs"), "Path to midijs files on your host")
+	flag.StringVar(&midijsPath, "m", filepath.Join(userHomeDir(), "go", "src", "github.com", "Michael-F-Ellis", "infinite-etudes", "midijs"), "Path to midijs files on your host (server-mode only)")
 
 	var hostport string
-	flag.StringVar(&hostport, "p", "localhost:8080", "hostname (or IP) and port to serve on.")
+	flag.StringVar(&hostport, "p", "localhost:8080", "hostname (or IP) and port to serve on. (server-mode only)")
 	flag.Parse()
 
 	var expireSeconds int
-	flag.IntVar(&expireSeconds, "x", 3600, "Maximum age in seconds for generated files")
+	flag.IntVar(&expireSeconds, "x", 3600, "Maximum age in seconds for generated files (server-mode only)")
 
 	// validate flags
 	if !within(1, instrument, 128) {
