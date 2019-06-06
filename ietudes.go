@@ -350,7 +350,7 @@ func writeMidiFile(sequence *etudeSequence) {
 		panic(msg)
 	}
 	defer fd.Close()
-	// write the header "MThd len=6, format=1, tracks=6, ticks=960"
+	// write the header "MThd len=6, format=1, tracks=3, ticks=960"
 	header := []byte{0x4d, 0x54, 0x68, 0x64, 0, 0, 0, 6, 0, 1, 0, 3, 3, 192}
 	n, err := fd.Write(header)
 	if err != nil {

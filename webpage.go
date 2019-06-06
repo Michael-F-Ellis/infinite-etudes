@@ -128,7 +128,7 @@ func forTheCurious() (div *ElementTree) {
 	sequence would take just under 3 hours at 120 bpm. I think you'd have to be
 	a little crazy to do that, but who am I to rein in your passion? For the
 	rest of us, breaking it down into keys and scale patterns allows practicing
-	in manageable.`)
+	in manageable chunks.`)
 
 	p5 := SC(`<strong>Pentatonic:</strong> If any scale can be said to be
 	universal across history and cultures, this is it. This pattern is also the
@@ -245,9 +245,16 @@ func tempo() (div *ElementTree) {
 	a program that allows you to adjust the tempo.  I recommend QMidi for Mac. I don't
 	know what's good on PC but a little Googling should turn up something appropriate. Downloading
 	also allows you to play the files through better equipment for more realistic sound.`)
+
+	p2 := SC(`You might also consider installing MuseScore, the excellent open
+	source notation editor. Version 3.1 does a very good job importing Infinite
+	Etudes midi files. Besides controlling tempo, you print the etude as sheet
+	music or play it back with real-time highlighting of each note as it's
+	played.`)
 	div = Div("",
 		H3("", SC("Tempo")),
 		P("", p1),
+		P("", p2),
 	)
 	return
 }

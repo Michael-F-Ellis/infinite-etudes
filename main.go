@@ -114,6 +114,15 @@ func userHomeDir() string {
 var debug bool // enables some diagnostic output when true
 
 func main() {
+	// initialize standard logger to write to "etudes.log"
+	logf, err := os.OpenFile("etudes.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer logf.Close()
+	// Start logging to new file.
+	log.SetOutput(logf)
+
 	// Parse command line
 	flag.Usage = usage
 
