@@ -46,7 +46,7 @@ func indexBody() (body *ElementTree) {
 	// Key
 	keys := []Content{}
 	for _, k := range keyInfo {
-		value := fmt.Sprintf(`value="%s"`, k.fileName)
+		value := fmt.Sprintf(`value="%s" aria-label="%s"`, k.fileName, k.uiAria)
 		keys = append(keys, Option(value, SC(k.uiName)))
 	}
 	keySelect := Select("id=key-select", keys...)

@@ -177,21 +177,22 @@ func validEtudeRequest(ksi []string) (ok bool) {
 type nameInfo struct {
 	fileName string
 	uiName   string
+	uiAria   string // alternate text for screen readers
 }
 
 var keyInfo = []nameInfo{
-	{"c", "C"},
-	{"dflat", "D♭"},
-	{"d", "D"},
-	{"eflat", "E♭"},
-	{"e", "E"},
-	{"f", "F"},
-	{"gflat", "G♭"},
-	{"g", "G"},
-	{"aflat", "A♭"},
-	{"a", "A"},
-	{"bflat", "B♭"},
-	{"b", "B"},
+	{"c", "C", "C"},
+	{"dflat", "D♭", "D-flat"},
+	{"d", "D", "D"},
+	{"eflat", "E♭", "E-flat"},
+	{"e", "E", "E"},
+	{"f", "F", "F"},
+	{"gflat", "G♭", "G-flat"},
+	{"g", "G", "G"},
+	{"aflat", "A♭", "A-flat"},
+	{"a", "A", "A"},
+	{"bflat", "B♭", "B-flat"},
+	{"b", "B", "B"},
 }
 
 // validKeyName returns true if the key name is in the ones we support.
@@ -206,13 +207,13 @@ func validKeyName(name string) (ok bool) {
 }
 
 var scaleInfo = []nameInfo{
-	{"pentatonic", "Pentatonic"},
-	{"final", "Chromatic Final"},
-	{"plus_four", "Plus Four"},
-	{"plus_seven", "Plus Seven"},
-	{"four_and_seven", "Four and Seven"},
-	{"raised_five", "Harmonic Minor 1"},
-	{"raised_five_with_four_or_seven", "Harmonic Minor 2"},
+	{"pentatonic", "Pentatonic", "Pentatonic"},
+	{"final", "Chromatic Final", "Chromatic Final"},
+	{"plus_four", "Plus Four", "Plus Four"},
+	{"plus_seven", "Plus Seven", "Plus Seven"},
+	{"four_and_seven", "Four and Seven", "Four and Seven"},
+	{"raised_five", "Harmonic Minor 1", "Harmonic Minor 1"},
+	{"raised_five_with_four_or_seven", "Harmonic Minor 2", "Harmonic Minor 2"},
 }
 
 // validScaleName returns true if the scale name is in the ones we support.
