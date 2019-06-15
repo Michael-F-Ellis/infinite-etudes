@@ -81,6 +81,7 @@ func indexBody() (body *HtmlTree) {
 		forTheCurious(),
 		intervalsOctavesRanges(),
 		tempo(),
+		variations(),
 		biblio(),
 		coda(),
 	)
@@ -248,12 +249,69 @@ func tempo() (div *HtmlTree) {
 
 	p2 := `You might also consider installing MuseScore, the excellent open
 	source notation editor. Version 3.1 does a very good job importing Infinite
-	Etudes midi files. Besides controlling tempo, you print the etude as sheet
+	Etudes midi files. Besides controlling tempo, you can print the etude as sheet
 	music or play it back with real-time highlighting of each note as it's
 	played.`
+
+	p3 := `A third option, if you have software skills, is to install Infinite
+	Etudes on your computer from the source code on <a
+	href="https://github.com/Michael-F-Ellis/infinite-etudes">GitHub.</a>. You
+	can control both tempo and the number of octaves from the command line
+	version.`
+
+	p4 := `Having said all that, let me offer a reason not to work at a much
+	slower tempo. In a jam session you're going to encounter 120 bpm and faster
+	and you'll be playing in eighths or sixteenths. I know there's a saying
+	among music teachers that "if you practice slowly and never make a mistake,
+	you'll never make a mistake". Slow practice certainly has its place but
+	that saying doesn't hold up in the research on learning. Immediate feedback
+	about mistakes is the important consideration [Brown 2014, p90]. Assuming
+	you can hear when two notes are in unison, you'll always know when you've
+	played a sequence right or wrong with Infinite Etudes. So have at it boldly
+	and smile at the notes you miss. You'll have more fun and make better progress.`
 	div = Div("",
 		H3("", "Tempo"),
 		P("", p1),
+		P("", p2),
+		P("", p3),
+		P("", p4),
+	)
+	return
+}
+
+func variations() (div *HtmlTree) {
+	p1 := `As you progress, some sequences will become easy to recognize and
+	play before others. When you nail a particular sequence correctly and
+	confidently on first hearing (hooray!), you can put the remaining two bars
+	to good use in a variety of ways. Here are a few suggestions, some simple
+	and some difficult:`
+	var variants = []string{
+		`Finger it differently.`,
+		`Change the bowing or picking.`,
+		`Play it with the other hand (keyboard).`,
+		`Play it in the same octave on different strings (string instruments).`,
+		`Play one note up or down an octave.`,
+		`Play the whole sequence up or down an octave.`,
+		`Play it in both hands one or more octaves apart.`,
+		`Play it up or down a fifth (or fourth, third, ...).`,
+		`Play it as a chord.`,
+		`Find a bass note or chord that works with the sequence.`,
+		`Mess with the rhythm, accents, dynamics, timbre, ...`,
+		`Shred it in sixteenth note cross-rhythm, e.g. 1231 2312 3123`,
+		`Fill in between the notes.`,
+		`Invent a counter-melody,`,
+		`or simply take a deep breath and relax your fingers.`,
+	}
+	p2 := `Above all, make some music whenever possible!`
+	// need []interface{} to pass strings as Li elements to Ul()
+	var ivariants []interface{}
+	for _, s := range variants {
+		ivariants = append(ivariants, Li("", s))
+	}
+	div = Div("",
+		H3("", "Variations"),
+		P("", p1),
+		Ul("", ivariants...),
 		P("", p2),
 	)
 	return
