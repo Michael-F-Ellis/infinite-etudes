@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	. "github.com/Michael-F-Ellis/infinite-etudes/internal/ht" // dot import makes sense here
+	. "github.com/Michael-F-Ellis/goht" // dot import makes sense here
 )
 
 // mkWebPages constructs the application web pages in the current working
@@ -32,46 +32,46 @@ func mkIndex() (err error) {
 
 	// <html>
 	page := Html("", head, indexBody())
-	page.Render(&buf, 0)
+	Render(page, &buf, 0)
 	err = ioutil.WriteFile("index.html", buf.Bytes(), 0644)
 	return
 }
 
-func indexBody() (body *ElementTree) {
+func indexBody() (body *HtmlTree) {
 	header := Div(`style="text-align:center; margin-bottom:2vh;"`,
-		H2("class=title", SC("Infinite Etudes Web Demo")),
-		Em("", SC("Ear training for your fingers")),
+		H2("class=title", "Infinite Etudes Web Demo"),
+		Em("", "Ear training for your fingers"),
 	)
 	// Etude menus:
 	// Key
-	keys := []Content{}
+	var keys []interface{}
 	for _, k := range keyInfo {
 		value := fmt.Sprintf(`value="%s" aria-label="%s"`, k.fileName, k.uiAria)
-		keys = append(keys, Option(value, SC(k.uiName)))
+		keys = append(keys, Option(value, k.uiName))
 	}
 	keySelect := Select("id=key-select", keys...)
 
 	// Scale pattern
-	scales := []Content{}
+	var scales []interface{}
 	for _, ptn := range scaleInfo { // scaleInfo is defined in server.go
 		value := fmt.Sprintf(`value="%s"`, ptn.fileName)
-		scales = append(scales, Option(value, SC(ptn.uiName)))
+		scales = append(scales, Option(value, ptn.uiName))
 	}
 	scaleSelect := Select("id=scale-select", scales...)
 
 	// Instrument sound
-	sounds := []Content{}
+	var sounds []interface{}
 	for _, iinfo := range supportedInstruments {
 		name := iinfo.displayName
 		value := fmt.Sprintf(`value="%s"`, iinfo.name)
-		sounds = append(sounds, Option(value, SC(name)))
+		sounds = append(sounds, Option(value, name))
 	}
 	soundSelect := Select("id=sound-select", sounds...)
 
 	// Controls
-	playBtn := Button(`onclick="playStart()"`, SC("Play"))
-	stopBtn := Button(`onclick="playStop()"`, SC("Stop"))
-	downloadBtn := Button(`onclick="downloadEtude()"`, SC("Download"))
+	playBtn := Button(`onclick="playStart()"`, "Play")
+	stopBtn := Button(`onclick="playStop()"`, "Stop")
+	downloadBtn := Button(`onclick="downloadEtude()"`, "Download")
 
 	// Assemble everything into the body element.
 	body = Body("", header,
@@ -87,101 +87,101 @@ func indexBody() (body *ElementTree) {
 	return
 }
 
-func quickStart() (div *ElementTree) {
+func quickStart() (div *HtmlTree) {
 	div = Div("",
-		H3("", SC("For the impatient")),
+		H3("", "For the impatient"),
 		Ol("",
-			Li("", SC(`Choose a key,`)),
-			Li("", SC(`Choose a scale pattern,`)),
-			Li("", SC(`Choose an instrument sound,`)),
-			Li("", SC(`Click 'Play' and play along.`)),
+			Li("", `Choose a key,`),
+			Li("", `Choose a scale pattern,`),
+			Li("", `Choose an instrument sound,`),
+			Li("", `Click 'Play' and play along.`),
 		),
 	)
 	return
 }
 
-func forTheCurious() (div *ElementTree) {
-	heading := SC("For the curious")
-	p1 := SC(`Infinite Etudes generates ear/finger training
+func forTheCurious() (div *HtmlTree) {
+	heading := "For the curious"
+	p1 := `Infinite Etudes generates ear/finger training
 	etudes for instrumentalists. All the etudes follow a simple four bar
 	form: a sequence of 3 different notes is played on beats 1, 2, and 3 and a
 	rest on beat 4. Each bar is played four times before moving on
 	 -- so you have 3 chances to play the sequence after the first
 	hearing.
-	`)
+	`
 
-	p2 := SC(`Each etude contains all possible 3-note sequences in the key for
+	p2 := `Each etude contains all possible 3-note sequences in the key for
 	the chosen scale pattern. The sequences are presented in random order. New
 	etudes are generated every hour. The program is called 'Infinite Etudes'
 	because the number of possible orderings of the sequences easily exceeds
 	the number of stars in the universe. Luckily, the goal is to learn to
 	recognize and play the individual 3-note sequences. That turns out to be a
 	much more reasonable task (and the infinite sequence orderings are actually
-	helpful because they prevent you from relying on muscle memory.)
-    `)
+	helpful because they prevent you from relying on muscle memory.
+    `
 
-	p3 := SC(`So how many sequences are there? Well, there are 12 pitches in
+	p3 := `So how many sequences are there? Well, there are 12 pitches in
 	the Western equal-tempered octave, so there are 12 * 11 * 10 = 1320
-	possible sequences of 3 different pitches.`)
+	possible sequences of 3 different pitches.`
 
-	p4 := SC(`Playing them all in one sitting with 4 bars devoted to each
+	p4 := `Playing them all in one sitting with 4 bars devoted to each
 	sequence would take just under 3 hours at 120 bpm. I think you'd have to be
 	a little crazy to do that, but who am I to rein in your passion? For the
 	rest of us, breaking it down into keys and scale patterns allows practicing
-	in manageable chunks.`)
+	in manageable chunks.`
 
-	p5 := SC(`<strong>Pentatonic:</strong> If any scale can be said to be
+	p5 := `<strong>Pentatonic:</strong> If any scale can be said to be
 	universal across history and cultures, this is it. This pattern is also the
 	easiest because you're only dealing with 5 pitches at a time. There are 60
 	possible 3-note sequences in each key.  Each etude takes 8 minutes to
-	play.`)
+	play.`
 
-	p6 := SC(`<strong>Chromatic Final:</strong> This one's special. It's
+	p6 := `<strong>Chromatic Final:</strong> This one's special. It's
 	composed of all the sequences that end on the note you choose with the
 	'key' selector without regard for any particular scale or key. It's the longest
 	and most challenging of the patterns. For any given final note, there are
-	110 possible sequences. Each etude takes just under 15 minutes to play.`)
+	110 possible sequences. Each etude takes just under 15 minutes to play.`
 
-	p7 := SC(`The good news is that this pattern is most efficient way to play
+	p7 := `The good news is that this pattern is most efficient way to play
 	every possible sequence because there's no overlap between the etudes for
 	different final notes. <strong><em>In fact, you could stop reading right
 	here and just start playing this pattern with a different final note every
 	day.</em></strong> In 12 days that will take you through every possible 3-note chord
 	in every inversion and every possible 3 note fragment of every possible
-	scale. Not bad for only 15 minutes a day.`)
+	scale. Not bad for only 15 minutes a day.`
 
-	p7a := SC(`The other scale patterns don't introduce any new sequences.
+	p7a := `The other scale patterns don't introduce any new sequences.
 	They're included because you may find them useful for developing a sense of
-	how the sequences function in a tonal context.`)
+	how the sequences function in a tonal context.`
 
-	p8 := SC(`<strong>Plus Four, Plus Seven, Four and Seven:</strong> These
+	p8 := `<strong>Plus Four, Plus Seven, Four and Seven:</strong> These
 	patterns connect the pentatonic scale to the major scale (and its relative
-	minor). In music-speak, the pentatonic scale is degrees 1,2,3,5,6 of the
+	minor. In music-speak, the pentatonic scale is degrees 1,2,3,5,6 of the
 	major scale that starts on the same note. So C pentatonic is C D E G A and
 	C major is C D E <strong>F</strong> G A <strong>B</strong>. F and B are 4 and 7
-	in C major.`)
+	in C major.`
 
-	p9 := SC(`<strong>Plus Four</strong> contains all the sequences that
+	p9 := `<strong>Plus Four</strong> contains all the sequences that
 	consist of 4 and any two of 1,2,3,5,6. As there are 60 such sequences, the
 	etudes are 8 minutes long. <strong>Plus Seven</strong> is analogous. It
-	adds 7 instead of 4, creating another 60 sequences.`)
+	adds 7 instead of 4, creating another 60 sequences.`
 
-	p10 := SC(`<strong>Four and Seven</strong> contains all the sequences that
+	p10 := `<strong>Four and Seven</strong> contains all the sequences that
 	contain both 4 and 7 plus one other note from the pentatonic scale.There
 	are only 30 such sequences. The etudes take 4 minutes to play.
 	Interestingly, these are the only sequences that can be said to exist in
-	exactly one key.  I'll leave it to you to work out why that's so :-)`)
+	exactly one key.  I'll leave it to you to work out why that's so :-`
 
-	p11 := SC(`<strong>Harmonic Minor 1</strong> and <strong>Harmonic Minor 2</strong>
+	p11 := `<strong>Harmonic Minor 1</strong> and <strong>Harmonic Minor 2</strong>
     explore the relative harmonic minor scale that's common in Middle
     Eastern music. They're included because they complete the coverage of all
-    possible sequences (except pairs of adjacent half-steps) in a tonal context.`)
+    possible sequences (except pairs of adjacent half-steps in a tonal context.`
 
-	p12 := SC(`<strong>Harmonic Minor 1</strong> contains all the sequences (36
-    total) from 1,2,3,#5,6 that contain #5. It takes just under 5 minutes to play.`)
+	p12 := `<strong>Harmonic Minor 1</strong> contains all the sequences (36
+    total from 1,2,3,#5,6 that contain #5. It takes just under 5 minutes to play.`
 
-	p13 := SC(`<strong>Harmonic Minor 2</strong> contains all the sequences (55
-    total) from 1,2,3,4,#5,6,7 that contain #5 and one or both of 4 and 7., It takes 7:20 to play.`)
+	p13 := `<strong>Harmonic Minor 2</strong> contains all the sequences (55
+    total from 1,2,3,4,#5,6,7 that contain #5 and one or both of 4 and 7., It takes 7:20 to play.`
 
 	div = Div("",
 		H3("", heading),
@@ -189,7 +189,7 @@ func forTheCurious() (div *ElementTree) {
 		P("", p2),
 		P("", p3),
 		P("", p4),
-		P("", SC("Here are the patterns.")),
+		P("", "Here are the patterns."),
 		P("", p5),
 		P("", p6),
 		P("", p7),
@@ -204,32 +204,32 @@ func forTheCurious() (div *ElementTree) {
 	return
 }
 
-func intervalsOctavesRanges() (div *ElementTree) {
-	p1 := SC(`What I said earlier about covering all possible sequences of
+func intervalsOctavesRanges() (div *HtmlTree) {
+	p1 := `What I said earlier about covering all possible sequences of
 	notes needs some clarification.  First, the program puts the notes of every
 	sequence in close voicing so that each note is no more than 6 semitones
-	from the note that came before it.`)
+	from the note that came before it.`
 
-	p2 := SC(`For example, the sequences 'E G C' and 'C G E' will always be
+	p2 := `For example, the sequences 'E G C' and 'C G E' will always be
 	voiced so that the E is the lowest note and the C is the highest. The same
 	rule applies between the last note of a sequence and the first note of the
 	next. If the program generates 'E G C' followed by 'E F D' the E in the
-	second sequence will be an octave above the E in the first sequence.`)
+	second sequence will be an octave above the E in the first sequence.`
 
-	p3 := SC(`If you find that explanation confusing, don't worry. What's going
+	p3 := `If you find that explanation confusing, don't worry. What's going
 	on will be obvious after a few minutes of playing along. Just be aware that
-	none of the sequences presented will contain leaps of a 5th (7 semitones) or larger.
+	none of the sequences presented will contain leaps of a 5th (7 semitones or larger.
 	A simple way to incorporate larger leaps is to play one of the notes an octave higher
-	or lower.`)
+	or lower.`
 
-	p4 := SC(`This voicing rule has a couple of good consequences: The
+	p4 := `This voicing rule has a couple of good consequences: The
 	notes of each sequence will always fit within one octave and the sequences,
 	being randomly chosen, will wander over the entire pitch range of your
 	instrument. The normal limits of each instrument are known to the program
-	and it will keep everything within the bounds of what's playable.`)
+	and it will keep everything within the bounds of what's playable.`
 
 	div = Div("",
-		H3("", SC("Intervals, Octaves, Ranges")),
+		H3("", "Intervals, Octaves, Ranges"),
 		P("", p1),
 		P("", p4),
 		P("", p2),
@@ -238,53 +238,53 @@ func intervalsOctavesRanges() (div *ElementTree) {
 	return
 }
 
-func tempo() (div *ElementTree) {
-	p1 := SC(`This web demo generates MIDI files in 4/4 time with the tempo fixed
+func tempo() (div *HtmlTree) {
+	p1 := `This web demo generates MIDI files in 4/4 time with the tempo fixed
 	at 120 beats per minute. If you need it slower or faster, the easiest solution
 	is to use the download button to save a local copy of a file and play it with
 	a program that allows you to adjust the tempo.  I recommend QMidi for Mac. I don't
 	know what's good on PC but a little Googling should turn up something appropriate. Downloading
-	also allows you to play the files through better equipment for more realistic sound.`)
+	also allows you to play the files through better equipment for more realistic sound.`
 
-	p2 := SC(`You might also consider installing MuseScore, the excellent open
+	p2 := `You might also consider installing MuseScore, the excellent open
 	source notation editor. Version 3.1 does a very good job importing Infinite
 	Etudes midi files. Besides controlling tempo, you print the etude as sheet
 	music or play it back with real-time highlighting of each note as it's
-	played.`)
+	played.`
 	div = Div("",
-		H3("", SC("Tempo")),
+		H3("", "Tempo"),
 		P("", p1),
 		P("", p2),
 	)
 	return
 }
 
-func coda() (div *ElementTree) {
-	p1 := SC(`I wrote Infinite Etudes for two reasons: First, as a tool for my
+func coda() (div *HtmlTree) {
+	p1 := `I wrote Infinite Etudes for two reasons: First, as a tool for my
 	own practice on piano and viola; second as a small project to develop a
 	complete application in the Go programming language. I'm happy with it on
 	both counts and I hope you find it useful also. The source code is available
 	on <a href="https://github.com/Michael-F-Ellis/infinite-etudes">GitHub.</a>
-	<br><br>Mike Ellis<br>Weaverville NC<br>May 2019`)
+	<br><br>Mike Ellis<br>Weaverville NC<br>May 2019`
 	div = Div("",
-		H3("", SC("Coda")),
+		H3("", "Coda"),
 		P("", p1),
 	)
 	return
 }
 
-func cite(citation, comment string) (div *ElementTree) {
+func cite(citation, comment string) (div *HtmlTree) {
 	div = Div("",
-		P("", SC("<em>"+citation+"</em>")),
-		P("", SC("<small>"+comment+"</small>")),
+		P("", "<em>"+citation+"</em>"),
+		P("", "<small>"+comment+"</small>"),
 	)
 	return
 }
 
-func biblio() (div *ElementTree) {
+func biblio() (div *HtmlTree) {
 	div = Div("",
-		H3("", SC("References")),
-		P("", SC("A few good books that influenced the development of Infinite Etudes:")),
+		H3("", "References"),
+		P("", "A few good books that influenced the development of Infinite Etudes:"),
 
 		cite(`Brown, Peter C. Make It Stick : the Science of Successful
         Learning. Cambridge, Massachusetts :The Belknap Press of Harvard University
@@ -325,8 +325,8 @@ func biblio() (div *ElementTree) {
 	return
 }
 
-func indexCSS() *ElementTree {
-	return Style("", SC(`
+func indexCSS() *HtmlTree {
+	return Style("", `
     body {
 	  margin: 0;
 	  height: 100%;
@@ -382,12 +382,12 @@ func indexCSS() *ElementTree {
 	/* hover color for buttons */
     input[type=submit]:hover {background-color: #0a0}
     input[type=button]:hover {background-color: #0a0}
-	`))
+	`)
 }
 
-func indexJS() (script *ElementTree) {
+func indexJS() (script *HtmlTree) {
 	script = Script("",
-		SC(`
+		`
 		// chores at start-up
 		function start() {
 		  // Chrome and other browsers now disallow AudioContext until
@@ -432,6 +432,6 @@ func indexJS() (script *ElementTree) {
 
 		// Run start when the doc is fully loaded.
 		document.addEventListener("DOMContentLoaded", start);
-	`))
+	`)
 	return
 }
