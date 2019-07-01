@@ -129,6 +129,9 @@ func main() {
 	// Command mode flags
 	flag.BoolVar(&debug, "d", false, "Enable diagnostic output")
 
+	var advancing bool
+	flag.BoolVar(&advancing, "a", false, "Use advancing rhythm pattern")
+
 	var instrument int
 	flag.IntVar(&instrument, "i", 1, "General Midi instrument number: 1 ... 128")
 
@@ -181,7 +184,7 @@ func main() {
 		serveEtudes(hostport, expireSeconds, midijsPath)
 	} else {
 		// create the midi files
-		mkAllEtudes(midilo, midihi, tempo, instrument, "")
+		mkAllEtudes(midilo, midihi, tempo, instrument, "", advancing)
 	}
 
 }
@@ -211,20 +214,21 @@ func usage() {
 // mkAllEtudes creates in the current directory all the etude files we support
 // for the specified instrument. The arguments are assumed to be previously
 // vetted and are not checked.
-func mkAllEtudes(midilo, midihi, tempo, instrument int, iname string) {
+func mkAllEtudes(midilo, midihi, tempo, instrument int, iname string, advancing bool) {
 	// Create and write all the tonal output files for all 12 key signatures
 
 	for i := 0; i < 12; i++ {
-		mkKeyEtudes(i, midilo, midihi, tempo, instrument, iname)
+		mkKeyEtudes(i, midilo, midihi, tempo, instrument, iname, advancing)
 	}
-	mkFinalEtudes(midilo, midihi, tempo, instrument, iname)
+	mkFinalEtudes(midilo, midihi, tempo, instrument, iname, advancing)
 }
 
 // mkKeyEtudes generates the six files associated with keynum where
 // 0->c, 1->dflat, 2->d, ... 11->b
-func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int, instrument int, iname string) {
+func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int,
+	instrument int, iname string, advancing bool) {
 	for _, sequence := range generateKeySequences(keynum, midilo, midihi, tempo, instrument, iname) {
-		mkMidi(&sequence)
+		mkMidi(&sequence, advancing)
 		if debug {
 			fmt.Println(pitchHistogram(sequence))
 		}
@@ -233,9 +237,10 @@ func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int, instrument int, 
 
 // mkFinalEtudes generates the 12 files associated with pitch numbers where
 // 0->c, 1->dflat, 2->d, ... 11->b
-func mkFinalEtudes(midilo int, midihi int, tempo int, instrument int, iname string) {
+func mkFinalEtudes(midilo int, midihi int, tempo int,
+	instrument int, iname string, advancing bool) {
 	for _, sequence := range generateFinalSequences(midilo, midihi, tempo, instrument, iname) {
-		mkMidi(&sequence)
+		mkMidi(&sequence, advancing)
 		if debug {
 			fmt.Println(pitchHistogram(sequence))
 		}

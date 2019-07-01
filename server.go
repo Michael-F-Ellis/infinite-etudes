@@ -151,7 +151,8 @@ func makeEtudesIfNeeded(filename, instrumentName string) {
 	midilo := iInfo.midilo
 	midihi := iInfo.midihi
 	tempo := 120
-	mkAllEtudes(midilo, midihi, tempo, instrument, iInfo.name)
+	advancing := false // TODO: add this to request format and UI
+	mkAllEtudes(midilo, midihi, tempo, instrument, iInfo.name, advancing)
 }
 
 // validEtudeRequest returns true if the request is correctly formed

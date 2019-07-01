@@ -300,7 +300,7 @@ func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrum
 // the pitches within the limits specified in the sequence. Finally, it calls
 // writeMidi file to convert the data to Standard Midi form and write it to
 // disk.
-func mkMidi(sequence *etudeSequence) {
+func mkMidi(sequence *etudeSequence, advancing bool) {
 	// Shuffle the sequence
 	shuffle(sequence.seq)
 
@@ -313,7 +313,7 @@ func mkMidi(sequence *etudeSequence) {
 		prior = t[2]
 	}
 	// Write the etude
-	writeMidiFile(sequence)
+	writeMidiFile(sequence, advancing)
 
 }
 
@@ -342,7 +342,7 @@ func low3(n uint32) (u24 [3]byte) {
 // a 4/4 measure with rest on beat 4. Each measure is played
 // 4 times accompanied by a metronome track.  The etude begins
 // with a one-bar count-in.
-func writeMidiFile(sequence *etudeSequence) {
+func writeMidiFile(sequence *etudeSequence, advancing bool) {
 	// open the file
 	fd, err := os.Create(sequence.filename)
 	if err != nil {
@@ -414,17 +414,22 @@ func writeMidiFile(sequence *etudeSequence) {
 			panic(err)
 		}
 	}
+	var offset int
 	for i, t := range sequence.seq {
 		var u midiTriple
-		var advancing bool // TODO obtain this from user input
-		var offset int     // ditto
 		if i < len(sequence.seq)-1 {
 			u = sequence.seq[i+1]
+		} else {
+			// last triple in sequence, so pass a copy as the successor
+			u = t
 		}
 		music := fourBarsMusic(t, u, advancing, offset).Bytes()
 		err = binary.Write(buf, binary.BigEndian, music)
 		if err != nil {
 			panic(err)
+		}
+		if advancing {
+			offset = (offset + 1) % 4
 		}
 	}
 	// end of track (note last delta is already in place)
@@ -455,9 +460,11 @@ func writeMidiFile(sequence *etudeSequence) {
 	}
 	for i := 0; i < len(sequence.seq); i++ {
 		var music []byte
-		switch i {
-		case 0:
+		switch {
+		case i == 0:
 			music = metronomeBars(5).Bytes()
+		case advancing && (i%4 == 3):
+			music = metronomeBars(3).Bytes()
 		default:
 			music = metronomeBars(4).Bytes()
 		}
@@ -637,6 +644,10 @@ func fourBarsMusic(t, u midiTriple, advancing bool, offset int) *bytes.Buffer {
 			mkBeat(buf, pitch, velocity2, 1)
 
 		case 3:
+			// only 3 bars for this offset
+			if i == 3 {
+				continue
+			}
 			// 2nd beat
 			pitch = byte(t[0])
 			mkBeat(buf, pitch, velocity2, 0)
@@ -645,7 +656,7 @@ func fourBarsMusic(t, u midiTriple, advancing bool, offset int) *bytes.Buffer {
 			pitch = byte(t[1])
 			mkBeat(buf, pitch, velocity2, 0)
 
-			if i < 3 {
+			if i < 2 {
 				// 4th beat
 				pitch = byte(t[2])
 				mkBeat(buf, pitch, velocity2, 1)
