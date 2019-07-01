@@ -414,8 +414,14 @@ func writeMidiFile(sequence *etudeSequence) {
 			panic(err)
 		}
 	}
-	for _, t := range sequence.seq {
-		music := fourBarsMusic(t).Bytes()
+	for i, t := range sequence.seq {
+		var u midiTriple
+		var advancing bool // TODO obtain this from user input
+		var offset int     // ditto
+		if i < len(sequence.seq)-1 {
+			u = sequence.seq[i+1]
+		}
+		music := fourBarsMusic(t, u, advancing, offset).Bytes()
 		err = binary.Write(buf, binary.BigEndian, music)
 		if err != nil {
 			panic(err)
@@ -483,9 +489,22 @@ func writeMidiFile(sequence *etudeSequence) {
 
 }
 
-// fourBarMusic returns a byte buffer containing four bars of  one midiTriple
-// as described in function comment for writeMidiFile.
-func fourBarsMusic(t midiTriple) *bytes.Buffer {
+// fourBarsMusic returns a byte buffer containing four bars of  one midiTriple
+// Two rhythm formats are supported with selection determined by the boolean
+// argument named advancing. When advancing is false, the rhythm is constant with
+// the pitches of each triple falling on beats 1, 2, 3 and a rest on beat 4. This
+// pattern is repeated in 4 identical bars.
+//
+// When advancing is true, the rhythm advances by 1 beat in the 4th bar so that
+// a sequence of triples may be cycled through 4 different patterns by successively
+// incrementing the offset argument.
+//
+// The advancing format expects the arguments t and u to be successive triples from
+// the sequence. The non-advancing format ignores u.
+//
+// For the final triple in the sequence, it is recommended to pass the same value
+// for t and u.
+func fourBarsMusic(t, u midiTriple, advancing bool, offset int) *bytes.Buffer {
 	// These are the only variable length delta times we need.
 	noBeats := byte(0x00)
 	oneBeatHi := byte(0x87)
@@ -521,15 +540,122 @@ func fourBarsMusic(t midiTriple) *bytes.Buffer {
 
 	// write all 4 bars for this triple
 	for i := 0; i < 4; i++ {
-		// first beat
-		pitch := byte(t[0])
-		mkBeat(buf, pitch, velocity1, 0)
-		// 2nd beat
-		pitch = byte(t[1])
-		mkBeat(buf, pitch, velocity2, 0)
-		// 3rd beat (4th beat is a rest, so we append a one beat delay after the Note Off event.
-		pitch = byte(t[2])
-		mkBeat(buf, pitch, velocity2, 1)
+		var pitch byte
+		if !advancing {
+			// first beat
+			pitch = byte(t[0])
+			mkBeat(buf, pitch, velocity1, 0)
+			// 2nd beat
+			pitch = byte(t[1])
+			mkBeat(buf, pitch, velocity2, 0)
+
+			// 3rd beat (4th beat is a rest, so we append a one beat delay after the Note Off event.
+			pitch = byte(t[2])
+			mkBeat(buf, pitch, velocity2, 1)
+			continue
+		}
+		// advancing
+		// 3rd beat
+		switch offset {
+		case 0:
+			// first beat
+			pitch = byte(t[0])
+			mkBeat(buf, pitch, velocity1, 0)
+			// 2nd beat
+			pitch = byte(t[1])
+			mkBeat(buf, pitch, velocity2, 0)
+
+			if i < 3 {
+				// 3rd beat
+				pitch = byte(t[2])
+				mkBeat(buf, pitch, velocity2, 1)
+				continue
+			}
+			pitch = byte(t[2])
+			mkBeat(buf, pitch, velocity2, 0)
+
+			// 4th beat
+			pitch = byte(u[0])
+			mkBeat(buf, pitch, velocity2, 0)
+		case 1:
+			// first beat
+			pitch = byte(t[1])
+			mkBeat(buf, pitch, velocity1, 0)
+			// 2nd beat
+			if i < 3 {
+				pitch = byte(t[2])
+				mkBeat(buf, pitch, velocity2, 1)
+
+				// 4th beat
+				pitch = byte(t[0])
+				mkBeat(buf, pitch, velocity2, 0)
+				continue
+			}
+			// 2nd beat
+			pitch = byte(t[2])
+			mkBeat(buf, pitch, velocity2, 0)
+
+			// 3rd beat
+			pitch = byte(u[0])
+			mkBeat(buf, pitch, velocity2, 0)
+
+			// 4th beat
+			pitch = byte(u[1])
+			mkBeat(buf, pitch, velocity2, 0)
+
+		case 2:
+			if i < 3 {
+				// first beat
+				pitch = byte(t[2])
+				mkBeat(buf, pitch, velocity1, 1)
+
+				// 2nd beat is a rest
+
+				// 3rd beat
+				pitch = byte(t[0])
+				mkBeat(buf, pitch, velocity2, 0)
+
+				// 4th beat
+				pitch = byte(t[1])
+				mkBeat(buf, pitch, velocity2, 0)
+				continue
+			}
+			// 1st beat
+			pitch = byte(t[2])
+			mkBeat(buf, pitch, velocity1, 0)
+
+			// 2nd beat
+			pitch = byte(u[0])
+			mkBeat(buf, pitch, velocity2, 0)
+
+			// 3rd beat
+			pitch = byte(u[1])
+			mkBeat(buf, pitch, velocity2, 0)
+
+			// 4th beat
+			pitch = byte(u[2])
+			mkBeat(buf, pitch, velocity2, 1)
+
+		case 3:
+			// 2nd beat
+			pitch = byte(t[0])
+			mkBeat(buf, pitch, velocity2, 0)
+
+			// 3rd beat
+			pitch = byte(t[1])
+			mkBeat(buf, pitch, velocity2, 0)
+
+			if i < 3 {
+				// 4th beat
+				pitch = byte(t[2])
+				mkBeat(buf, pitch, velocity2, 1)
+				continue
+			}
+
+			// 4th beat
+			pitch = byte(t[2])
+			mkBeat(buf, pitch, velocity2, 0)
+		}
 	}
 	return buf
 }
