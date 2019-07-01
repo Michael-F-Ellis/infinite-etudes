@@ -39,7 +39,7 @@ func mkIndex() (err error) {
 
 func indexBody() (body *HtmlTree) {
 	header := Div(`style="text-align:center; margin-bottom:2vh;"`,
-		H2("class=title", "Infinite Etudes Web Demo"),
+		H2("class=title", "Infinite Etudes Web App"),
 		Em("", "Ear training for your fingers"),
 	)
 	// Etude menus:
@@ -68,6 +68,15 @@ func indexBody() (body *HtmlTree) {
 	}
 	soundSelect := Select("id=sound-select", sounds...)
 
+	// Rythhm pattern
+	var rhythms []interface{}
+	for _, rhy := range []string{"steady", "advancing"} {
+		name := rhy + " rhythm"
+		value := fmt.Sprintf(`value="%s"`, rhy)
+		rhythms = append(rhythms, Option(value, name))
+	}
+	rhythmSelect := Select("id=rhythm-select", rhythms...)
+
 	// Controls
 	playBtn := Button(`onclick="playStart()"`, "Play")
 	stopBtn := Button(`onclick="playStop()"`, "Stop")
@@ -75,10 +84,12 @@ func indexBody() (body *HtmlTree) {
 
 	// Assemble everything into the body element.
 	body = Body("", header,
-		Div("", keySelect, scaleSelect, soundSelect),
+		Div("", keySelect, scaleSelect, soundSelect, rhythmSelect),
 		Div("", playBtn, stopBtn, downloadBtn),
 		quickStart(),
 		forTheCurious(),
+		forVocalists(),
+		rhythmPatterns(),
 		intervalsOctavesRanges(),
 		tempo(),
 		variations(),
@@ -104,11 +115,10 @@ func quickStart() (div *HtmlTree) {
 func forTheCurious() (div *HtmlTree) {
 	heading := "For the curious"
 	p1 := `Infinite Etudes generates ear/finger training
-	etudes for instrumentalists. All the etudes follow a simple four bar
-	form: a sequence of 3 different notes is played on beats 1, 2, and 3 and a
-	rest on beat 4. Each bar is played four times before moving on
-	 -- so you have 3 chances to play the sequence after the first
-	hearing.
+	etudes for instrumentalists and vocalists. By default, the etudes follow a simple four
+	bar form: a sequence of 3 different notes is played on beats 1, 2, and 3
+	and a rest on beat 4. Each bar is played four times before moving on -- so
+	you have 3 chances to play the sequence after the first hearing.
 	`
 
 	p2 := `Each etude contains all possible 3-note sequences in the key for
@@ -204,6 +214,42 @@ func forTheCurious() (div *HtmlTree) {
 	)
 	return
 }
+func forVocalists() (div *HtmlTree) {
+	p1 := `I conceived Infinite Etudes as an aid for instrumentalists. I've since
+	found it's also quite useful as a daily vocal workout for intonation. The
+	instrument selection menu has choir ahh sounds for SATB ranges.`
+	div = Div("",
+		H3("", "For Vocalists"),
+		P("", p1),
+	)
+	return
+}
+
+func rhythmPatterns() (div *HtmlTree) {
+	p1 := `Infinite Etudes supports two ryhthm patterns via the rhythm select
+	menu. The "steady rhythm" pattern is the default. Each sequence of three
+	notes is played 4 times with the first note falling on the downbeat of a
+	measure and a rest on the fourth beat.`
+
+	p2 := `The "advancing rhythm" pattern adds some rhythmic variety. It begins
+	in the same way as the steady rhythm pattern but omits the rest at the end
+	of the fourth repetition. The creates a cycle so that the second sequence has the
+	downbeat on the second note, the third sequence has the downbeat on the third note,
+	then fourth sequence has the downbeat on a rest. The point is to allow you to hear
+	and play the sequences at different starting points within a measure.`
+
+	p3 := `You'll probably want to use the steady pattern until you're getting the
+    most of the notes right on the first or second repetition.`
+
+	div = Div("",
+		H3("", "Rhythm Patterns"),
+		P("", p1),
+		P("", p2),
+		P("", p3),
+	)
+
+	return
+}
 
 func intervalsOctavesRanges() (div *HtmlTree) {
 	p1 := `What I said earlier about covering all possible sequences of
@@ -263,7 +309,7 @@ func tempo() (div *HtmlTree) {
 	slower tempo. In a jam session you're going to encounter 120 bpm and faster
 	and you'll be playing in eighths or sixteenths. I know there's a saying
 	among music teachers that "if you practice slowly and never make a mistake,
-	you'll never make a mistake". Slow practice certainly has its place but
+	you'll never make a mistake" -- and slow practice certainly has its place -- but
 	that saying doesn't hold up in the research on learning. Immediate feedback
 	about mistakes is the important consideration [Brown 2014, p90]. Assuming
 	you can hear when two notes are in unison, you'll always know when you've
@@ -458,7 +504,8 @@ func indexJS() (script *HtmlTree) {
 		  key = document.getElementById("key-select").value
 		  scale = document.getElementById("scale-select").value
 		  sound = document.getElementById("sound-select").value
-		  return "/etude/" + key + "/" + scale + "/" + sound
+		  rhythm = document.getElementById("rhythm-select").value
+		  return "/etude/" + key + "/" + scale + "/" + sound + "/" + rhythm
 		}
 
 		// Read the selects and returns a proposed filename for the etude to be downloaded.
@@ -466,7 +513,8 @@ func indexJS() (script *HtmlTree) {
 		  key = document.getElementById("key-select").value
 		  scale = document.getElementById("scale-select").value
 		  sound = document.getElementById("sound-select").value
-		  return key + "_" + scale + "_" + sound + ".midi"
+		  rhythm = document.getElementById("rhythm-select").value
+		  return key + "_" + scale + "_" + sound + "_" + rhythm + ".midi"
 		}
 
 		function playStart() {

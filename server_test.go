@@ -59,7 +59,7 @@ func TestMidijsRequest(t *testing.T) {
 
 func TestGoodEtudeRequest(t *testing.T) {
 	var err error
-	url := "http://" + testhost + "/etude/aflat/pentatonic/trumpet"
+	url := "http://" + testhost + "/etude/aflat/pentatonic/trumpet/steady"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Errorf("GET failed: %v", err)
@@ -68,7 +68,7 @@ func TestGoodEtudeRequest(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status code %v, got %v", http.StatusOK, resp.StatusCode)
 	}
-	exp, _ := ioutil.ReadFile("aflat_pentatonic_trumpet.mid")
+	exp, _ := ioutil.ReadFile("aflat_pentatonic_trumpet_steady.mid")
 	got, _ := ioutil.ReadAll(resp.Body)
 	if !bytes.Equal(got, exp) {
 		t.Errorf("response didn't match the file content")
@@ -95,7 +95,7 @@ func TestGoodEtudeRequest(t *testing.T) {
 func TestVocalEtudeRequest(t *testing.T) {
 	// because multiple vocal parts are mapped to the same midi number
 	var err error
-	url := "http://" + testhost + "/etude/aflat/pentatonic/choir_aahs_tenor"
+	url := "http://" + testhost + "/etude/aflat/pentatonic/choir_aahs_tenor/advancing"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Errorf("GET failed: %v", err)
@@ -104,7 +104,7 @@ func TestVocalEtudeRequest(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status code %v, got %v", http.StatusOK, resp.StatusCode)
 	}
-	exp, _ := ioutil.ReadFile("aflat_pentatonic_choir_aahs_tenor.mid")
+	exp, _ := ioutil.ReadFile("aflat_pentatonic_choir_aahs_tenor_advancing.mid")
 	got, _ := ioutil.ReadAll(resp.Body)
 	if !bytes.Equal(got, exp) {
 		t.Errorf("response didn't match the file content")

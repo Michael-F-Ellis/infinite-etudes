@@ -92,9 +92,10 @@ func midijsHndlr(w http.ResponseWriter, r *http.Request) {
 
 // etudeHndlr returns a midi file that matches the get request or a 404 for
 // incorrectly specified etudes. The pattern is
-// /etude/<key>/<scale>/<instrument> where key is a pitchname like "c" or
-// "aflat", <scale> is a scalename like "pentatonic", and instrument is a
-// formatted General Midi instrument name like "acoustic_grand_piano".  If any
+// /etude/<key>/<scale>/<instrument>/<advancing> where key is a pitchname like "c" or
+// "aflat", <scale> is a scalename like "pentatonic", instrument is a
+// formatted General Midi instrument name like "acoustic_grand_piano" and advancing is one of
+// 'steady' or 'advancing' indicating the rhythm pattern to use.  If any
 // of the forgoing are unknown or unsupported by this app, etudeHndlr gives a
 // 400 response (StatusBadRequest). If the request matches a valid filename,
 // the file will be returned in the response body if it exists and is younger
@@ -110,7 +111,12 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	filename := strings.Join(what[2:], "_") + ".mid"
-	makeEtudesIfNeeded(filename, what[4])
+	log.Println(filename)
+	advancing := false
+	if what[5] == "advancing" {
+		advancing = true
+	}
+	makeEtudesIfNeeded(filename, what[4], advancing)
 	http.ServeFile(w, r, filename)
 	// log the request in format that's convenient for analysis
 	log.Printf("%s %s %s %s %s\n", r.RemoteAddr, what[2], what[3], what[4], "served")
@@ -120,7 +126,7 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 // working directory if the requested file doesn't exist or is older
 // than the age limit set by serveEtudes in os.Environ. Otherwise
 // it does nothing.
-func makeEtudesIfNeeded(filename, instrumentName string) {
+func makeEtudesIfNeeded(filename, instrumentName string, advancing bool) {
 	var exists = true // initial assumption
 	finfo, err := os.Stat(filename)
 	if err != nil {
@@ -151,14 +157,13 @@ func makeEtudesIfNeeded(filename, instrumentName string) {
 	midilo := iInfo.midilo
 	midihi := iInfo.midihi
 	tempo := 120
-	advancing := false // TODO: add this to request format and UI
 	mkAllEtudes(midilo, midihi, tempo, instrument, iInfo.name, advancing)
 }
 
 // validEtudeRequest returns true if the request is correctly formed
 // and references a valid etude file.
 func validEtudeRequest(ksi []string) (ok bool) {
-	if len(ksi) != 3 {
+	if len(ksi) != 4 {
 		return
 	}
 	if !validKeyName(ksi[0]) {
@@ -168,6 +173,9 @@ func validEtudeRequest(ksi []string) (ok bool) {
 		return
 	}
 	if !validInstrumentName(ksi[2]) {
+		return
+	}
+	if !validRhythmPattern(ksi[3]) {
 		return
 	}
 
@@ -233,6 +241,16 @@ func validScaleName(name string) (ok bool) {
 func validInstrumentName(name string) (ok bool) {
 	_, err := getSupportedInstrumentByName(name)
 	if err == nil {
+		ok = true
+	}
+	return
+}
+
+func validRhythmPattern(name string) (ok bool) {
+	switch name {
+	case "steady":
+		ok = true
+	case "advancing":
 		ok = true
 	}
 	return

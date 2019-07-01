@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 )
 
 type midiTriple [3]int
@@ -343,6 +344,13 @@ func low3(n uint32) (u24 [3]byte) {
 // 4 times accompanied by a metronome track.  The etude begins
 // with a one-bar count-in.
 func writeMidiFile(sequence *etudeSequence, advancing bool) {
+	// update the filename with the rhythm pattern
+	var newend = "_steady.mid"
+	if advancing {
+		newend = "_advancing.mid"
+	}
+	sequence.filename = strings.Replace(sequence.filename, ".mid", newend, 1)
+
 	// open the file
 	fd, err := os.Create(sequence.filename)
 	if err != nil {
