@@ -128,7 +128,7 @@ func forTheCurious() (div *HtmlTree) {
 	the number of stars in the universe. Luckily, the goal is to learn to
 	recognize and play the individual 3-note sequences. That turns out to be a
 	much more reasonable task (and the infinite sequence orderings are actually
-	helpful because they prevent you from relying on muscle memory.
+	helpful because they prevent you from relying on muscle memory.)
     `
 
 	p3 := `So how many sequences are there? Well, there are 12 pitches in
@@ -181,18 +181,18 @@ func forTheCurious() (div *HtmlTree) {
 	contain both 4 and 7 plus one other note from the pentatonic scale.There
 	are only 30 such sequences. The etudes take 4 minutes to play.
 	Interestingly, these are the only sequences that can be said to exist in
-	exactly one key.  I'll leave it to you to work out why that's so :-`
+	exactly one key.  I'll leave it to you to work out why that's so :-)`
 
 	p11 := `<strong>Harmonic Minor 1</strong> and <strong>Harmonic Minor 2</strong>
     explore the relative harmonic minor scale that's common in Middle
     Eastern music. They're included because they complete the coverage of all
-    possible sequences (except pairs of adjacent half-steps in a tonal context.`
+    possible sequences (except pairs of adjacent half-steps) in a tonal context.`
 
 	p12 := `<strong>Harmonic Minor 1</strong> contains all the sequences (36
-    total from 1,2,3,#5,6 that contain #5. It takes just under 5 minutes to play.`
+    total) from 1,2,3,♯5,6 that contain ♯5. It takes just under 5 minutes to play.`
 
 	p13 := `<strong>Harmonic Minor 2</strong> contains all the sequences (55
-    total from 1,2,3,4,#5,6,7 that contain #5 and one or both of 4 and 7., It takes 7:20 to play.`
+    total) from 1,2,3,4,♯5,6,7 that contain ♯5 and one or both of 4 and 7. It takes 7:20 to play.`
 
 	div = Div("",
 		H3("", heading),
@@ -217,7 +217,7 @@ func forTheCurious() (div *HtmlTree) {
 func forVocalists() (div *HtmlTree) {
 	p1 := `I conceived Infinite Etudes as an aid for instrumentalists. I've since
 	found it's also quite useful as a daily vocal workout for intonation. The
-	instrument selection menu has choir ahh sounds for SATB ranges.`
+	instrument selection menu has choir ahh sounds for soprano, alto, tenor and bass ranges.`
 	div = Div("",
 		H3("", "For Vocalists"),
 		P("", p1),
@@ -265,7 +265,7 @@ func intervalsOctavesRanges() (div *HtmlTree) {
 
 	p3 := `If you find that explanation confusing, don't worry. What's going
 	on will be obvious after a few minutes of playing along. Just be aware that
-	none of the sequences presented will contain leaps of a 5th (7 semitones or larger.
+	none of the sequences presented will contain leaps of a 5th (7 semitones) or larger.
 	A simple way to incorporate larger leaps is to play one of the notes an octave higher
 	or lower.`
 
