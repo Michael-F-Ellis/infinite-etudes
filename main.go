@@ -221,6 +221,7 @@ func mkAllEtudes(midilo, midihi, tempo, instrument int, iname string, advancing 
 		mkKeyEtudes(i, midilo, midihi, tempo, instrument, iname, advancing)
 	}
 	mkFinalEtudes(midilo, midihi, tempo, instrument, iname, advancing)
+	mkIntervalEtudes(midilo, midihi, tempo, instrument, iname, advancing)
 }
 
 // mkKeyEtudes generates the six files associated with keynum where
@@ -228,7 +229,19 @@ func mkAllEtudes(midilo, midihi, tempo, instrument int, iname string, advancing 
 func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int,
 	instrument int, iname string, advancing bool) {
 	for _, sequence := range generateKeySequences(keynum, midilo, midihi, tempo, instrument, iname) {
-		mkMidi(&sequence, advancing)
+		mkMidi(&sequence, advancing, false)
+		if debug {
+			fmt.Println(pitchHistogram(sequence))
+		}
+	}
+}
+
+// mkIntervalEtudes generates the 12 interval files associated with pitch numbers where
+// 0->c, 1->dflat, 2->d, ... 11->b
+func mkIntervalEtudes(midilo int, midihi int, tempo int,
+	instrument int, iname string, advancing bool) {
+	for _, sequence := range generateIntervalSequences(midilo, midihi, tempo, instrument, iname) {
+		mkMidi(&sequence, advancing, true)
 		if debug {
 			fmt.Println(pitchHistogram(sequence))
 		}
@@ -240,7 +253,7 @@ func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int,
 func mkFinalEtudes(midilo int, midihi int, tempo int,
 	instrument int, iname string, advancing bool) {
 	for _, sequence := range generateFinalSequences(midilo, midihi, tempo, instrument, iname) {
-		mkMidi(&sequence, advancing)
+		mkMidi(&sequence, advancing, false)
 		if debug {
 			fmt.Println(pitchHistogram(sequence))
 		}

@@ -62,6 +62,51 @@ func getChromaticScale() (scale []int) {
 	return
 }
 
+// tripleFromInterval builds a midiTriple from a pair of pitch numbers.
+// The up argument determines if second pitch is to be adjusted an octave up or down, depending on the
+// interval.
+func tripleFromInterval(p, q int, up bool) (t midiTriple) {
+	switch {
+	case p == q: // convert unison to an octave
+		if up {
+			q += 12
+		} else {
+			q -= 12
+		}
+	case p < q:
+		if !up {
+			q -= 12
+		}
+	case p > q:
+		if up {
+			q += 12
+		}
+	default:
+		panic("This should be impossible")
+	}
+	t = midiTriple{p, q, p}
+	return
+}
+
+// flip simulates a fair coin flip
+func flip() (up bool) {
+	if rand.Intn(2) == 1 {
+		up = true
+	}
+	return
+}
+
+// permute2 returns a slice of midiTriple. Each triple is built from an interval
+// with the first note repeated as the third note, e.g. {3, 5, 3} or {3, -7, 3}
+func permute2(scale []int) (permutations []midiTriple) {
+	for _, p := range scale {
+		for _, q := range scale {
+			permutations = append(permutations, tripleFromInterval(p, q, flip()))
+		}
+	}
+	return
+}
+
 // permute3 returns a slice of midiTriple containing
 // all possible permutations of 3 distinct notes in the
 // scale.
@@ -82,6 +127,45 @@ func permute3(scale []int) []midiTriple {
 		}
 	}
 	return permutations
+}
+
+// generateIntervalSequences returns a slice of 12 etudeSequences as described in the usage instructions.
+// Each sequence consists of 12 triples with the middle pitch corresponding to pitchnum.
+func generateIntervalSequences(midilo int, midihi int, tempo int, instrument int, iname string) (sequences []etudeSequence) {
+	// Get the chromatic scale as midi numbers in the range 0 - 11
+	midiChromaticScaleNums := getChromaticScale()
+	// Generate all intervals
+	triples := permute2(midiChromaticScaleNums)
+
+	if iname == "" {
+		sname, err := gmSoundName(instrument)
+		if err != nil {
+			panic("instrument number should have already been validated")
+		}
+		iname = gmSoundFileNamePrefix(sname)
+	}
+	// construct the sequences
+	for pitch := 0; pitch < 12; pitch++ {
+		pitchname := keyNames[pitch]
+		sequences = append(sequences, etudeSequence{
+			filename:   pitchname + "_intervals" + "_" + iname + ".mid",
+			midilo:     midilo,
+			midihi:     midihi,
+			tempo:      tempo,
+			instrument: instrument,
+			keyname:    pitchname,
+		})
+	}
+
+	// filter the triples into the corresponding etude sequences
+	for _, t := range triples {
+		pitch := t[1] % 12
+		if pitch < 0 {
+			pitch += 12
+		}
+		sequences[pitch].seq = append(sequences[pitch].seq, t)
+	}
+	return
 }
 
 // generateFinalSequences returns a slice of 12 etudeSequences as described in the usage instructions.
@@ -301,7 +385,7 @@ func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrum
 // the pitches within the limits specified in the sequence. Finally, it calls
 // writeMidi file to convert the data to Standard Midi form and write it to
 // disk.
-func mkMidi(sequence *etudeSequence, advancing bool) {
+func mkMidi(sequence *etudeSequence, advancing bool, noTighten bool) {
 	// Shuffle the sequence
 	shuffle(sequence.seq)
 
@@ -310,7 +394,7 @@ func mkMidi(sequence *etudeSequence, advancing bool) {
 	seqlen := len(sequence.seq)
 	for i := 0; i < seqlen; i++ {
 		t := &(sequence.seq[i])
-		constrain(t, prior, sequence.midilo, sequence.midihi)
+		constrain(t, prior, sequence.midilo, sequence.midihi, noTighten)
 		prior = t[2]
 	}
 	// Write the etude
@@ -788,14 +872,15 @@ func tighten(t *midiTriple) {
 // of a previous triple. Then it checks to see if any of the adjusted
 // pitches are above midihi or below midilow and re-adjusts the octave
 // as needed to keep the pitches within the limits.
-func constrain(t *midiTriple, prior int, midilo int, midihi int) {
+func constrain(t *midiTriple, prior int, midilo int, midihi int, noTighten bool) {
 	if midilo > 127 || midihi > 127 || midihi-midilo < 24 {
 		msg := fmt.Sprintf("Invalid midi limits %v, %v", midilo, midihi)
 		panic(msg) // Programming error. Bad limits should be rejected at startup
 	}
 	// Tighten the triple to close position
-	tighten(t)
-
+	if !noTighten {
+		tighten(t)
+	}
 	// Shift tightened triple so that first pitch is as
 	// close as possible to prior.
 	offset := adjustSuccessor(prior, t[0]) - t[0]

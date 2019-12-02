@@ -2,10 +2,15 @@ package main
 
 import (
 	"bytes"
+	"math/rand"
 	"reflect"
 	"testing"
+	"time"
 )
 
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 func TestGetScale(t *testing.T) {
 	keynum := 0
 	expected := []int{0, 2, 4, 5, 7, 9, 11}
@@ -30,6 +35,58 @@ func TestGetScale(t *testing.T) {
 		t.Errorf("for keynum=%d, isminor=%t,  expected %v, got %v", keynum, isminor, expected, got)
 	}
 
+}
+
+func TestTripleFromInterval(t *testing.T) {
+	type testcase struct {
+		in  []int
+		up  bool
+		exp midiTriple
+	}
+	cases := []testcase{
+		{[]int{0, 1}, true, midiTriple{0, 1, 0}},
+		{[]int{0, 1}, false, midiTriple{0, -11, 0}},
+		{[]int{1, 0}, false, midiTriple{1, 0, 1}},
+		{[]int{7, 0}, true, midiTriple{7, 12, 7}},
+		{[]int{7, 7}, true, midiTriple{7, 19, 7}},
+		{[]int{7, 7}, false, midiTriple{7, -5, 7}},
+	}
+	for _, c := range cases {
+		got := tripleFromInterval(c.in[0], c.in[1], c.up)
+		if got != c.exp {
+			t.Errorf("%v input, exp %v, got %v", c.in, c.exp, got)
+		}
+	}
+}
+
+func TestFlip(t *testing.T) {
+	var (
+		heads int
+		tails int
+	)
+	for i := 0; i < 100; i++ {
+		if flip() {
+			heads++
+		} else {
+			tails++
+		}
+	}
+	// Crude test that flip is approximately fair
+	if heads < 25 || heads > 75 {
+		t.Errorf("Unexpected outcome: %d heads, %d tails", heads, tails)
+	}
+}
+func TestPermute2(t *testing.T) {
+	p := permute2(getChromaticScale())
+	if len(p) != 144 {
+		t.Errorf("expected 132 permutations, got %d", len(p))
+	}
+	exp := midiTriple{0, 12, 0}
+	exp2 := midiTriple{0, -12, 0}
+	got := p[0]
+	if exp != got && exp2 != got {
+		t.Errorf("expected first triple to be one of %v, %v. Got %v", exp, exp2, got)
+	}
 }
 
 func TestPermute3(t *testing.T) {
@@ -75,10 +132,28 @@ func TestGenerateKeySequences(t *testing.T) {
 	}
 }
 
+func TestGenerateIntervalSequences(t *testing.T) {
+	s := generateIntervalSequences(36, 84, 120, 0, "")
+	if len(s) != 12 {
+		t.Errorf("expected 12 sequences, got %d", len(s))
+	}
+	if s[0].filename != "c_intervals_acoustic_grand_piano.mid" {
+		t.Errorf("expected name of first sequence to be c_intervals, got %s", s[0].filename)
+	}
+	// verify that all 144 permutations are accounted for
+	n := 0
+	for _, seq := range s {
+		n += len(seq.seq)
+	}
+	if n != 144 {
+		t.Errorf("expected 144 midiTriples total, got %d", n)
+	}
+}
+
 func TestGenerateFinalSequences(t *testing.T) {
 	s := generateFinalSequences(36, 84, 120, 0, "")
 	if len(s) != 12 {
-		t.Errorf("expected 6 sequences, got %d", len(s))
+		t.Errorf("expected 12 sequences, got %d", len(s))
 	}
 	if s[0].filename != "c_final_acoustic_grand_piano.mid" {
 		t.Errorf("expected name of first sequence to be c_final, got %s", s[0].filename)
@@ -118,21 +193,21 @@ func TestConstrain(t *testing.T) {
 	x := midiTriple{1, 2, 3}
 	prior := 60
 	exp := midiTriple{61, 62, 63}
-	constrain(&x, prior, 36, 84)
+	constrain(&x, prior, 36, 84, false)
 	if x != exp {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
 	x = midiTriple{1, 2, 3}
 	prior = 83
 	exp = midiTriple{73, 74, 75}
-	constrain(&x, prior, 36, 84)
+	constrain(&x, prior, 36, 84, false)
 	if x != exp {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
 	x = midiTriple{0, 7, 2}
 	prior = 37
 	exp = midiTriple{48, 43, 38}
-	constrain(&x, prior, 36, 84)
+	constrain(&x, prior, 36, 84, false)
 	if x != exp {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
@@ -150,7 +225,7 @@ func TestMkMidi(t *testing.T) {
 	x.filename = "/tmp/testmkmidi.mid"
 	exp.seq = []midiTriple{{61, 62, 63}, midiTriple{64, 65, 66}}
 	exp2.seq = []midiTriple{{64, 65, 66}, midiTriple{61, 62, 63}}
-	mkMidi(&x, false)
+	mkMidi(&x, false, false)
 	if !(reflect.DeepEqual(x.seq, exp.seq) || reflect.DeepEqual(x.seq, exp2.seq)) {
 		t.Errorf("expected %v or %v, got %v", exp.seq, exp2.seq, x.seq)
 	}

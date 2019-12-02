@@ -216,6 +216,7 @@ func validKeyName(name string) (ok bool) {
 }
 
 var scaleInfo = []nameInfo{
+	{"intervals", "Intervals", "Intervals"},
 	{"pentatonic", "Pentatonic", "Pentatonic"},
 	{"final", "Chromatic Final", "Chromatic Final"},
 	{"plus_four", "Plus Four", "Plus Four"},

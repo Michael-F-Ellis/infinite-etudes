@@ -193,7 +193,10 @@ func forTheCurious() (div *HtmlTree) {
     total) from 1,2,3,♯5,6 that contain ♯5. It takes just under 5 minutes to play.`
 
 	p13 := `<strong>Harmonic Minor 2</strong> contains all the sequences (55
-    total) from 1,2,3,4,♯5,6,7 that contain ♯5 and one or both of 4 and 7. It takes 7:20 to play.`
+	total) from 1,2,3,4,♯5,6,7 that contain ♯5 and one or both of 4 and 7. It takes 7:20 to play.`
+
+	p14 := `<strong>Intervals</strong> is the simplest and shortest pattern. Each etude presents all twelve chromatic pitches
+	relative to the chosen key note and takes just over 90 seconds to play.`
 
 	div = Div("",
 		H3("", heading),
@@ -202,6 +205,7 @@ func forTheCurious() (div *HtmlTree) {
 		P("", p3),
 		P("", p4),
 		P("", "Here are the patterns."),
+		P("", p14),
 		P("", p5),
 		P("", p6),
 		P("", p7),
