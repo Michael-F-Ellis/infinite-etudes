@@ -202,6 +202,7 @@ var keyInfo = []nameInfo{
 	{"a", "A", "A"},
 	{"bflat", "B♭", "B-flat"},
 	{"b", "B", "B"},
+	{"random", "Random", "Random"},
 }
 
 // validKeyName returns true if the key name is in the ones we support.

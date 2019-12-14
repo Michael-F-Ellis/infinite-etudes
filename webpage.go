@@ -537,6 +537,9 @@ func indexJS() (script *HtmlTree) {
 		// Read the selects and return the URL for the etude to be played or downloaded.
 		function etudeURL() {
 		  key = document.getElementById("key-select").value
+		  if (key=="random") {
+			  key=randomKey()
+			  };
 		  scale = document.getElementById("scale-select").value
 		  sound = document.getElementById("sound-select").value
 		  rhythm = document.getElementById("rhythm-select").value
@@ -550,6 +553,13 @@ func indexJS() (script *HtmlTree) {
 		  sound = document.getElementById("sound-select").value
 		  rhythm = document.getElementById("rhythm-select").value
 		  return key + "_" + scale + "_" + sound + "_" + rhythm + ".midi"
+		}
+		// randomKey returns a keyname chosen randomly from a list of supported
+		// keys.
+		function randomKey() {
+			keys = ['c', 'dflat', 'd', 'eflat', 'e', 'f',
+			'gflat', 'g', 'aflat', 'a', 'bflat', 'b']
+			return keys[Math.floor(Math.random() * keys.length)]
 		}
 
 		function playStart() {
