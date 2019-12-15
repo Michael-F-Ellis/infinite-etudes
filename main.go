@@ -153,10 +153,12 @@ func main() {
 
 	var hostport string
 	flag.StringVar(&hostport, "p", "localhost:8080", "hostname (or IP) and port to serve on. (server-mode only)")
-	flag.Parse()
 
 	var expireSeconds int
 	flag.IntVar(&expireSeconds, "x", 3600, "Maximum age in seconds for generated files (server-mode only)")
+
+	// make sure all flags are defined before calling this
+	flag.Parse()
 
 	// validate flags
 	if !within(1, instrument, 128) {
