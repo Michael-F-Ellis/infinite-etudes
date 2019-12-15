@@ -32,7 +32,10 @@ func mkIndex() (err error) {
 
 	// <html>
 	page := Html("", head, indexBody())
-	Render(page, &buf, 0)
+	err = Render(page, &buf, 0)
+	if err != nil {
+		return
+	}
 	err = ioutil.WriteFile("index.html", buf.Bytes(), 0644)
 	return
 }

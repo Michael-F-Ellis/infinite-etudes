@@ -145,7 +145,7 @@ func makeEtudesIfNeeded(filename, instrumentName string, advancing bool) {
 
 		maxduration := time.Duration(maxage) * time.Second
 		modtime := finfo.ModTime()
-		if time.Now().Sub(modtime) < maxduration {
+		if time.Since(modtime) < maxduration {
 			// nothing to do
 			return
 		}

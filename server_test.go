@@ -133,18 +133,29 @@ func TestBadEtudeRequest(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	// call flag.Parse() here if TestMain uses flags
-	os.Mkdir("test", 0777) // set up a temporary dir for generated files
-	//var err error
+	err := os.Mkdir("test", 0777) // set up a temporary dir for generated files
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(-1)
+	}
 	//html := []byte("<html></html>")
 	//err = ioutil.WriteFile("test/index.html", html, 0644)
 
 	// Run all tests and clean up
 	wd, _ := os.Getwd()
 	midijspath := filepath.Join(wd, "midijs")
-	os.Chdir(filepath.Join(wd, "test"))
+	err = os.Chdir(filepath.Join(wd, "test"))
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(-1)
+	}
 	go serveEtudes(testhost, 1, midijspath) // max etude age = 1 second so we don't wait forever while testing.
 	exitcode := m.Run()
-	os.Chdir(wd)
+	err = os.Chdir(wd)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(-1)
+	}
 	os.RemoveAll("test") // remove the directory and its contents.
 	os.Exit(exitcode)
 }
