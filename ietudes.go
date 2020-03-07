@@ -129,6 +129,51 @@ func permute3(scale []int) []midiTriple {
 	return permutations
 }
 
+// generateEqualIntervalSequences returns a slice of etudeSequences as described in the usage instructions.
+// Each sequence consists of triples of equal interval sizes
+func generateEqualIntervalSequences(midilo int, midihi int, tempo int, instrument int, iname string) (sequences []etudeSequence) {
+	// Get the chromatic scale as midi numbers in the range 0 - 11
+	midiChromaticScaleNums := getChromaticScale()
+	// Generate all intervals
+	triples := permute2(midiChromaticScaleNums)
+
+	if iname == "" {
+		sname, err := gmSoundName(instrument)
+		if err != nil {
+			panic("instrument number should have already been validated")
+		}
+		iname = gmSoundFileNamePrefix(sname)
+	}
+	var intervalNames []string
+	for _, iinfo := range intervalInfo {
+		intervalNames = append(intervalNames, iinfo.fileName)
+	}
+
+	// construct the sequences
+	for i := 0; i < 12; i++ {
+		intervalName := intervalNames[i]
+		sequences = append(sequences, etudeSequence{
+			filename:   intervalName + "_intervals" + "_" + iname + ".mid",
+			midilo:     midilo,
+			midihi:     midihi,
+			tempo:      tempo,
+			instrument: instrument,
+			keyname:    intervalName,
+		})
+	}
+
+	// filter the triples into the corresponding etude sequences
+	for _, t := range triples {
+		diff := t[0] - t[1]
+		if diff < 0 {
+			diff = -diff
+		}
+		diff -= 1
+		sequences[diff].seq = append(sequences[diff].seq, t)
+	}
+	return
+}
+
 // generateIntervalSequences returns a slice of 12 etudeSequences as described in the usage instructions.
 // Each sequence consists of 12 triples with the middle pitch corresponding to pitchnum.
 func generateIntervalSequences(midilo int, midihi int, tempo int, instrument int, iname string) (sequences []etudeSequence) {

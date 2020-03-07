@@ -239,10 +239,17 @@ func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int,
 }
 
 // mkIntervalEtudes generates the 12 interval files associated with pitch numbers where
-// 0->c, 1->dflat, 2->d, ... 11->b
+// 0->c, 1->dflat, 2->d, ... 11->b and the 12 interval files associated with interval
+// sizes from m2 to P8
 func mkIntervalEtudes(midilo int, midihi int, tempo int,
 	instrument int, iname string, advancing bool) {
 	for _, sequence := range generateIntervalSequences(midilo, midihi, tempo, instrument, iname) {
+		mkMidi(&sequence, advancing, true)
+		if debug {
+			fmt.Println(pitchHistogram(sequence))
+		}
+	}
+	for _, sequence := range generateEqualIntervalSequences(midilo, midihi, tempo, instrument, iname) {
 		mkMidi(&sequence, advancing, true)
 		if debug {
 			fmt.Println(pitchHistogram(sequence))

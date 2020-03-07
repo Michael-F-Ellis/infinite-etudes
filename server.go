@@ -166,11 +166,19 @@ func validEtudeRequest(ksi []string) (ok bool) {
 	if len(ksi) != 4 {
 		return
 	}
-	if !validKeyName(ksi[0]) {
-		return
-	}
 	if !validScaleName(ksi[1]) {
 		return
+	}
+	scaleName := ksi[1]
+	switch scaleName { // Intervals get special handling
+	case "intervals":
+		if !validKeyName(ksi[0]) && !validIntervalName(ksi[0]) {
+			return
+		}
+	default:
+		if !validKeyName(ksi[0]) {
+			return
+		}
 	}
 	if !validInstrumentName(ksi[2]) {
 		return
@@ -178,7 +186,6 @@ func validEtudeRequest(ksi []string) (ok bool) {
 	if !validRhythmPattern(ksi[3]) {
 		return
 	}
-
 	ok = true
 	return
 }
@@ -203,6 +210,32 @@ var keyInfo = []nameInfo{
 	{"bflat", "B♭", "B-flat"},
 	{"b", "B", "B"},
 	{"random", "Random", "Random"},
+}
+
+var intervalInfo = []nameInfo{
+	{"minor2", "Minor 2", "Minor Second"},
+	{"major2", "Major 2", "Major Second"},
+	{"minor3", "Minor 3", "Minor Third"},
+	{"major3", "Major 3", "Major Third"},
+	{"perfect4", "Perfect 4", "Perfect Fourth"},
+	{"tritone", "Tritone", "Tritone"},
+	{"perfect5", "Perfect 5", "Perfect Fifth"},
+	{"minor6", "Minor 6", "Minor Sixth"},
+	{"major6", "Major 6", "Major Sixth"},
+	{"minor7", "Minor 7", "Minor Seventh"},
+	{"major7", "Major 7", "Major Seventh"},
+	{"octave", "Octave", "Octave"},
+}
+
+// validIntervalName returns true if the interval name is in the ones we support.
+func validIntervalName(name string) (ok bool) {
+	for _, k := range intervalInfo {
+		if k.fileName == name {
+			ok = true
+			break
+		}
+	}
+	return
 }
 
 // validKeyName returns true if the key name is in the ones we support.

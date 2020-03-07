@@ -52,6 +52,10 @@ func indexBody() (body *HtmlTree) {
 		value := fmt.Sprintf(`value="%s" aria-label="%s"`, k.fileName, k.uiAria)
 		keys = append(keys, Option(value, k.uiName))
 	}
+	for _, k := range intervalInfo {
+		value := fmt.Sprintf(`value="%s" aria-label="%s"`, k.fileName, k.uiAria)
+		keys = append(keys, Option(value, k.uiName))
+	}
 	keySelect := Select("id=key-select", keys...)
 
 	// Scale pattern
@@ -536,14 +540,24 @@ func indexJS() (script *HtmlTree) {
 		  // after a user action.
 		  document.body.addEventListener("click", MIDIjs.resumeAudioContext);
 		}
+		// returns true if the selected key is an interval name
+		function isIntervalName(name) {
+			var inames = ['minor2', 'major2', 'minor3', 'major3', 'perfect4', 'tritone',
+			'perfect5', 'minor6', 'major6', 'minor7', 'major7', 'octave']
+			return inames.includes(name)
+		}
 
 		// Read the selects and return the URL for the etude to be played or downloaded.
 		function etudeURL() {
+		  scale = document.getElementById("scale-select").value
 		  key = document.getElementById("key-select").value
+		  if (scale != "intervals" &&  isIntervalName(key)) {
+			  alert(key + " is only valid when the scale pattern is Intervals.")
+			  return ""
+		  }
 		  if (key=="random") {
 			  key=randomKey()
 			  };
-		  scale = document.getElementById("scale-select").value
 		  sound = document.getElementById("sound-select").value
 		  rhythm = document.getElementById("rhythm-select").value
 		  return "/etude/" + key + "/" + scale + "/" + sound + "/" + rhythm
@@ -552,6 +566,9 @@ func indexJS() (script *HtmlTree) {
 		// Read the selects and returns a proposed filename for the etude to be downloaded.
 		function etudeFileName() {
 		  key = document.getElementById("key-select").value
+		  if (key=="random") {
+			  key=randomKey()
+			  };
 		  scale = document.getElementById("scale-select").value
 		  sound = document.getElementById("sound-select").value
 		  rhythm = document.getElementById("rhythm-select").value
@@ -566,8 +583,11 @@ func indexJS() (script *HtmlTree) {
 		}
 
 		function playStart() {
-		    MIDIjs.stop()
-		    MIDIjs.play(etudeURL())
+			MIDIjs.stop()
+			var url = etudeURL()
+			if (url != "") {
+			  MIDIjs.play(url)
+			}
 		}
 
 		function playStop() {
@@ -575,9 +595,13 @@ func indexJS() (script *HtmlTree) {
 		}
         
 		function downloadEtude() {
+          var url = etudeURL()
+		  if (url == "") {
+			  return // bad selection
+		  }
 		  // adapted from https://stackoverflow.com/a/49917066/426853
 		  let a = document.createElement('a')
-		  a.href = etudeURL()
+		  a.href = url
 		  a.download = etudeFileName()
 		  document.body.appendChild(a)
 		  a.click()
