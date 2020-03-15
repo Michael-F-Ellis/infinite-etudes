@@ -2,14 +2,28 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Michael-F-Ellis/infinite-etudes/internal/miditempo"
 )
+
+// randString returns a random string of length n chosen from chars.
+func randString(chars []rune, n uint) (out string) {
+	var outslice []rune
+	for i := 0; i < int(n); i++ {
+		outslice = append(outslice, chars[rand.Intn(int(n))])
+	}
+	out = string(outslice)
+	return
+}
 
 // serveEtudes serves etude midi files from the current working directory.
 func serveEtudes(hostport string, maxAgeSeconds int, midijsPath string) {
@@ -92,34 +106,74 @@ func midijsHndlr(w http.ResponseWriter, r *http.Request) {
 
 // etudeHndlr returns a midi file that matches the get request or a 404 for
 // incorrectly specified etudes. The pattern is
-// /etude/<key>/<scale>/<instrument>/<advancing> where key is a pitchname like "c" or
-// "aflat", <scale> is a scalename like "pentatonic", instrument is a
-// formatted General Midi instrument name like "acoustic_grand_piano" and advancing is one of
-// 'steady' or 'advancing' indicating the rhythm pattern to use.  If any
-// of the forgoing are unknown or unsupported by this app, etudeHndlr gives a
-// 400 response (StatusBadRequest). If the request matches a valid filename,
-// the file will be returned in the response body if it exists and is younger
-// than the maximum age imposed by this service. Otherwise the app will
-// generate it so it can be returned.
+// /etude/<key>/<scale>/<instrument>/<advancing> where <key> is a pitchname like
+// "c" or "aflat", <scale> is a scalename like "pentatonic", instrument is a
+// formatted General Midi instrument name like "acoustic_grand_piano" and
+// advancing is one of 'steady' or 'advancing' indicating the rhythm pattern to
+// use. An optional final component, <tempo> allows specifying a tempo in beats
+// per minute. Integer values between 20 and 600 are supported. If any of the
+// foregoing pattern components are unknown or unsupported by this app,
+// etudeHndlr gives a 400 response (StatusBadRequest). If the request matches a
+// valid filename, the file will be returned in the response body if it exists
+// and is younger than the maximum age imposed by this service. Otherwise the
+// app will generate it so it can be returned.
 func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 	what := strings.Split(r.URL.Path, "/")
+	// Note first element of what is an empty string
+	// log.Println(what)
 	if what[1] != "etude" {
 		log.Fatalf("programming error. got request path that didn't start with 'etude': %s", r.URL.Path)
 	}
-	if !validEtudeRequest(what[2:]) {
+	if !validEtudeRequest(what[2:6]) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	filename := strings.Join(what[2:], "_") + ".mid"
+	filename := strings.Join(what[2:6], "_") + ".mid"
 	log.Println(filename)
 	advancing := false
 	if what[5] == "advancing" {
 		advancing = true
 	}
+	var tempo int
+	if len(what) == 7 {
+		log.Println("tempo requested")
+		tmpo, err := strconv.Atoi(what[6])
+		if err != nil {
+			log.Printf("bad tempo requested, %s: %v", what[6], err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if tmpo < 20 || tmpo > 600 {
+			log.Printf("tempo %d out of range. must be between 20 and 600", tmpo)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		tempo = tmpo
+	}
 	makeEtudesIfNeeded(filename, what[4], advancing)
+	if tempo != 0 {
+		// log.Println("need to serve an altered file")
+		µs := uint(60000000 / tempo) // microseconds per beat
+		bytes, err := miditempo.SetTempo(filename, µs)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Printf("%v", err)
+			return
+		}
+		unique := randString([]rune("abcedfghijklmnopqrstuvwxyz"), 4) // used to make deferred removal safe
+		filename = fmt.Sprintf("new filename: %s_%d_%s.mid", filename[0:len(filename)-4], tempo, unique)
+		// log.Println(filename)
+		err = ioutil.WriteFile(filename, bytes, 0644)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Printf("%v", err)
+			return
+		}
+		// defer os.Remove(filename) // avoid proliferation
+	}
 	http.ServeFile(w, r, filename)
 	// log the request in format that's convenient for analysis
-	log.Printf("%s %s %s %s %s\n", r.RemoteAddr, what[2], what[3], what[4], "served")
+	log.Printf("%s %s %s %s %s served\n", r.RemoteAddr, what[2], what[3], what[4], filename)
 }
 
 // makeEtudesIfNeeded generates a full set of etudes in the current

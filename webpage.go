@@ -84,6 +84,22 @@ func indexBody() (body *HtmlTree) {
 	}
 	rhythmSelect := Select("id=rhythm-select", rhythms...)
 
+	// Tempo values : we support 60 - 180 in increments of 4 bpm
+	var tempos []interface{}
+	var tempoValues []int
+	for i := 60; i < 184; i += 4 {
+		tempoValues = append(tempoValues, i)
+	}
+	for _, bpm := range tempoValues {
+		name := fmt.Sprintf("%d", bpm)
+		value := fmt.Sprintf(`value="%d"`, bpm)
+		if bpm == 120 {
+			value += " selected" // use 120 as the default value
+		}
+		tempos = append(tempos, Option(value, name))
+	}
+	tempoSelect := Select("id=tempo-select", tempos...)
+
 	// Controls
 	playBtn := Button(`onclick="playStart()"`, "Play")
 	stopBtn := Button(`onclick="playStop()"`, "Stop")
@@ -91,7 +107,7 @@ func indexBody() (body *HtmlTree) {
 
 	// Assemble everything into the body element.
 	body = Body("", header,
-		Div("", keySelect, scaleSelect, soundSelect, rhythmSelect),
+		Div("", keySelect, scaleSelect, soundSelect, rhythmSelect, tempoSelect),
 		Div("", playBtn, stopBtn, downloadBtn),
 		quickStart(),
 		forTheCurious(),
@@ -99,6 +115,7 @@ func indexBody() (body *HtmlTree) {
 		rhythmPatterns(),
 		intervalsOctavesRanges(),
 		tempo(),
+		custom(),
 		variations(),
 		faq(),
 		biblio(),
@@ -202,8 +219,10 @@ func forTheCurious() (div *HtmlTree) {
 	p13 := `<strong>Harmonic Minor 2</strong> contains all the sequences (55
 	total) from 1,2,3,4,♯5,6,7 that contain ♯5 and one or both of 4 and 7. It takes 7:20 to play.`
 
-	p14 := `<strong>Intervals</strong> is the simplest and shortest pattern. Each etude presents all twelve chromatic pitches
-	relative to the chosen key note and takes just over 90 seconds to play.`
+	p14 := `<strong>Intervals</strong> are the simplest and shortest patterns. Each etude presents all twelve chromatic pitches
+	relative to the chosen key note and takes just over 90 seconds to play. <b>NEW</b> You can now choose patterns that concentrate
+	exclusively on one interval, e.g. "Minor 6". These are a great way to get the sound and feel of all 12 intervals in your ears and
+	fingers over the full range of your instrument.`
 
 	div = Div("",
 		H3("", heading),
@@ -298,15 +317,38 @@ func intervalsOctavesRanges() (div *HtmlTree) {
 }
 
 func tempo() (div *HtmlTree) {
-	p1 := `This web demo generates MIDI files in 4/4 time with the tempo fixed
-	at 120 beats per minute. If you need it slower or faster, the easiest solution
+	p1 := `This web demo generates MIDI files in 4/4 time with the tempo
+	defaulted to 120 beats per minute. If you need it slower or faster, use
+	the tempo widget button to select a value between 60 and 180 beats per
+	minute.`
+
+	p4 := `Having said that, let me offer a reason not to work at a much
+	slower tempo than the default. In a jam session you're going to encounter
+	120 bpm and faster and you'll be playing in eighths or sixteenths. I know
+	there's a saying among music teachers that "if you practice slowly and
+	never make a mistake, you'll never make a mistake" -- and slow practice
+	certainly has its place -- but that saying doesn't hold up in the
+	research on learning. Immediate feedback about mistakes is the important
+	consideration [Brown 2014, p90]. Assuming you can hear when two notes are
+	in unison, you'll always know when you've played a sequence right or
+	wrong with Infinite Etudes. So have at it boldly and smile at the notes
+	you miss. You'll have more fun and make better progress.`
+	div = Div("",
+		H3("", "Tempo"),
+		P("", p1),
+		P("", p4),
+	)
+	return
+}
+func custom() (div *HtmlTree) {
+	p1 := `If you need something beyond the available tempi and instrument sounds, the easiest solution
 	is to use the download button to save a local copy of a file and play it with
-	a program that allows you to adjust the tempo.  I recommend QMidi for Mac. I don't
+	a program that allows you finer control of the playback.  I recommend QMidi for Mac. I don't
 	know what's good on PC but a little Googling should turn up something appropriate. Downloading
 	also allows you to play the files through better equipment for more realistic sound.`
 
 	p2 := `You might also consider installing MuseScore, the excellent open
-	source notation editor. Version 3.1 does a very good job importing Infinite
+	source notation editor. Version 3.1 and higher does a very good job importing Infinite
 	Etudes midi files. Besides controlling tempo, you can print the etude as sheet
 	music or play it back with real-time highlighting of each note as it's
 	played.`
@@ -317,26 +359,14 @@ func tempo() (div *HtmlTree) {
 	can control both tempo and the number of octaves from the command line
 	version.`
 
-	p4 := `Having said all that, let me offer a reason not to work at a much
-	slower tempo. In a jam session you're going to encounter 120 bpm and faster
-	and you'll be playing in eighths or sixteenths. I know there's a saying
-	among music teachers that "if you practice slowly and never make a mistake,
-	you'll never make a mistake" -- and slow practice certainly has its place -- but
-	that saying doesn't hold up in the research on learning. Immediate feedback
-	about mistakes is the important consideration [Brown 2014, p90]. Assuming
-	you can hear when two notes are in unison, you'll always know when you've
-	played a sequence right or wrong with Infinite Etudes. So have at it boldly
-	and smile at the notes you miss. You'll have more fun and make better progress.`
 	div = Div("",
-		H3("", "Tempo"),
+		H3("", "Customizing"),
 		P("", p1),
 		P("", p2),
 		P("", p3),
-		P("", p4),
 	)
 	return
 }
-
 func variations() (div *HtmlTree) {
 	p1 := `As you progress, some sequences will become easy to recognize and
 	play before others. When you nail a particular sequence correctly and
@@ -346,7 +376,7 @@ func variations() (div *HtmlTree) {
 	var variants = []string{
 		`Finger it differently.`,
 		`Change the bowing or picking.`,
-		`Play it with the other hand (keyboard).`,
+		`Play it with the other hand (keyboards).`,
 		`Play it in the same octave on different strings (string instruments).`,
 		`Play one note up or down an octave.`,
 		`Play the whole sequence up or down an octave.`,
@@ -560,7 +590,12 @@ func indexJS() (script *HtmlTree) {
 			  };
 		  sound = document.getElementById("sound-select").value
 		  rhythm = document.getElementById("rhythm-select").value
-		  return "/etude/" + key + "/" + scale + "/" + sound + "/" + rhythm
+		  tempo = document.getElementById("tempo-select").value
+		  if (tempo == "120") {
+			return "/etude/" + key + "/" + scale + "/" + sound + "/" + rhythm
+          } else {
+			return "/etude/" + key + "/" + scale + "/" + sound + "/" + rhythm + "/" + tempo
+		  }
 		}
 
 		// Read the selects and returns a proposed filename for the etude to be downloaded.
@@ -572,7 +607,8 @@ func indexJS() (script *HtmlTree) {
 		  scale = document.getElementById("scale-select").value
 		  sound = document.getElementById("sound-select").value
 		  rhythm = document.getElementById("rhythm-select").value
-		  return key + "_" + scale + "_" + sound + "_" + rhythm + ".midi"
+		  tempo = document.getElementById("tempo-select").value
+		  return key + "_" + scale + "_" + sound + "_" + rhythm + "_" + tempo + ".midi"
 		}
 		// randomKey returns a keyname chosen randomly from a list of supported
 		// keys.
