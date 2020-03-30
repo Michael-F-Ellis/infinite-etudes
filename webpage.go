@@ -46,6 +46,15 @@ func indexBody() (body *HtmlTree) {
 		Em("", "Ear training for your fingers"),
 	)
 	// Etude menus:
+	// Scale pattern
+	var scales []interface{}
+	for _, ptn := range scaleInfo { // scaleInfo is defined in server.go
+		value := fmt.Sprintf(`value="%s"`, ptn.fileName)
+		scales = append(scales, Option(value, ptn.uiName))
+	}
+	scaleSelect := Label(``, "Pattern", Select("id=scale-select", scales...))
+	// scaleSelectLabel := Label(`class=sel-label`, "Pattern")
+
 	// Key
 	var keys []interface{}
 	for _, k := range keyInfo {
@@ -56,15 +65,7 @@ func indexBody() (body *HtmlTree) {
 		value := fmt.Sprintf(`value="%s" aria-label="%s"`, k.fileName, k.uiAria)
 		keys = append(keys, Option(value, k.uiName))
 	}
-	keySelect := Select("id=key-select", keys...)
-
-	// Scale pattern
-	var scales []interface{}
-	for _, ptn := range scaleInfo { // scaleInfo is defined in server.go
-		value := fmt.Sprintf(`value="%s"`, ptn.fileName)
-		scales = append(scales, Option(value, ptn.uiName))
-	}
-	scaleSelect := Select("id=scale-select", scales...)
+	keySelect := Label(``, "Key", Select("id=key-select", keys...))
 
 	// Instrument sound
 	var sounds []interface{}
@@ -73,7 +74,7 @@ func indexBody() (body *HtmlTree) {
 		value := fmt.Sprintf(`value="%s"`, iinfo.name)
 		sounds = append(sounds, Option(value, name))
 	}
-	soundSelect := Select("id=sound-select", sounds...)
+	soundSelect := Label(``, "Instrument", Select("id=sound-select", sounds...))
 
 	// Rythhm pattern
 	var rhythms []interface{}
@@ -82,12 +83,12 @@ func indexBody() (body *HtmlTree) {
 		value := fmt.Sprintf(`value="%s"`, rhy)
 		rhythms = append(rhythms, Option(value, name))
 	}
-	rhythmSelect := Select("id=rhythm-select", rhythms...)
+	rhythmSelect := Label(``, "Rhythm", Select("id=rhythm-select", rhythms...))
 
 	// Tempo values : we support 60 - 180 in increments of 4 bpm
 	var tempos []interface{}
 	var tempoValues []int
-	for i := 60; i < 184; i += 4 {
+	for i := 60; i < 244; i += 4 {
 		tempoValues = append(tempoValues, i)
 	}
 	for _, bpm := range tempoValues {
@@ -98,7 +99,7 @@ func indexBody() (body *HtmlTree) {
 		}
 		tempos = append(tempos, Option(value, name))
 	}
-	tempoSelect := Select("id=tempo-select", tempos...)
+	tempoSelect := Label(``, "Tempo", Select("id=tempo-select", tempos...))
 
 	// Controls
 	playBtn := Button(`onclick="playStart()"`, "Play")
@@ -107,14 +108,14 @@ func indexBody() (body *HtmlTree) {
 
 	// Assemble everything into the body element.
 	body = Body("", header,
-		Div("", keySelect, scaleSelect, soundSelect, rhythmSelect, tempoSelect),
-		Div("", playBtn, stopBtn, downloadBtn),
+		Div("", scaleSelect, keySelect, soundSelect, rhythmSelect, tempoSelect),
+		Div(`style="padding-top:1vh;"`, playBtn, stopBtn, downloadBtn),
 		quickStart(),
 		forTheCurious(),
 		forVocalists(),
+		tempo(),
 		rhythmPatterns(),
 		intervalsOctavesRanges(),
-		tempo(),
 		custom(),
 		variations(),
 		faq(),
@@ -128,8 +129,8 @@ func quickStart() (div *HtmlTree) {
 	div = Div("",
 		H3("", "For the impatient"),
 		Ol("",
-			Li("", `Choose a key,`),
 			Li("", `Choose a scale pattern,`),
+			Li("", `Choose a key,`),
 			Li("", `Choose an instrument sound,`),
 			Li("", `Click 'Play' and play along.`),
 		),
@@ -319,7 +320,7 @@ func intervalsOctavesRanges() (div *HtmlTree) {
 func tempo() (div *HtmlTree) {
 	p1 := `This web demo generates MIDI files in 4/4 time with the tempo
 	defaulted to 120 beats per minute. If you need it slower or faster, use
-	the tempo widget button to select a value between 60 and 180 beats per
+	the tempo selector to choose a value between 60 and 240 beats per
 	minute.`
 
 	p4 := `Having said that, let me offer a reason not to work at a much
@@ -530,8 +531,15 @@ func indexCSS() *HtmlTree {
         margin-left: 5%;
         margin-right: 10%;
         width: 85vw;
-    }
+	}
+	label {
+		display: inline-block;
+		text-align: center;
+		font-size: 80%;
+	}
     select {
+	  display: inline-block;
+	  font-size: 125%;
 	  margin-left: 5%;
 	  margin-bottom: 1%;
 	  background-color: white;

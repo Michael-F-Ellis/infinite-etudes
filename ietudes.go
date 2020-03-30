@@ -817,8 +817,8 @@ func metronomeBars(n int) *bytes.Buffer {
 	oneBeatLo := byte(0x40)
 	// fourBeats := []byte{0x9e, 0x00}
 
-	velocity1 := byte(0x65) // downbeat
-	velocity2 := byte(0x51) // other beats
+	velocity1 := byte(0x30) // downbeat
+	velocity2 := byte(0x10) // other beats
 
 	on := byte(0x99)  // Note On, channel 10
 	off := byte(0x89) // Note off, channel 10

@@ -27,8 +27,7 @@ func randString(chars []rune, n uint) (out string) {
 
 // serveEtudes serves etude midi files from the current working directory.
 func serveEtudes(hostport string, maxAgeSeconds int, midijsPath string) {
-	var err error
-	err = mkWebPages()
+	err := mkWebPages()
 	if err != nil {
 		log.Fatalf("could not write web pages: %v", err)
 	}
