@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
@@ -15,7 +16,11 @@ import (
 var testhost = "localhost:8080"
 
 func TestGETIndex(t *testing.T) {
-	expbytes, _ := ioutil.ReadFile("index.html")
+	expbytes, err := ioutil.ReadFile("index.html")
+	if err != nil {
+		t.Errorf("%v", err)
+		return
+	}
 	exp := string(expbytes)
 	url := "http://" + testhost
 	resp, err := http.Get(url)
@@ -110,7 +115,21 @@ func TestVocalEtudeRequest(t *testing.T) {
 		t.Errorf("response didn't match the file content")
 	}
 }
+func TestValidEtudeRequest(t *testing.T) {
+	badRequests := []string{
+		"/etude/hsharp/pentatonic/trumpet",
+		"/etude/aflat/schizotonic/trumpet",
+		"/etude/aflat/pentatonic/fromix_horn",
+	}
+	for _, path := range badRequests {
+		eksi := strings.Split(path, "/")
+		ok := validEtudeRequest(eksi[1 : len(eksi)-1])
+		if ok {
+			t.Errorf("bad request `%s` should not have succeeded", path)
+		}
+	}
 
+}
 func TestBadEtudeRequest(t *testing.T) {
 	badRequests := []string{
 		"/etude/hsharp/pentatonic/trumpet",
@@ -119,11 +138,13 @@ func TestBadEtudeRequest(t *testing.T) {
 	}
 	for _, path := range badRequests {
 		url := "http://" + testhost + path
-		resp, err := http.Get(url)
+		resp, err := http.Get(url) // TODO #1 This is returning a nil response.
 		if err != nil {
 			t.Errorf("GET failed: %v", err)
+			continue
+		} else {
+			defer resp.Body.Close()
 		}
-		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusBadRequest {
 			t.Errorf("%s : xpected status code %v, got %v",
 				path, http.StatusBadRequest, resp.StatusCode)
