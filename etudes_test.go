@@ -154,8 +154,8 @@ func TestGenerateEqualIntervalSequences(t *testing.T) {
 	if len(s) != 12 {
 		t.Errorf("expected 12 sequences, got %d", len(s))
 	}
-	if s[0].filename != "m2_intervals_acoustic_grand_piano.mid" {
-		t.Errorf("expected name of first sequence to be c_intervals, got %s", s[0].filename)
+	if s[0].filename != "minor2_intervals_acoustic_grand_piano.mid" {
+		t.Errorf("expected name of first sequence to begin with minor2_intervals, got %s", s[0].filename)
 	}
 	// verify that all 144 permutations are accounted for
 	n := 0
@@ -235,13 +235,13 @@ func TestMkMidi(t *testing.T) {
 	var x etudeSequence
 	var exp etudeSequence
 	var exp2 etudeSequence
-	x.seq = []midiTriple{{1, 2, 3}, midiTriple{4, 5, 6}}
+	x.seq = []midiTriple{{1, 2, 3}, {4, 5, 6}}
 	x.tempo = 120
 	x.midilo = 36
 	x.midihi = 84
 	x.filename = "/tmp/testmkmidi.mid"
-	exp.seq = []midiTriple{{61, 62, 63}, midiTriple{64, 65, 66}}
-	exp2.seq = []midiTriple{{64, 65, 66}, midiTriple{61, 62, 63}}
+	exp.seq = []midiTriple{{61, 62, 63}, {64, 65, 66}}
+	exp2.seq = []midiTriple{{64, 65, 66}, {61, 62, 63}}
 	mkMidi(&x, false, false)
 	if !(reflect.DeepEqual(x.seq, exp.seq) || reflect.DeepEqual(x.seq, exp2.seq)) {
 		t.Errorf("expected %v or %v, got %v", exp.seq, exp2.seq, x.seq)
@@ -252,8 +252,8 @@ func TestMkMidi(t *testing.T) {
 func TestShuffle(t *testing.T) {
 	var x etudeSequence
 	var y etudeSequence
-	x.seq = []midiTriple{{1, 2, 3}, midiTriple{4, 5, 6}, midiTriple{7, 8, 9}, midiTriple{10, 11, 12}, midiTriple{13, 14, 15}}
-	y.seq = []midiTriple{{1, 2, 3}, midiTriple{4, 5, 6}, midiTriple{7, 8, 9}, midiTriple{10, 11, 12}, midiTriple{13, 14, 15}}
+	x.seq = []midiTriple{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}, {13, 14, 15}}
+	y.seq = []midiTriple{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}, {13, 14, 15}}
 	shuffle(x.seq)
 	if reflect.DeepEqual(x.seq, y.seq) {
 		t.Errorf("shuffle did not change sequence, could be chance, so try again")
@@ -376,7 +376,7 @@ func TestFourBarsAdvancingRhythm(t *testing.T) {
 }
 func TestMetronomeBars(t *testing.T) {
 	// just the first bar
-	exp := []byte{0x99, 0x4c, 0x65, 0x87, 0x40, 0x89, 0x4c, 0x65, 0x00, 0x99, 0x4d, 0x51, 0x87, 0x40, 0x89, 0x4d, 0x51, 0x00, 0x99, 0x4d, 0x51, 0x87, 0x40, 0x89, 0x4d, 0x51, 0x00, 0x99, 0x4d, 0x51, 0x87, 0x40, 0x89, 0x4d, 0x51, 0x00}
+	exp := []byte{0x99, 0x4c, 0x30, 0x87, 0x40, 0x89, 0x4c, 0x30, 0x00, 0x99, 0x4d, 0x10, 0x87, 0x40, 0x89, 0x4d, 0x10, 0x00, 0x99, 0x4d, 0x10, 0x87, 0x40, 0x89, 0x4d, 0x10, 0x00, 0x99, 0x4d, 0x10, 0x87, 0x40, 0x89, 0x4d, 0x10, 0x00}
 	x := metronomeBars(4)
 	if !reflect.DeepEqual(x.Bytes()[:len(exp)], exp) {
 		t.Errorf("expected % x, got % x", exp, x)
