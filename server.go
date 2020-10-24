@@ -123,7 +123,7 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 	if what[1] != "etude" {
 		log.Fatalf("programming error. got request path that didn't start with 'etude': %s", r.URL.Path)
 	}
-	if !validEtudeRequest(what[2:6]) {
+	if !validEtudeRequest(what[2:]) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
