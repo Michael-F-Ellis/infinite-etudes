@@ -180,3 +180,9 @@ func TestMain(m *testing.M) {
 	os.RemoveAll("test") // remove the directory and its contents.
 	os.Exit(exitcode)
 }
+
+func BenchmarkMkAllEtudes(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		mkAllEtudes(48, 84, 120, 15, "Viola", false)
+	}
+}

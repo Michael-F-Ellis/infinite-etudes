@@ -62,10 +62,20 @@ func getChromaticScale() (scale []int) {
 	return
 }
 
-// tripleFromInterval builds a midiTriple from a pair of pitch numbers.
+// tripleFrom2Intervals builds a midiTripe from an initial pitch, p, and a pair
+// of intervals, i1 and i2, (measured in half steps). The construction always
+// ascends from p.
+func tripleFrom2Intervals(p, i1, i2 int) (t midiTriple) {
+	q := p + i1
+	r := q + i2
+	t = midiTriple{p, q, r}
+	return
+}
+
+// tripleFromPitchPair builds a midiTriple from a pair of pitch numbers.
 // The up argument determines if second pitch is to be adjusted an octave up or down, depending on the
 // interval.
-func tripleFromInterval(p, q int, up bool) (t midiTriple) {
+func tripleFromPitchPair(p, q int, up bool) (t midiTriple) {
 	switch {
 	case p == q: // convert unison to an octave
 		if up {
@@ -101,7 +111,7 @@ func flip() (up bool) {
 func permute2(scale []int) (permutations []midiTriple) {
 	for _, p := range scale {
 		for _, q := range scale {
-			permutations = append(permutations, tripleFromInterval(p, q, flip()))
+			permutations = append(permutations, tripleFromPitchPair(p, q, flip()))
 		}
 	}
 	return
@@ -209,6 +219,41 @@ func generateIntervalSequences(midilo int, midihi int, tempo int, instrument int
 			pitch += 12
 		}
 		sequences[pitch].seq = append(sequences[pitch].seq, t)
+	}
+	return
+}
+
+// generateIntervalPairSequences returns an etudeSequence with 12 triples of
+// equal interval sizes, one beginning on each pitch in the Chromatic scale.
+func generateIntervaPairlSequence(midilo int, midihi int, tempo int, instrument int, iname string, i1, i2 int) (sequence etudeSequence) {
+	// Get the chromatic scale as midi numbers in the range 0 - 11
+	midiChromaticScaleNums := getChromaticScale()
+	// Generate all triples
+	triples := []midiTriple{}
+	for p := range midiChromaticScaleNums {
+		t := tripleFrom2Intervals(p, i1, i2)
+		shuffleTriplePitches(&t) // randomize the order
+		triples = append(triples, t)
+	}
+
+	if iname == "" {
+		sname, err := gmSoundName(instrument)
+		if err != nil {
+			panic("instrument number should have already been validated")
+		}
+		iname = gmSoundFileNamePrefix(sname)
+	}
+
+	// construct the sequence
+	intervalPair := fmt.Sprintf("%d-%d", i1, i2)
+	sequence = etudeSequence{
+		seq:        triples,
+		filename:   "intervalpair" + "_" + intervalPair + "_" + iname + ".mid",
+		midilo:     midilo,
+		midihi:     midihi,
+		tempo:      tempo,
+		instrument: instrument,
+		keyname:    "IntervalPair",
 	}
 	return
 }
@@ -432,7 +477,7 @@ func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrum
 // disk.
 func mkMidi(sequence *etudeSequence, advancing bool, noTighten bool) {
 	// Shuffle the sequence
-	shuffle(sequence.seq)
+	shuffleTriples(sequence.seq)
 
 	// Constrain the sequence assuming a prior pitch halfway between the limits.
 	prior := (sequence.midilo + sequence.midihi) / 2
@@ -447,9 +492,20 @@ func mkMidi(sequence *etudeSequence, advancing bool, noTighten bool) {
 
 }
 
-// shuffle puts a slice of midiTriple in random order using the Fisher-Yates
-// algorithm,
-func shuffle(slc []midiTriple) {
+// shuffleTriplePitches puts the pitches of a midiTriple in random order using
+// the Fisher-Yates algorithm.
+func shuffleTriplePitches(t *midiTriple) {
+	N := 3
+	for i := 0; i < N; i++ {
+		// choose index uniformly in [i, N-1]
+		r := i + rand.Intn(N-i)
+		t[r], t[i] = t[i], t[r]
+	}
+}
+
+// shuffleTriples puts a slice of midiTriple in random order using the
+// Fisher-Yates algorithm.
+func shuffleTriples(slc []midiTriple) {
 	N := len(slc)
 	for i := 0; i < N; i++ {
 		// choose index uniformly in [i, N-1]

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"log"
 	"math/rand"
 	"reflect"
 	"testing"
@@ -52,7 +53,7 @@ func TestTripleFromInterval(t *testing.T) {
 		{[]int{7, 7}, false, midiTriple{7, -5, 7}},
 	}
 	for _, c := range cases {
-		got := tripleFromInterval(c.in[0], c.in[1], c.up)
+		got := tripleFromPitchPair(c.in[0], c.in[1], c.up)
 		if got != c.exp {
 			t.Errorf("%v input, exp %v, got %v", c.in, c.exp, got)
 		}
@@ -184,6 +185,13 @@ func TestGenerateFinalSequences(t *testing.T) {
 		t.Errorf("expected 1320 midiTriples total, got %d", n)
 	}
 }
+func TestGenerateIntervalPairSequence(t *testing.T) {
+	s := generateIntervaPairlSequence(36, 84, 120, 0, "", 2, 2)
+	if len(s.seq) != 12 {
+		t.Errorf("expected 12 triples, got %d", len(s.seq))
+	}
+	log.Println(s)
+}
 
 func TestTighten(t *testing.T) {
 	x := midiTriple{1, 2, 3}
@@ -254,7 +262,7 @@ func TestShuffle(t *testing.T) {
 	var y etudeSequence
 	x.seq = []midiTriple{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}, {13, 14, 15}}
 	y.seq = []midiTriple{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}, {13, 14, 15}}
-	shuffle(x.seq)
+	shuffleTriples(x.seq)
 	if reflect.DeepEqual(x.seq, y.seq) {
 		t.Errorf("shuffle did not change sequence, could be chance, so try again")
 	}
@@ -411,4 +419,46 @@ func TestTrackInstrument(t *testing.T) {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
 
+}
+func TestTripleFrom2Intervals(t *testing.T) {
+	got := tripleFrom2Intervals(60, 4, 3) // C E G from middle C
+	exp := midiTriple{60, 64, 67}
+	if !reflect.DeepEqual(got, exp) {
+		t.Errorf("expected %v, got %v", exp, got)
+	}
+}
+func TestShuffleTriplePitches(t *testing.T) {
+	// loop until we see all 6 possible orders
+	m := map[midiTriple]int{
+		{1, 2, 3}: 0,
+		{1, 3, 2}: 0,
+		{2, 1, 3}: 0,
+		{2, 3, 1}: 0,
+		{3, 1, 2}: 0,
+		{3, 2, 1}: 0,
+	}
+	var done bool
+	for i := 0; i < 1000; i++ {
+		done = true // assumption
+		trpl := midiTriple{1, 2, 3}
+		shuffleTriplePitches(&trpl)
+		m[trpl] += 1
+		for _, n := range m {
+			if n == 0 {
+				done = false
+				break
+			}
+		}
+		if done {
+			goto SUCCESS
+		}
+	}
+	t.Errorf("%v", m)
+SUCCESS:
+	// log.Println(m)
+}
+func TestIntervalPairEtude(t *testing.T) {
+	// generate a midi file with root position major triads
+	s := generateIntervaPairlSequence(36, 84, 120, 0, "", 4, 3)
+	mkMidi(&s, false, true) // steady rhythm, no tighten
 }
