@@ -462,3 +462,32 @@ func TestIntervalPairEtude(t *testing.T) {
 	s := generateIntervaPairlSequence(36, 84, 120, 0, "", 4, 3)
 	mkMidi(&s, false, true) // steady rhythm, no tighten
 }
+func TestExtractIntervalPair(t *testing.T) {
+	type testcase struct {
+		s  string
+		ok bool // got two intervals, both valid
+	}
+	tcs := []testcase{
+		{"3-4", true},    // ok
+		{"3", false},     // too few intervals
+		{"3-4-5", false}, // too many intervals
+		{"x-4", false},   // bad i1
+		{"3-x", false},   // bad i2
+		{"0-4", false},   // i1 too low
+		{"3-13", false},  // i2 too high
+	}
+	for _, tc := range tcs {
+		_, _, err := extractIntervalPair(tc.s)
+		switch tc.ok {
+		case true:
+			if err != nil {
+				t.Errorf("for input %s: %v", tc.s, err)
+			}
+		case false:
+			if err == nil {
+				t.Errorf("input %s should have yielded an error", tc.s)
+			}
+		}
+
+	}
+}

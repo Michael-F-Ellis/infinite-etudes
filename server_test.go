@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 )
@@ -116,25 +115,35 @@ func TestVocalEtudeRequest(t *testing.T) {
 	}
 }
 func TestValidEtudeRequest(t *testing.T) {
-	badRequests := []string{
-		"/etude/hsharp/pentatonic/trumpet",
-		"/etude/aflat/schizotonic/trumpet",
-		"/etude/aflat/pentatonic/fromix_horn",
+	badRequests := []etudeRequest{
+		{tonalCenter: "hsharp", pattern: "pentatonic", instrument: "trumpet", rhythm: "steady", tempo: "120"},
 	}
-	for _, path := range badRequests {
-		eksi := strings.Split(path, "/")
-		ok := validEtudeRequest(eksi[1 : len(eksi)-1])
+	for _, req := range badRequests {
+		ok := validEtudeRequest(req)
 		if ok {
-			t.Errorf("bad request `%s` should not have succeeded", path)
+			t.Errorf("request should not have succeeded:\n%v", req)
+		}
+	}
+	goodRequests := []etudeRequest{
+		{tonalCenter: "", pattern: "intervalpair", interval1: "minor3", interval2: "major3", instrument: "trumpet", rhythm: "steady", tempo: "120"},
+	}
+	for _, req := range goodRequests {
+		ok := validEtudeRequest(req)
+		if !ok {
+			t.Errorf("request should have succeeded:\n%v", req)
 		}
 	}
 
 }
 func TestBadEtudeRequest(t *testing.T) {
 	badRequests := []string{
-		"/etude/hsharp/pentatonic/trumpet",
-		"/etude/aflat/schizotonic/trumpet",
-		"/etude/aflat/pentatonic/fromix_horn",
+		"/etude/hsharp/pentatonic/minor2/minor2/trumpet/steady/120",     // bad tonal center
+		"/etude/c/schizotonic/minor2/minor2/trumpet/steady/120",         // bad pattern
+		"/etude/c/interval/fermented2/minor2/trumpet/steady/120",        // bad interval1
+		"/etude/c/intervalpairs/minor2/toxic2/trumpet/steady/120",       // bad interval2
+		"/etude/c/pentatonic/minor2/toxic2/fromixhorn/steady/120",       // bad instrument
+		"/etude/c/pentatonic/minor2/minor2/trumpet/jittery/120",         // bad rhythm
+		"/etude/c/pentatonic/minor2/minor2/trumpet/steady/allaregretto", // bad tempo
 	}
 	for _, path := range badRequests {
 		url := "http://" + testhost + path
