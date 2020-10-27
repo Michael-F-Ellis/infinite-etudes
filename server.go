@@ -157,11 +157,11 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	filename := (&req).midiFilename()
-	log.Println(filename)
+	log.Printf("%s requested", filename)
 	makeEtudesIfNeeded(filename, req)
 	http.ServeFile(w, r, filename)
 	// log the request in format that's convenient for analysis
-	log.Printf("%s %s %s %s %s served\n", r.RemoteAddr, path[2], path[3], path[4], filename)
+	log.Printf("%s %s served\n", r.RemoteAddr, filename)
 }
 
 // makeEtudesIfNeeded generates a full set of etudes in the current

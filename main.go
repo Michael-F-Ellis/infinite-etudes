@@ -247,7 +247,7 @@ func mkAllEtudes(midilo, midihi, tempo, instrument int, r etudeRequest) {
 func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int,
 	instrument int, r etudeRequest) {
 	for _, sequence := range generateKeySequences(keynum, midilo, midihi, tempo, instrument, r) {
-		sequence.req = r
+		// sequence.req = r
 		mkMidi(&sequence, false)
 		if debug {
 			fmt.Println(pitchHistogram(sequence))

@@ -162,6 +162,7 @@ func generateEqualIntervalSequences(midilo int, midihi int, tempo int, instrumen
 			req:        req,
 		})
 		sequences[i].req.interval1 = intervalNames[i]
+		sequences[i].req.pattern = "interval"
 
 	}
 
