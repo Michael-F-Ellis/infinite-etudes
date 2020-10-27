@@ -194,8 +194,10 @@ func generateIntervalSequences(midilo int, midihi int, tempo int, instrument int
 			tempo:      tempo,
 			instrument: instrument,
 			keyname:    pitchname,
+			req:        req,
 		})
 		sequences[pitch].req.tonalCenter = pitchname
+		sequences[pitch].req.pattern = "allintervals"
 	}
 
 	// filter the triples into the corresponding etude sequences
@@ -222,24 +224,13 @@ func generateIntervalPairlSequence(midilo int, midihi int, tempo int, instrument
 		triples = append(triples, t)
 	}
 
-	if iname == "" {
-		sname, err := gmSoundName(instrument)
-		if err != nil {
-			panic("instrument number should have already been validated")
-		}
-		iname = gmSoundFileNamePrefix(sname)
-	}
-
 	// construct the sequence
-	intervalPair := fmt.Sprintf("%d-%d", i1, i2)
 	sequence = etudeSequence{
 		seq:        triples,
-		filename:   "intervalpair" + "_" + intervalPair + "_" + iname + ".mid",
 		midilo:     midilo,
 		midihi:     midihi,
 		tempo:      tempo,
 		instrument: instrument,
-		keyname:    "IntervalPair",
 	}
 	return
 }
@@ -263,7 +254,8 @@ func generateFinalSequences(midilo int, midihi int, tempo int, instrument int, r
 			keyname:    pitchname,
 			req:        req,
 		})
-		req.tonalCenter = pitchname
+		sequences[pitch].req.tonalCenter = pitchname
+		sequences[pitch].req.pattern = "final"
 	}
 
 	// filter the triples into the corresponding etude sequences
@@ -296,6 +288,7 @@ func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrum
 		req:        req,
 	}
 	pentatonic.req.tonalCenter = keyname
+	pentatonic.req.pattern = "pentatonic"
 
 	plusFour := etudeSequence{
 		midilo:     midilo,
@@ -306,6 +299,7 @@ func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrum
 		req:        req,
 	}
 	plusFour.req.tonalCenter = keyname
+	plusFour.req.pattern = "plus_four"
 
 	plusSeven := etudeSequence{
 		midilo:     midilo,
@@ -316,6 +310,7 @@ func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrum
 		req:        req,
 	}
 	plusSeven.req.tonalCenter = keyname
+	plusSeven.req.pattern = "plus_seven"
 
 	fourAndSeven := etudeSequence{
 		midilo:     midilo,
@@ -326,6 +321,7 @@ func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrum
 		req:        req,
 	}
 	fourAndSeven.req.tonalCenter = keyname
+	fourAndSeven.req.pattern = "four_and_seven"
 
 	raisedFive := etudeSequence{
 		midilo:     midilo,
@@ -336,6 +332,7 @@ func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrum
 		req:        req,
 	}
 	raisedFive.req.tonalCenter = keyname
+	raisedFive.req.pattern = "raised_five"
 
 	raisedFiveWithFourOrSeven := etudeSequence{
 		midilo:     midilo,
@@ -346,6 +343,7 @@ func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrum
 		req:        req,
 	}
 	raisedFiveWithFourOrSeven.req.tonalCenter = keyname
+	raisedFiveWithFourOrSeven.req.pattern = "raised_five_with_four_or_seven"
 
 	// scale degree midi values for this key
 	four := midiMajorScaleNums[3]

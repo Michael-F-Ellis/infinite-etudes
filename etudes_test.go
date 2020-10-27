@@ -103,7 +103,6 @@ func TestPermute3(t *testing.T) {
 func TestGenerateKeySequences(t *testing.T) {
 	req := etudeRequest{
 		instrument: "acoustic_grand_piano",
-		pattern:    "pentatonic",
 		tempo:      "120",
 		rhythm:     "steady",
 	}
@@ -149,7 +148,7 @@ func TestGenerateIntervalSequences(t *testing.T) {
 	if len(s) != 12 {
 		t.Errorf("expected 12 sequences, got %d", len(s))
 	}
-	if s[0].filename != "c_allintervals_acoustic_grand_piano_steady_120.mid" {
+	if s[0].req.midiFilename() != "c_allintervals_acoustic_grand_piano_steady_120.mid" {
 		t.Errorf("expected name of first sequence to be c_intervals, got %s", s[0].filename)
 	}
 	// verify that all 144 permutations are accounted for
@@ -166,13 +165,17 @@ func TestGenerateEqualIntervalSequences(t *testing.T) {
 		instrument: "acoustic_grand_piano",
 		tempo:      "120",
 		rhythm:     "steady",
+		interval1:  "minor2",
+		pattern:    "interval",
 	}
 	s := generateEqualIntervalSequences(36, 84, 120, 0, req)
 	if len(s) != 12 {
 		t.Errorf("expected 12 sequences, got %d", len(s))
 	}
-	if s[0].filename != "interval_minor2_acoustic_grand_piano.mid" {
-		t.Errorf("expected name of first sequence to begin with minor2_intervals, got %s", s[0].filename)
+	fname_got := s[0].req.midiFilename()
+	fname_exp := "interval_minor2_acoustic_grand_piano_steady_120.mid"
+	if fname_got != fname_exp {
+		t.Errorf("expected file name of first sequence to be %s, got %s", fname_exp, fname_got)
 	}
 	// verify that all 144 permutations are accounted for
 	n := 0
@@ -194,7 +197,7 @@ func TestGenerateFinalSequences(t *testing.T) {
 	if len(s) != 12 {
 		t.Errorf("expected 12 sequences, got %d", len(s))
 	}
-	if s[0].filename != "c_final_acoustic_grand_piano_steady_120.mid" {
+	if s[0].req.midiFilename() != "c_final_acoustic_grand_piano_steady_120.mid" {
 		t.Errorf("expected name of first sequence to be c_final, got %s", s[0].filename)
 	}
 	// verify that all 1320 permutations are accounted for

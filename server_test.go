@@ -14,30 +14,6 @@ import (
 
 var testhost = "localhost:8080"
 
-func TestGETIndex(t *testing.T) {
-	expbytes, err := ioutil.ReadFile("index.html")
-	if err != nil {
-		t.Errorf("%v", err)
-		return
-	}
-	exp := string(expbytes)
-	url := "http://" + testhost
-	resp, err := http.Get(url)
-	if err != nil {
-		t.Errorf("GET failed: %v", err)
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Errorf("Error reading response body: %v", err)
-	}
-	got := string(body)
-	if got != exp {
-		t.Errorf("\nexp: %v\ngot: %v", exp, got)
-	}
-
-}
-
 func TestMidijsRequest(t *testing.T) {
 	url := "http://" + testhost + "/midijs/pat/arachno-0.pat"
 	resp, err := http.Get(url)
@@ -62,38 +38,51 @@ func TestMidijsRequest(t *testing.T) {
 }
 
 func TestGoodEtudeRequest(t *testing.T) {
-	var err error
-	url := "http://" + testhost + "/etude/aflat/pentatonic/trumpet/steady"
-	resp, err := http.Get(url)
-	if err != nil {
-		t.Errorf("GET failed: %v", err)
+	type testcase struct {
+		url      string
+		filename string
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("Expected status code %v, got %v", http.StatusOK, resp.StatusCode)
+	testTable := []testcase{
+		{
+			url:      "http://" + testhost + "/etude/aflat/pentatonic/minor2/minor2/trumpet/steady/120",
+			filename: "aflat_pentatonic_trumpet_steady_120.mid",
+		},
+		{
+			url:      "http://" + testhost + "/etude/aflat/intervalpair/minor2/minor2/trumpet/steady/120",
+			filename: "intervalpair_minor2_minor2_trumpet_steady_120.mid",
+		},
 	}
-	exp, _ := ioutil.ReadFile("aflat_pentatonic_trumpet_steady.mid")
-	got, _ := ioutil.ReadAll(resp.Body)
-	if !bytes.Equal(got, exp) {
-		t.Errorf("response didn't match the file content")
+	for _, tcase := range testTable {
+		resp, err := http.Get(tcase.url)
+		if err != nil {
+			t.Errorf("GET failed: %v", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected status code %v, got %v", http.StatusOK, resp.StatusCode)
+		}
+		exp, _ := ioutil.ReadFile(tcase.filename)
+		got, _ := ioutil.ReadAll(resp.Body)
+		if !bytes.Equal(got, exp) {
+			t.Errorf("response didn't match the file content")
+		}
+		// now test the age check
+		maxage, _ := strconv.Atoi(os.Getenv("ETUDE_MAX_AGE"))
+		maxduration := time.Duration(maxage) * time.Second
+		time.Sleep(maxduration)
+		resp2, err := http.Get(tcase.url)
+		if err != nil {
+			t.Errorf("GET failed: %v", err)
+		}
+		defer resp2.Body.Close()
+		if resp2.StatusCode != http.StatusOK {
+			t.Errorf("Expected status code %v, got %v", http.StatusOK, resp2.StatusCode)
+		}
+		got, _ = ioutil.ReadAll(resp2.Body)
+		if bytes.Equal(got, exp) { // exp is unchanged and should not match got.
+			t.Errorf("file did not update")
+		}
 	}
-	// now test the age check
-	maxage, _ := strconv.Atoi(os.Getenv("ETUDE_MAX_AGE"))
-	maxduration := time.Duration(maxage) * time.Second
-	time.Sleep(maxduration)
-	resp2, err := http.Get(url)
-	if err != nil {
-		t.Errorf("GET failed: %v", err)
-	}
-	defer resp2.Body.Close()
-	if resp2.StatusCode != http.StatusOK {
-		t.Errorf("Expected status code %v, got %v", http.StatusOK, resp2.StatusCode)
-	}
-	got, _ = ioutil.ReadAll(resp2.Body)
-	if bytes.Equal(got, exp) { // exp is unchanged and should not match got.
-		t.Errorf("file did not update")
-	}
-
 }
 
 func TestVocalEtudeRequest(t *testing.T) {
