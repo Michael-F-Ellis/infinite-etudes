@@ -186,7 +186,14 @@ func main() {
 		serveEtudes(hostport, expireSeconds, midijsPath)
 	} else {
 		// create the midi files
-		mkAllEtudes(midilo, midihi, tempo, instrument, "", advancing)
+		req := etudeRequest{}
+		if advancing {
+			req.rhythm = "advancing"
+		} else {
+			req.rhythm = "steady"
+		}
+		req.instrument, _ = gmSoundName(instrument)
+		mkAllEtudes(midilo, midihi, tempo, instrument, req)
 	}
 
 }
@@ -216,22 +223,32 @@ func usage() {
 // mkAllEtudes creates in the current directory all the etude files we support
 // for the specified instrument. The arguments are assumed to be previously
 // vetted and are not checked.
-func mkAllEtudes(midilo, midihi, tempo, instrument int, iname string, advancing bool) {
-	// Create and write all the tonal output files for all 12 key signatures
-
-	for i := 0; i < 12; i++ {
-		mkKeyEtudes(i, midilo, midihi, tempo, instrument, iname, advancing)
+func mkAllEtudes(midilo, midihi, tempo, instrument int, r etudeRequest) {
+	iname := r.instrument
+	if r.pattern == "intervalpair" {
+		i1 := intervalSizeByName(r.interval1)
+		i2 := intervalSizeByName(r.interval2)
+		s := generateIntervalPairlSequence(midilo, midihi, tempo, instrument, iname, i1, i2)
+		s.req = r
+		mkMidi(&s, true) // no tighten
+		return           // don't bother with the other etude sets.
 	}
-	mkFinalEtudes(midilo, midihi, tempo, instrument, iname, advancing)
-	mkIntervalEtudes(midilo, midihi, tempo, instrument, iname, advancing)
+
+	// Create and write all the tonal output files for all 12 key signatures
+	for i := 0; i < 12; i++ {
+		mkKeyEtudes(i, midilo, midihi, tempo, instrument, r)
+	}
+	mkFinalEtudes(midilo, midihi, tempo, instrument, r)
+	mkIntervalEtudes(midilo, midihi, tempo, instrument, r)
 }
 
 // mkKeyEtudes generates the six files associated with keynum where
 // 0->c, 1->dflat, 2->d, ... 11->b
 func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int,
-	instrument int, iname string, advancing bool) {
-	for _, sequence := range generateKeySequences(keynum, midilo, midihi, tempo, instrument, iname) {
-		mkMidi(&sequence, advancing, false)
+	instrument int, r etudeRequest) {
+	for _, sequence := range generateKeySequences(keynum, midilo, midihi, tempo, instrument, r) {
+		sequence.req = r
+		mkMidi(&sequence, false)
 		if debug {
 			fmt.Println(pitchHistogram(sequence))
 		}
@@ -242,15 +259,15 @@ func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int,
 // 0->c, 1->dflat, 2->d, ... 11->b and the 12 interval files associated with interval
 // sizes from m2 to P8
 func mkIntervalEtudes(midilo int, midihi int, tempo int,
-	instrument int, iname string, advancing bool) {
-	for _, sequence := range generateIntervalSequences(midilo, midihi, tempo, instrument, iname) {
-		mkMidi(&sequence, advancing, true)
+	instrument int, req etudeRequest) {
+	for _, sequence := range generateIntervalSequences(midilo, midihi, tempo, instrument, req) {
+		mkMidi(&sequence, true)
 		if debug {
 			fmt.Println(pitchHistogram(sequence))
 		}
 	}
-	for _, sequence := range generateEqualIntervalSequences(midilo, midihi, tempo, instrument, iname) {
-		mkMidi(&sequence, advancing, true)
+	for _, sequence := range generateEqualIntervalSequences(midilo, midihi, tempo, instrument, req) {
+		mkMidi(&sequence, true)
 		if debug {
 			fmt.Println(pitchHistogram(sequence))
 		}
@@ -260,9 +277,9 @@ func mkIntervalEtudes(midilo int, midihi int, tempo int,
 // mkFinalEtudes generates the 12 files associated with pitch numbers where
 // 0->c, 1->dflat, 2->d, ... 11->b
 func mkFinalEtudes(midilo int, midihi int, tempo int,
-	instrument int, iname string, advancing bool) {
-	for _, sequence := range generateFinalSequences(midilo, midihi, tempo, instrument, iname) {
-		mkMidi(&sequence, advancing, false)
+	instrument int, req etudeRequest) {
+	for _, sequence := range generateFinalSequences(midilo, midihi, tempo, instrument, req) {
+		mkMidi(&sequence, false)
 		if debug {
 			fmt.Println(pitchHistogram(sequence))
 		}

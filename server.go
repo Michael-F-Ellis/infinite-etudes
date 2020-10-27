@@ -2,20 +2,17 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/Michael-F-Ellis/infinite-etudes/internal/miditempo"
 )
 
 // randString returns a random string of length n chosen from chars.
+/*
 func randString(chars []rune, n uint) (out string) {
 	var outslice []rune
 	for i := 0; i < int(n); i++ {
@@ -24,7 +21,7 @@ func randString(chars []rune, n uint) (out string) {
 	out = string(outslice)
 	return
 }
-
+*/
 // serveEtudes serves etude midi files from the current working directory.
 func serveEtudes(hostport string, maxAgeSeconds int, midijsPath string) {
 	err := mkWebPages()
@@ -113,6 +110,20 @@ type etudeRequest struct {
 	tempo       string
 }
 
+func (r *etudeRequest) midiFilename() (f string) {
+	var parts []string
+	switch r.pattern {
+	case "interval":
+		parts = []string{r.pattern, r.interval1, r.instrument, r.rhythm, r.tempo}
+	case "intervalpair":
+		parts = []string{r.pattern, r.interval1, r.interval2, r.instrument, r.rhythm, r.tempo}
+	default:
+		parts = []string{r.tonalCenter, r.pattern, r.instrument, r.rhythm, r.tempo}
+	}
+	f = strings.Join(parts, "_") + ".mid"
+	return
+}
+
 // etudeHndlr returns a midi file that matches the get request or a 404 for
 // incorrectly specified etudes. The pattern is
 // /etude/<key>/<scale>/<instrument>/<advancing> where <key> is a pitchname like
@@ -145,49 +156,9 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	filename := strings.Join(path[2:6], "_") + ".mid"
+	filename := (&req).midiFilename()
 	log.Println(filename)
-	advancing := false
-	if path[5] == "advancing" {
-		advancing = true
-	}
-	var tempo int
-	if len(path) == 7 {
-		log.Println("tempo requested")
-		tmpo, err := strconv.Atoi(path[6])
-		if err != nil {
-			log.Printf("bad tempo requested, %s: %v", path[6], err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		if tmpo < 20 || tmpo > 600 {
-			log.Printf("tempo %d out of range. must be between 20 and 600", tmpo)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		tempo = tmpo
-	}
-	makeEtudesIfNeeded(filename, path[4], advancing)
-	if tempo != 0 {
-		// log.Println("need to serve an altered file")
-		µs := uint(60000000 / tempo) // microseconds per beat
-		bytes, err := miditempo.SetTempo(filename, µs)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Printf("%v", err)
-			return
-		}
-		unique := randString([]rune("abcedfghijklmnopqrstuvwxyz"), 4) // used to make deferred removal safe
-		filename = fmt.Sprintf("new filename: %s_%d_%s.mid", filename[0:len(filename)-4], tempo, unique)
-		// log.Println(filename)
-		err = ioutil.WriteFile(filename, bytes, 0644)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Printf("%v", err)
-			return
-		}
-		// defer os.Remove(filename) // avoid proliferation
-	}
+	makeEtudesIfNeeded(filename, req)
 	http.ServeFile(w, r, filename)
 	// log the request in format that's convenient for analysis
 	log.Printf("%s %s %s %s %s served\n", r.RemoteAddr, path[2], path[3], path[4], filename)
@@ -197,7 +168,7 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 // working directory if the requested file doesn't exist or is older
 // than the age limit set by serveEtudes in os.Environ. Otherwise
 // it does nothing.
-func makeEtudesIfNeeded(filename, instrumentName string, advancing bool) {
+func makeEtudesIfNeeded(filename string, req etudeRequest) {
 	var exists = true // initial assumption
 	finfo, err := os.Stat(filename)
 	if err != nil {
@@ -222,13 +193,13 @@ func makeEtudesIfNeeded(filename, instrumentName string, advancing bool) {
 		}
 	}
 	// need to generate if we get to here
-	iInfo, _ := getSupportedInstrumentByName(instrumentName) // already validated. ignore err value
+	iInfo, _ := getSupportedInstrumentByName(req.instrument) // already validated. ignore err value
 	// fmt.Printf("%v %s\n", iInfo, filename)
 	instrument := iInfo.gmnumber - 1
 	midilo := iInfo.midilo
 	midihi := iInfo.midihi
-	tempo := 120
-	mkAllEtudes(midilo, midihi, tempo, instrument, iInfo.name, advancing)
+	tempo, _ := strconv.Atoi(req.tempo)
+	mkAllEtudes(midilo, midihi, tempo, instrument, req)
 }
 
 // validEtudeRequest returns true if the request is correctly formed
@@ -261,6 +232,9 @@ func validEtudeRequest(req etudeRequest) (ok bool) {
 		return
 	}
 	if !validRhythmPattern(req.rhythm) {
+		return
+	}
+	if !validTempo(req.tempo) {
 		return
 	}
 	ok = true
@@ -303,6 +277,17 @@ var intervalInfo = []nameInfo{
 	{"minor7", "Minor 7", "Minor Seventh", 10},
 	{"major7", "Major 7", "Major Seventh", 11},
 	{"octave", "Octave", "Octave", 12},
+}
+
+// intervalSizeByName returns the size of name in half-steps
+func intervalSizeByName(name string) (sz int) {
+	for _, inf := range intervalInfo {
+		if inf.fileName == name {
+			sz = inf.size
+			break
+		}
+	}
+	return
 }
 
 // validIntervalName returns true if the interval name is in the ones we support.
@@ -395,6 +380,13 @@ func validRhythmPattern(name string) (ok bool) {
 	case "steady":
 		ok = true
 	case "advancing":
+		ok = true
+	}
+	return
+}
+func validTempo(ts string) (ok bool) {
+	_, err := strconv.Atoi(ts)
+	if err == nil {
 		ok = true
 	}
 	return

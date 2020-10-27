@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"strings"
 )
 
 type midiTriple [3]int
@@ -32,6 +31,7 @@ type etudeSequence struct {
 	instrument int
 	keyname    string
 	filename   string
+	req        etudeRequest
 }
 
 var keyNames = []string{"c", "dflat", "d", "eflat", "e", "f", "gflat", "g", "aflat", "a", "bflat", "b"}
@@ -141,19 +141,12 @@ func permute3(scale []int) []midiTriple {
 
 // generateEqualIntervalSequences returns a slice of etudeSequences as described in the usage instructions.
 // Each sequence consists of triples of equal interval sizes
-func generateEqualIntervalSequences(midilo int, midihi int, tempo int, instrument int, iname string) (sequences []etudeSequence) {
+func generateEqualIntervalSequences(midilo int, midihi int, tempo int, instrument int, req etudeRequest) (sequences []etudeSequence) {
 	// Get the chromatic scale as midi numbers in the range 0 - 11
 	midiChromaticScaleNums := getChromaticScale()
 	// Generate all intervals
 	triples := permute2(midiChromaticScaleNums)
 
-	if iname == "" {
-		sname, err := gmSoundName(instrument)
-		if err != nil {
-			panic("instrument number should have already been validated")
-		}
-		iname = gmSoundFileNamePrefix(sname)
-	}
 	var intervalNames []string
 	for _, iinfo := range intervalInfo {
 		intervalNames = append(intervalNames, iinfo.fileName)
@@ -161,15 +154,15 @@ func generateEqualIntervalSequences(midilo int, midihi int, tempo int, instrumen
 
 	// construct the sequences
 	for i := 0; i < 12; i++ {
-		intervalName := intervalNames[i]
 		sequences = append(sequences, etudeSequence{
-			filename:   intervalName + "_intervals" + "_" + iname + ".mid",
 			midilo:     midilo,
 			midihi:     midihi,
 			tempo:      tempo,
 			instrument: instrument,
-			keyname:    intervalName,
+			req:        req,
 		})
+		sequences[i].req.interval1 = intervalNames[i]
+
 	}
 
 	// filter the triples into the corresponding etude sequences
@@ -186,30 +179,23 @@ func generateEqualIntervalSequences(midilo int, midihi int, tempo int, instrumen
 
 // generateIntervalSequences returns a slice of 12 etudeSequences as described in the usage instructions.
 // Each sequence consists of 12 triples with the middle pitch corresponding to pitchnum.
-func generateIntervalSequences(midilo int, midihi int, tempo int, instrument int, iname string) (sequences []etudeSequence) {
+func generateIntervalSequences(midilo int, midihi int, tempo int, instrument int, req etudeRequest) (sequences []etudeSequence) {
 	// Get the chromatic scale as midi numbers in the range 0 - 11
 	midiChromaticScaleNums := getChromaticScale()
 	// Generate all intervals
 	triples := permute2(midiChromaticScaleNums)
 
-	if iname == "" {
-		sname, err := gmSoundName(instrument)
-		if err != nil {
-			panic("instrument number should have already been validated")
-		}
-		iname = gmSoundFileNamePrefix(sname)
-	}
 	// construct the sequences
 	for pitch := 0; pitch < 12; pitch++ {
 		pitchname := keyNames[pitch]
 		sequences = append(sequences, etudeSequence{
-			filename:   pitchname + "_intervals" + "_" + iname + ".mid",
 			midilo:     midilo,
 			midihi:     midihi,
 			tempo:      tempo,
 			instrument: instrument,
 			keyname:    pitchname,
 		})
+		sequences[pitch].req.tonalCenter = pitchname
 	}
 
 	// filter the triples into the corresponding etude sequences
@@ -225,7 +211,7 @@ func generateIntervalSequences(midilo int, midihi int, tempo int, instrument int
 
 // generateIntervalPairSequences returns an etudeSequence with 12 triples of
 // equal interval sizes, one beginning on each pitch in the Chromatic scale.
-func generateIntervaPairlSequence(midilo int, midihi int, tempo int, instrument int, iname string, i1, i2 int) (sequence etudeSequence) {
+func generateIntervalPairlSequence(midilo int, midihi int, tempo int, instrument int, iname string, i1, i2 int) (sequence etudeSequence) {
 	// Get the chromatic scale as midi numbers in the range 0 - 11
 	midiChromaticScaleNums := getChromaticScale()
 	// Generate all triples
@@ -260,30 +246,24 @@ func generateIntervaPairlSequence(midilo int, midihi int, tempo int, instrument 
 
 // generateFinalSequences returns a slice of 12 etudeSequences as described in the usage instructions.
 // Each sequence consists of all possible triples with a final pitch corresponding to pitchnum.
-func generateFinalSequences(midilo int, midihi int, tempo int, instrument int, iname string) (sequences []etudeSequence) {
+func generateFinalSequences(midilo int, midihi int, tempo int, instrument int, req etudeRequest) (sequences []etudeSequence) {
 	// Get the chromatic scale as midi numbers in the range 0 - 11
 	midiChromaticScaleNums := getChromaticScale()
 	// Generate all 3 note permutations
 	triples := permute3(midiChromaticScaleNums)
 
-	if iname == "" {
-		sname, err := gmSoundName(instrument)
-		if err != nil {
-			panic("instrument number should have already been validated")
-		}
-		iname = gmSoundFileNamePrefix(sname)
-	}
 	// construct the sequences
 	for pitch := 0; pitch < 12; pitch++ {
 		pitchname := keyNames[pitch]
 		sequences = append(sequences, etudeSequence{
-			filename:   pitchname + "_final" + "_" + iname + ".mid",
 			midilo:     midilo,
 			midihi:     midihi,
 			tempo:      tempo,
 			instrument: instrument,
 			keyname:    pitchname,
+			req:        req,
 		})
+		req.tonalCenter = pitchname
 	}
 
 	// filter the triples into the corresponding etude sequences
@@ -296,7 +276,7 @@ func generateFinalSequences(midilo int, midihi int, tempo int, instrument int, i
 }
 
 // generateKeySequences returns a slice of six etudeSequences as described in the usage instructions.
-func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrument int, iname string) []etudeSequence {
+func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrument int, req etudeRequest) []etudeSequence {
 	// Look up the keyname string
 	keyname := keyNames[keynum]
 	// Get the major and harmonic minor scales as midi numbers in the range 0 - 11
@@ -306,63 +286,66 @@ func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrum
 	majors := permute3(midiMajorScaleNums)
 	minors := permute3(midiMinorScaleNums)
 
-	if iname == "" {
-		sname, err := gmSoundName(instrument)
-		if err != nil {
-			panic("instrument number should have already been validated")
-		}
-		iname = gmSoundFileNamePrefix(sname)
-	}
-
 	// declare the sequences
 	pentatonic := etudeSequence{
-		filename:   keyname + "_pentatonic" + "_" + iname + ".mid",
 		midilo:     midilo,
 		midihi:     midihi,
 		tempo:      tempo,
 		instrument: instrument,
 		keyname:    keyname,
+		req:        req,
 	}
+	pentatonic.req.tonalCenter = keyname
+
 	plusFour := etudeSequence{
-		filename:   keyname + "_plus_four" + "_" + iname + ".mid",
 		midilo:     midilo,
 		midihi:     midihi,
 		tempo:      tempo,
 		instrument: instrument,
 		keyname:    keyname,
+		req:        req,
 	}
+	plusFour.req.tonalCenter = keyname
+
 	plusSeven := etudeSequence{
-		filename:   keyname + "_plus_seven" + "_" + iname + ".mid",
 		midilo:     midilo,
 		midihi:     midihi,
 		tempo:      tempo,
 		instrument: instrument,
 		keyname:    keyname,
+		req:        req,
 	}
+	plusSeven.req.tonalCenter = keyname
+
 	fourAndSeven := etudeSequence{
-		filename:   keyname + "_four_and_seven" + "_" + iname + ".mid",
 		midilo:     midilo,
 		midihi:     midihi,
 		tempo:      tempo,
 		instrument: instrument,
 		keyname:    keyname,
+		req:        req,
 	}
+	fourAndSeven.req.tonalCenter = keyname
+
 	raisedFive := etudeSequence{
-		filename:   keyname + "_raised_five" + "_" + iname + ".mid",
 		midilo:     midilo,
 		midihi:     midihi,
 		tempo:      tempo,
 		instrument: instrument,
 		keyname:    keyname,
+		req:        req,
 	}
+	raisedFive.req.tonalCenter = keyname
+
 	raisedFiveWithFourOrSeven := etudeSequence{
-		filename:   keyname + "_raised_five_with_four_or_seven" + "_" + iname + ".mid",
 		midilo:     midilo,
 		midihi:     midihi,
 		tempo:      tempo,
 		instrument: instrument,
 		keyname:    keyname,
+		req:        req,
 	}
+	raisedFiveWithFourOrSeven.req.tonalCenter = keyname
 
 	// scale degree midi values for this key
 	four := midiMajorScaleNums[3]
@@ -475,7 +458,7 @@ func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrum
 // the pitches within the limits specified in the sequence. Finally, it calls
 // writeMidi file to convert the data to Standard Midi form and write it to
 // disk.
-func mkMidi(sequence *etudeSequence, advancing bool, noTighten bool) {
+func mkMidi(sequence *etudeSequence, noTighten bool) {
 	// Shuffle the sequence
 	shuffleTriples(sequence.seq)
 
@@ -488,7 +471,7 @@ func mkMidi(sequence *etudeSequence, advancing bool, noTighten bool) {
 		prior = t[2]
 	}
 	// Write the etude
-	writeMidiFile(sequence, advancing)
+	writeMidiFile(sequence)
 
 }
 
@@ -528,14 +511,10 @@ func low3(n uint32) (u24 [3]byte) {
 // a 4/4 measure with rest on beat 4. Each measure is played
 // 4 times accompanied by a metronome track.  The etude begins
 // with a one-bar count-in.
-func writeMidiFile(sequence *etudeSequence, advancing bool) {
+func writeMidiFile(sequence *etudeSequence) {
 	// update the filename with the rhythm pattern
-	var newend = "_steady.mid"
-	if advancing {
-		newend = "_advancing.mid"
-	}
-	sequence.filename = strings.Replace(sequence.filename, ".mid", newend, 1)
-
+	sequence.filename = sequence.req.midiFilename()
+	advancing := sequence.req.rhythm == "advancing"
 	// open the file
 	fd, err := os.Create(sequence.filename)
 	if err != nil {

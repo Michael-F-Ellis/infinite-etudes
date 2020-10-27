@@ -99,16 +99,17 @@ func TestGoodEtudeRequest(t *testing.T) {
 func TestVocalEtudeRequest(t *testing.T) {
 	// because multiple vocal parts are mapped to the same midi number
 	var err error
-	url := "http://" + testhost + "/etude/aflat/pentatonic/choir_aahs_tenor/advancing"
+	url := "http://" + testhost + "/etude/aflat/pentatonic/minor2/minor2/choir_aahs_tenor/advancing/120"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Errorf("GET failed: %v", err)
+		return
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status code %v, got %v", http.StatusOK, resp.StatusCode)
 	}
-	exp, _ := ioutil.ReadFile("aflat_pentatonic_choir_aahs_tenor_advancing.mid")
+	exp, _ := ioutil.ReadFile("aflat_pentatonic_choir_aahs_tenor_advancing_120.mid")
 	got, _ := ioutil.ReadAll(resp.Body)
 	if !bytes.Equal(got, exp) {
 		t.Errorf("response didn't match the file content")
@@ -191,7 +192,8 @@ func TestMain(m *testing.M) {
 }
 
 func BenchmarkMkAllEtudes(b *testing.B) {
+	req := etudeRequest{instrument: "viola", rhythm: "steady"}
 	for i := 0; i < b.N; i++ {
-		mkAllEtudes(48, 84, 120, 15, "Viola", false)
+		mkAllEtudes(48, 84, 120, 15, req)
 	}
 }

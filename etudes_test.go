@@ -101,12 +101,18 @@ func TestPermute3(t *testing.T) {
 }
 
 func TestGenerateKeySequences(t *testing.T) {
-	s := generateKeySequences(0, 36, 84, 120, 0, "")
+	req := etudeRequest{
+		instrument: "acoustic_grand_piano",
+		pattern:    "pentatonic",
+		tempo:      "120",
+		rhythm:     "steady",
+	}
+	s := generateKeySequences(0, 36, 84, 120, 0, req)
 	if len(s) != 6 {
 		t.Errorf("expected 6 sequences, got %d", len(s))
 	}
-	if s[0].filename != "c_pentatonic_acoustic_grand_piano.mid" {
-		t.Errorf("expected name of first sequence to be c_pentatonic, got %s", s[0].filename)
+	if s[0].req.midiFilename() != "c_pentatonic_acoustic_grand_piano_steady_120.mid" {
+		t.Errorf("expected name of first sequence to be c_pentatonic, got %s", s[0].req.midiFilename())
 	}
 	// verify that all 300 permutations are accounted for
 	n := 0
@@ -121,8 +127,8 @@ func TestGenerateKeySequences(t *testing.T) {
 	four := midiMajorScaleNums[3]
 	seven := midiMajorScaleNums[6]
 	r5 := s[4]
-	if r5.filename != "c_raised_five_acoustic_grand_piano.mid" {
-		t.Errorf("expected fifth sequence filename to start with 'c_raised_5', got %s", s[0].filename)
+	if r5.req.midiFilename() != "c_raised_five_acoustic_grand_piano_steady_120.mid" {
+		t.Errorf("expected fifth sequence filename to start with 'c_raised_5', got %s", r5.req.midiFilename())
 	}
 	for _, x := range r5.seq {
 		for i, v := range x {
@@ -134,11 +140,16 @@ func TestGenerateKeySequences(t *testing.T) {
 }
 
 func TestGenerateIntervalSequences(t *testing.T) {
-	s := generateIntervalSequences(36, 84, 120, 0, "")
+	req := etudeRequest{
+		instrument: "acoustic_grand_piano",
+		tempo:      "120",
+		rhythm:     "steady",
+	}
+	s := generateIntervalSequences(36, 84, 120, 0, req)
 	if len(s) != 12 {
 		t.Errorf("expected 12 sequences, got %d", len(s))
 	}
-	if s[0].filename != "c_intervals_acoustic_grand_piano.mid" {
+	if s[0].filename != "c_allintervals_acoustic_grand_piano_steady_120.mid" {
 		t.Errorf("expected name of first sequence to be c_intervals, got %s", s[0].filename)
 	}
 	// verify that all 144 permutations are accounted for
@@ -151,11 +162,16 @@ func TestGenerateIntervalSequences(t *testing.T) {
 	}
 }
 func TestGenerateEqualIntervalSequences(t *testing.T) {
-	s := generateEqualIntervalSequences(36, 84, 120, 0, "")
+	req := etudeRequest{
+		instrument: "acoustic_grand_piano",
+		tempo:      "120",
+		rhythm:     "steady",
+	}
+	s := generateEqualIntervalSequences(36, 84, 120, 0, req)
 	if len(s) != 12 {
 		t.Errorf("expected 12 sequences, got %d", len(s))
 	}
-	if s[0].filename != "minor2_intervals_acoustic_grand_piano.mid" {
+	if s[0].filename != "interval_minor2_acoustic_grand_piano.mid" {
 		t.Errorf("expected name of first sequence to begin with minor2_intervals, got %s", s[0].filename)
 	}
 	// verify that all 144 permutations are accounted for
@@ -169,11 +185,16 @@ func TestGenerateEqualIntervalSequences(t *testing.T) {
 }
 
 func TestGenerateFinalSequences(t *testing.T) {
-	s := generateFinalSequences(36, 84, 120, 0, "")
+	req := etudeRequest{
+		instrument: "acoustic_grand_piano",
+		tempo:      "120",
+		rhythm:     "steady",
+	}
+	s := generateFinalSequences(36, 84, 120, 0, req)
 	if len(s) != 12 {
 		t.Errorf("expected 12 sequences, got %d", len(s))
 	}
-	if s[0].filename != "c_final_acoustic_grand_piano.mid" {
+	if s[0].filename != "c_final_acoustic_grand_piano_steady_120.mid" {
 		t.Errorf("expected name of first sequence to be c_final, got %s", s[0].filename)
 	}
 	// verify that all 1320 permutations are accounted for
@@ -186,7 +207,7 @@ func TestGenerateFinalSequences(t *testing.T) {
 	}
 }
 func TestGenerateIntervalPairSequence(t *testing.T) {
-	s := generateIntervaPairlSequence(36, 84, 120, 0, "", 2, 2)
+	s := generateIntervalPairlSequence(36, 84, 120, 0, "", 2, 2)
 	if len(s.seq) != 12 {
 		t.Errorf("expected 12 triples, got %d", len(s.seq))
 	}
@@ -247,10 +268,16 @@ func TestMkMidi(t *testing.T) {
 	x.tempo = 120
 	x.midilo = 36
 	x.midihi = 84
-	x.filename = "/tmp/testmkmidi.mid"
+	x.req = etudeRequest{
+		tonalCenter: "c",
+		pattern:     "pentatonic",
+		instrument:  "trumpet",
+		rhythm:      "steady",
+		tempo:       "120",
+	}
 	exp.seq = []midiTriple{{61, 62, 63}, {64, 65, 66}}
 	exp2.seq = []midiTriple{{64, 65, 66}, {61, 62, 63}}
-	mkMidi(&x, false, false)
+	mkMidi(&x, false)
 	if !(reflect.DeepEqual(x.seq, exp.seq) || reflect.DeepEqual(x.seq, exp2.seq)) {
 		t.Errorf("expected %v or %v, got %v", exp.seq, exp2.seq, x.seq)
 	}
@@ -459,8 +486,8 @@ SUCCESS:
 }
 func TestIntervalPairEtude(t *testing.T) {
 	// generate a midi file with root position major triads
-	s := generateIntervaPairlSequence(36, 84, 120, 0, "", 4, 3)
-	mkMidi(&s, false, true) // steady rhythm, no tighten
+	s := generateIntervalPairlSequence(36, 84, 120, 0, "", 4, 3)
+	mkMidi(&s, false) // steady rhythm, no tighten
 }
 func TestExtractIntervalPair(t *testing.T) {
 	type testcase struct {
