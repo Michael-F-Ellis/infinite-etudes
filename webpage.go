@@ -581,7 +581,7 @@ func indexJS() (script *HtmlTree) {
 		  // after a user action.
 		  document.body.addEventListener("click", MIDIjs.resumeAudioContext);
 		  var scaleselect = document.getElementById("scale-select")
-		  scaleselect.addEventListener("onchange", manageInputs)
+		  scaleselect.addEventListener("change", manageInputs)
 		  manageInputs()
 		}
 		// returns true if the selected key is an interval name
@@ -597,13 +597,13 @@ func indexJS() (script *HtmlTree) {
 			var interval1 = document.getElementById("interval1-select")
 			var interval2 = document.getElementById("interval2-select")
 			var scalePattern = document.getElementById("scale-select").value
-			if (scalePattern = "interval") {
+			if (scalePattern == "interval") {
 				interval1.disabled=false
 				interval2.disabled=true
 				key.disabled=true
 				return
 			}
-			if (scalePattern = "intervalpair") {
+			if (scalePattern == "intervalpair") {
 				interval1.disabled=false
 				interval2.disabled=false
 				key.disabled=true
