@@ -70,6 +70,7 @@ func indexBody() (body *HtmlTree) {
 	}
 	interval1Select := Label(``, "Interval 1", Select("id=interval1-select", intervals...))
 	interval2Select := Label(``, "Interval 2", Select("id=interval2-select", intervals...))
+	interval3Select := Label(``, "Interval 3", Select("id=interval3-select", intervals...))
 	// Instrument sound
 	var sounds []interface{}
 	for _, iinfo := range supportedInstruments {
@@ -111,7 +112,7 @@ func indexBody() (body *HtmlTree) {
 
 	// Assemble everything into the body element.
 	body = Body("", header,
-		Div("", scaleSelect, keySelect, interval1Select, interval2Select, soundSelect, rhythmSelect, tempoSelect),
+		Div("", scaleSelect, keySelect, interval1Select, interval2Select, interval3Select, soundSelect, rhythmSelect, tempoSelect),
 		Div(`style="padding-top:1vh;"`, playBtn, stopBtn, downloadBtn),
 		quickStart(),
 		forTheCurious(),
@@ -596,22 +597,33 @@ func indexJS() (script *HtmlTree) {
 			var key = document.getElementById("key-select")
 			var interval1 = document.getElementById("interval1-select")
 			var interval2 = document.getElementById("interval2-select")
+			var interval3 = document.getElementById("interval3-select")
 			var scalePattern = document.getElementById("scale-select").value
 			if (scalePattern == "interval") {
 				interval1.disabled=false
 				interval2.disabled=true
+				interval3.disabled=true
 				key.disabled=true
 				return
 			}
 			if (scalePattern == "intervalpair") {
 				interval1.disabled=false
 				interval2.disabled=false
+				interval3.disabled=true
+				key.disabled=true
+				return
+			}
+			if (scalePattern == "intervaltriple") {
+				interval1.disabled=false
+				interval2.disabled=false
+				interval3.disabled=false
 				key.disabled=true
 				return
 			}
 			// all the other patterns are chosen by key
 			interval1.disabled=true
 			interval2.disabled=true
+			interval3.disabled=true
 			key.disabled=false
 			return
 		}
@@ -628,10 +640,11 @@ func indexJS() (script *HtmlTree) {
 			  };
 		  interval1 = document.getElementById("interval1-select").value
 		  interval2 = document.getElementById("interval2-select").value
+		  interval3 = document.getElementById("interval3-select").value
 		  sound = document.getElementById("sound-select").value
 		  rhythm = document.getElementById("rhythm-select").value
 		  tempo = document.getElementById("tempo-select").value
-		  return "/etude/" + key + "/" + scale + "/" + interval1 + "/" + interval2 + "/" + sound + "/" + rhythm + "/" + tempo
+		  return "/etude/" + key + "/" + scale + "/" + interval1 + "/" + interval2 + "/" + interval3 + "/" + sound + "/" + rhythm + "/" + tempo
 		}
 
 		// Read the selects and returns a proposed filename for the etude to be downloaded.
@@ -643,6 +656,7 @@ func indexJS() (script *HtmlTree) {
 		  scale = document.getElementById("scale-select").value
 		  interval1 = document.getElementById("interval1-select").value
 		  interval2 = document.getElementById("interval2-select").value
+		  interval3 = document.getElementById("interval3-select").value
 		  sound = document.getElementById("sound-select").value
 		  rhythm = document.getElementById("rhythm-select").value
 		  tempo = document.getElementById("tempo-select").value
@@ -651,6 +665,9 @@ func indexJS() (script *HtmlTree) {
 		  }
 		  if (scale=="intervalpair"){
 			  return scale + "_" + interval1 + "_" + interval2 + "_" + sound + "_" + rhythm + "_" + tempo + ".midi" 
+		  }
+		  if (scale=="intervaltriple"){
+			  return scale + "_" + interval1 + "_" + interval2 + "_"  + interval3 + "_" + sound + "_" + rhythm + "_" + tempo + ".midi" 
 		  }
 		  // any other scale 
 		  return key + "_" + scale + "_" + sound + "_" + rhythm + "_" + tempo + ".midi"

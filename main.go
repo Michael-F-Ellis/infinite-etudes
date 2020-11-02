@@ -225,21 +225,28 @@ func usage() {
 // vetted and are not checked.
 func mkAllEtudes(midilo, midihi, tempo, instrument int, r etudeRequest) {
 	iname := r.instrument
-	if r.pattern == "intervalpair" {
+	switch r.pattern {
+	case "intervalpair":
 		i1 := intervalSizeByName(r.interval1)
 		i2 := intervalSizeByName(r.interval2)
-		s := generateIntervalPairlSequence(midilo, midihi, tempo, instrument, iname, i1, i2)
+		s := generateTwoIntervalSequence(midilo, midihi, tempo, instrument, iname, i1, i2)
 		s.req = r
 		mkMidi(&s, true) // no tighten
-		return           // don't bother with the other etude sets.
+	case "intervaltriple":
+		i1 := intervalSizeByName(r.interval1)
+		i2 := intervalSizeByName(r.interval2)
+		i3 := intervalSizeByName(r.interval3)
+		s := generateThreeIntervalSequence(midilo, midihi, tempo, instrument, iname, i1, i2, i3)
+		s.req = r
+		mkMidi(&s, true) // no tighten
+	default:
+		// Create and write all the tonal output files for all 12 key signatures
+		for i := 0; i < 12; i++ {
+			mkKeyEtudes(i, midilo, midihi, tempo, instrument, r)
+		}
+		mkFinalEtudes(midilo, midihi, tempo, instrument, r)
+		mkIntervalEtudes(midilo, midihi, tempo, instrument, r)
 	}
-
-	// Create and write all the tonal output files for all 12 key signatures
-	for i := 0; i < 12; i++ {
-		mkKeyEtudes(i, midilo, midihi, tempo, instrument, r)
-	}
-	mkFinalEtudes(midilo, midihi, tempo, instrument, r)
-	mkIntervalEtudes(midilo, midihi, tempo, instrument, r)
 }
 
 // mkKeyEtudes generates the six files associated with keynum where

@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/go-test/deep"
 )
 
 func init() {
@@ -38,24 +40,24 @@ func TestGetScale(t *testing.T) {
 
 }
 
-func TestTripleFromInterval(t *testing.T) {
+func TestTripleFromIntervals(t *testing.T) {
 	type testcase struct {
 		in  []int
 		up  bool
-		exp midiTriple
+		exp midiPattern
 	}
 	cases := []testcase{
-		{[]int{0, 1}, true, midiTriple{0, 1, 0}},
-		{[]int{0, 1}, false, midiTriple{0, -11, 0}},
-		{[]int{1, 0}, false, midiTriple{1, 0, 1}},
-		{[]int{7, 0}, true, midiTriple{7, 12, 7}},
-		{[]int{7, 7}, true, midiTriple{7, 19, 7}},
-		{[]int{7, 7}, false, midiTriple{7, -5, 7}},
+		{[]int{0, 1}, true, midiPattern{0, 1, 0}},
+		{[]int{0, 1}, false, midiPattern{0, -11, 0}},
+		{[]int{1, 0}, false, midiPattern{1, 0, 1}},
+		{[]int{7, 0}, true, midiPattern{7, 12, 7}},
+		{[]int{7, 7}, true, midiPattern{7, 19, 7}},
+		{[]int{7, 7}, false, midiPattern{7, -5, 7}},
 	}
 	for _, c := range cases {
 		got := tripleFromPitchPair(c.in[0], c.in[1], c.up)
-		if got != c.exp {
-			t.Errorf("%v input, exp %v, got %v", c.in, c.exp, got)
+		if diff := deep.Equal(got, c.exp); diff != nil {
+			t.Errorf("%v input, %v", c.in, diff)
 		}
 	}
 }
@@ -82,10 +84,12 @@ func TestPermute2(t *testing.T) {
 	if len(p) != 144 {
 		t.Errorf("expected 132 permutations, got %d", len(p))
 	}
-	exp := midiTriple{0, 12, 0}
-	exp2 := midiTriple{0, -12, 0}
+	exp := midiPattern{0, 12, 0}
+	exp2 := midiPattern{0, -12, 0}
 	got := p[0]
-	if exp != got && exp2 != got {
+	diff := deep.Equal(got, exp)
+	diff1 := deep.Equal(got, exp2)
+	if diff != nil && diff1 != nil {
 		t.Errorf("expected first triple to be one of %v, %v. Got %v", exp, exp2, got)
 	}
 }
@@ -95,7 +99,7 @@ func TestPermute3(t *testing.T) {
 	if len(p) != 210 {
 		t.Errorf("expected 210 permutations, got %d", len(p))
 	}
-	if !(p[0] == [3]int{0, 2, 4}) {
+	if diff := deep.Equal(p[0], midiPattern{0, 2, 4}); diff != nil {
 		t.Errorf("expected first triple to be %v, got %v", [3]int{0, 2, 4}, p[0])
 	}
 }
@@ -209,65 +213,71 @@ func TestGenerateFinalSequences(t *testing.T) {
 		t.Errorf("expected 1320 midiTriples total, got %d", n)
 	}
 }
-func TestGenerateIntervalPairSequence(t *testing.T) {
-	s := generateIntervalPairlSequence(36, 84, 120, 0, "", 2, 2)
+func TestGenerateTwoIntervalSequence(t *testing.T) {
+	s := generateTwoIntervalSequence(36, 84, 120, 0, "", 2, 2)
 	if len(s.seq) != 12 {
 		t.Errorf("expected 12 triples, got %d", len(s.seq))
 	}
 	log.Println(s)
 }
 
+func TestGenerateThreeIntervalSequence(t *testing.T) {
+	s := generateThreeIntervalSequence(36, 84, 120, 0, "", 2, 2, 2)
+	if len(s.seq) != 12 {
+		t.Errorf("expected 12 quads, got %d", len(s.seq))
+	}
+	log.Println(s)
+}
+
 func TestTighten(t *testing.T) {
-	x := midiTriple{1, 2, 3}
-	exp := midiTriple{1, 2, 3}
+	x := midiPattern{1, 2, 3}
+	exp := midiPattern{1, 2, 3}
 	tighten(&x)
-	if x != exp {
+	if diff := deep.Equal(x, exp); diff != nil {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
-	x = midiTriple{0, 11, 10}
-	exp = midiTriple{0, -1, -2}
+	x = midiPattern{0, 11, 10}
+	exp = midiPattern{0, -1, -2}
 	tighten(&x)
-	if x != exp {
+	if diff := deep.Equal(x, exp); diff != nil {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
-	x = midiTriple{11, 0, 10}
-	exp = midiTriple{11, 12, 10}
+	x = midiPattern{11, 0, 10}
+	exp = midiPattern{11, 12, 10}
 	tighten(&x)
-	if x != exp {
+	if diff := deep.Equal(x, exp); diff != nil {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
 }
 
 func TestConstrain(t *testing.T) {
-	x := midiTriple{1, 2, 3}
+	x := midiPattern{1, 2, 3}
 	prior := 60
-	exp := midiTriple{61, 62, 63}
+	exp := midiPattern{61, 62, 63}
 	constrain(&x, prior, 36, 84, false)
-	if x != exp {
+	if diff := deep.Equal(x, exp); diff != nil {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
-	x = midiTriple{1, 2, 3}
+	x = midiPattern{1, 2, 3}
 	prior = 83
-	exp = midiTriple{73, 74, 75}
+	exp = midiPattern{73, 74, 75}
 	constrain(&x, prior, 36, 84, false)
-	if x != exp {
+	if diff := deep.Equal(x, exp); diff != nil {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
-	x = midiTriple{0, 7, 2}
+	x = midiPattern{0, 7, 2}
 	prior = 37
-	exp = midiTriple{48, 43, 38}
+	exp = midiPattern{48, 43, 38}
 	constrain(&x, prior, 36, 84, false)
-	if x != exp {
+	if diff := deep.Equal(x, exp); diff != nil {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
-
 }
 
 func TestMkMidi(t *testing.T) {
 	var x etudeSequence
 	var exp etudeSequence
 	var exp2 etudeSequence
-	x.seq = []midiTriple{{1, 2, 3}, {4, 5, 6}}
 	x.tempo = 120
 	x.midilo = 36
 	x.midihi = 84
@@ -278,8 +288,16 @@ func TestMkMidi(t *testing.T) {
 		rhythm:      "steady",
 		tempo:       "120",
 	}
-	exp.seq = []midiTriple{{61, 62, 63}, {64, 65, 66}}
-	exp2.seq = []midiTriple{{64, 65, 66}, {61, 62, 63}}
+	x.seq = []midiPattern{{1, 2, 3}, {4, 5, 6}}
+	exp.seq = []midiPattern{{61, 62, 63}, {64, 65, 66}}
+	exp2.seq = []midiPattern{{64, 65, 66}, {61, 62, 63}}
+	mkMidi(&x, false)
+	if !(reflect.DeepEqual(x.seq, exp.seq) || reflect.DeepEqual(x.seq, exp2.seq)) {
+		t.Errorf("expected %v or %v, got %v", exp.seq, exp2.seq, x.seq)
+	}
+	x.seq = []midiPattern{{1, 2, 3, 4}, {4, 5, 6, 7}}
+	exp.seq = []midiPattern{{61, 62, 63, 64}, {64, 65, 66, 67}}
+	exp2.seq = []midiPattern{{64, 65, 66, 67}, {61, 62, 63, 64}}
 	mkMidi(&x, false)
 	if !(reflect.DeepEqual(x.seq, exp.seq) || reflect.DeepEqual(x.seq, exp2.seq)) {
 		t.Errorf("expected %v or %v, got %v", exp.seq, exp2.seq, x.seq)
@@ -290,9 +308,9 @@ func TestMkMidi(t *testing.T) {
 func TestShuffle(t *testing.T) {
 	var x etudeSequence
 	var y etudeSequence
-	x.seq = []midiTriple{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}, {13, 14, 15}}
-	y.seq = []midiTriple{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}, {13, 14, 15}}
-	shuffleTriples(x.seq)
+	x.seq = []midiPattern{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}, {13, 14, 15}}
+	y.seq = []midiPattern{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}, {13, 14, 15}}
+	shufflePatterns(x.seq)
 	if reflect.DeepEqual(x.seq, y.seq) {
 		t.Errorf("shuffle did not change sequence, could be chance, so try again")
 	}
@@ -326,17 +344,55 @@ func TestComposeFileName(t *testing.T) {
 
 }
 
-func TestFourBarsNormalRhythm(t *testing.T) {
-	pitches := []midiTriple{{1, 2, 3}, {4, 5, 6}}
+func TestQuadNormalRhythm(t *testing.T) {
+	pitches := []midiPattern{{1, 2, 3, 4}, {4, 5, 6, 7}}
 	exp := []byte{
-		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00, 0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00, 0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
-		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00, 0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00, 0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
-		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00, 0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00, 0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
-		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00, 0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00, 0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
+		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00,
+		0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
+		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x00,
+		0x90, 0x04, 0x51, 0x87, 0x40, 0x80, 0x04, 0x51, 0x00,
+		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00,
+		0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
+		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x00,
+		0x90, 0x04, 0x51, 0x87, 0x40, 0x80, 0x04, 0x51, 0x00,
+		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00,
+		0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
+		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x00,
+		0x90, 0x04, 0x51, 0x87, 0x40, 0x80, 0x04, 0x51, 0x00,
+		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00,
+		0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
+		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x00,
+		0x90, 0x04, 0x51, 0x87, 0x40, 0x80, 0x04, 0x51, 0x00,
 	}
 	x := fourBarsMusic(pitches[0], pitches[1], false, 0)
-	if !reflect.DeepEqual(x.Bytes()[:], exp) {
-		t.Errorf("expected % x, got % x", exp, x)
+	if diff := deep.Equal(x.Bytes()[:], exp); diff != nil {
+		t.Errorf("%v", diff)
+	}
+	n := len(x.Bytes())
+	if n != len(exp) {
+		t.Errorf("expected %d bytes, got %d", 4*len(exp), n)
+	}
+
+}
+func TestFourBarsNormalRhythm(t *testing.T) {
+	pitches := []midiPattern{{1, 2, 3}, {4, 5, 6}}
+	exp := []byte{
+		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00,
+		0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
+		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
+		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00,
+		0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
+		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
+		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00,
+		0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
+		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
+		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00,
+		0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
+		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
+	}
+	x := fourBarsMusic(pitches[0], pitches[1], false, 0)
+	if diff := deep.Equal(x.Bytes()[:], exp); diff != nil {
+		t.Errorf("%v", diff)
 	}
 	n := len(x.Bytes())
 	if n != len(exp) {
@@ -348,7 +404,7 @@ func TestFourBarsNormalRhythm(t *testing.T) {
 func TestFourBarsAdvancingRhythm(t *testing.T) {
 	var offset int
 	var music *bytes.Buffer
-	pitches := []midiTriple{{1, 2, 3}, {4, 5, 6}}
+	pitches := []midiPattern{{1, 2, 3}, {4, 5, 6}}
 	music = fourBarsMusic(pitches[0], pitches[1], true, offset)
 	exp := []byte{
 		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00, 0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00, 0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
@@ -450,16 +506,23 @@ func TestTrackInstrument(t *testing.T) {
 	}
 
 }
-func TestTripleFrom2Intervals(t *testing.T) {
-	got := tripleFrom2Intervals(60, 4, 3) // C E G from middle C
-	exp := midiTriple{60, 64, 67}
+func TestQuadFrom3Intervals(t *testing.T) {
+	got := quadFrom3Intervals(60, 4, 3, 3) // C E G from middle C
+	exp := midiPattern{60, 64, 67, 70}
 	if !reflect.DeepEqual(got, exp) {
 		t.Errorf("expected %v, got %v", exp, got)
 	}
 }
-func TestShuffleTriplePitches(t *testing.T) {
+func TestTripleFrom2Intervals(t *testing.T) {
+	got := tripleFrom2Intervals(60, 4, 3) // C E G from middle C
+	exp := midiPattern{60, 64, 67}
+	if !reflect.DeepEqual(got, exp) {
+		t.Errorf("expected %v, got %v", exp, got)
+	}
+}
+func TestShufflePatternPitches(t *testing.T) {
 	// loop until we see all 6 possible orders
-	m := map[midiTriple]int{
+	m := map[[3]int]int{
 		{1, 2, 3}: 0,
 		{1, 3, 2}: 0,
 		{2, 1, 3}: 0,
@@ -470,9 +533,11 @@ func TestShuffleTriplePitches(t *testing.T) {
 	var done bool
 	for i := 0; i < 1000; i++ {
 		done = true // assumption
-		trpl := midiTriple{1, 2, 3}
-		shuffleTriplePitches(&trpl)
-		m[trpl] += 1
+		trpl := midiPattern{1, 2, 3}
+		shufflePatternPitches(&trpl)
+		var key [3]int
+		copy(key[:], trpl)
+		m[key] += 1
 		for _, n := range m {
 			if n == 0 {
 				done = false
@@ -489,7 +554,7 @@ SUCCESS:
 }
 func TestIntervalPairEtude(t *testing.T) {
 	// generate a midi file with root position major triads
-	s := generateIntervalPairlSequence(36, 84, 120, 0, "", 4, 3)
+	s := generateTwoIntervalSequence(36, 84, 120, 0, "", 4, 3)
 	mkMidi(&s, false) // steady rhythm, no tighten
 }
 func TestExtractIntervalPair(t *testing.T) {

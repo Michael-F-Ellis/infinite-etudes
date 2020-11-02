@@ -105,6 +105,7 @@ type etudeRequest struct {
 	pattern     string
 	interval1   string
 	interval2   string
+	interval3   string
 	instrument  string
 	rhythm      string
 	tempo       string
@@ -117,6 +118,8 @@ func (r *etudeRequest) midiFilename() (f string) {
 		parts = []string{r.pattern, r.interval1, r.instrument, r.rhythm, r.tempo}
 	case "intervalpair":
 		parts = []string{r.pattern, r.interval1, r.interval2, r.instrument, r.rhythm, r.tempo}
+	case "intervaltriple":
+		parts = []string{r.pattern, r.interval1, r.interval2, r.interval3, r.instrument, r.rhythm, r.tempo}
 	default:
 		parts = []string{r.tonalCenter, r.pattern, r.instrument, r.rhythm, r.tempo}
 	}
@@ -149,9 +152,10 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 	req.pattern = path[3]
 	req.interval1 = path[4]
 	req.interval2 = path[5]
-	req.instrument = path[6]
-	req.rhythm = path[7]
-	req.tempo = path[8]
+	req.interval3 = path[6]
+	req.instrument = path[7]
+	req.rhythm = path[8]
+	req.tempo = path[9]
 	if !validEtudeRequest(req) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -220,6 +224,12 @@ func validEtudeRequest(req etudeRequest) (ok bool) {
 		}
 	case "intervalpair":
 		if !validIntervalName(req.interval1) || !validIntervalName(req.interval2) {
+			return
+		}
+	case "intervaltriple":
+		if !validIntervalName(req.interval1) ||
+			!validIntervalName(req.interval2) ||
+			!validIntervalName(req.interval3) {
 			return
 		}
 
@@ -345,6 +355,7 @@ var scaleInfo = []nameInfo{
 	{"allintervals", "All Intervals", "All Intervals", 0},
 	{"interval", "Interval", "Interval", 0},
 	{"intervalpair", "Interval Pairs", "Interval Pairs", 0},
+	{"intervaltriple", "Interval Triples", "Interval Triples", 0},
 	{"pentatonic", "Pentatonic", "Pentatonic", 0},
 	{"final", "Chromatic Final", "Chromatic Final", 0},
 	{"plus_four", "Plus Four", "Plus Four", 0},

@@ -21,10 +21,10 @@ import (
 	"os"
 )
 
-type midiTriple [3]int
+type midiPattern []int
 
 type etudeSequence struct {
-	seq        []midiTriple
+	seq        []midiPattern
 	midilo     int
 	midihi     int
 	tempo      int
@@ -65,17 +65,28 @@ func getChromaticScale() (scale []int) {
 // tripleFrom2Intervals builds a midiTripe from an initial pitch, p, and a pair
 // of intervals, i1 and i2, (measured in half steps). The construction always
 // ascends from p.
-func tripleFrom2Intervals(p, i1, i2 int) (t midiTriple) {
+func tripleFrom2Intervals(p, i1, i2 int) (t midiPattern) {
 	q := p + i1
 	r := q + i2
-	t = midiTriple{p, q, r}
+	t = midiPattern{p, q, r}
+	return
+}
+
+// quadFrom3Intervals builds a 4 element midiPattern from an initial pitch, p, and three
+// intervals, i1, i2, i3, (measured in half steps). The construction always
+// ascends from p.
+func quadFrom3Intervals(p, i1, i2, i3 int) (t midiPattern) {
+	q := p + i1
+	r := q + i2
+	s := r + i3
+	t = midiPattern{p, q, r, s}
 	return
 }
 
 // tripleFromPitchPair builds a midiTriple from a pair of pitch numbers.
 // The up argument determines if second pitch is to be adjusted an octave up or down, depending on the
 // interval.
-func tripleFromPitchPair(p, q int, up bool) (t midiTriple) {
+func tripleFromPitchPair(p, q int, up bool) (t midiPattern) {
 	switch {
 	case p == q: // convert unison to an octave
 		if up {
@@ -94,7 +105,7 @@ func tripleFromPitchPair(p, q int, up bool) (t midiTriple) {
 	default:
 		panic("This should be impossible")
 	}
-	t = midiTriple{p, q, p}
+	t = midiPattern{p, q, p}
 	return
 }
 
@@ -108,7 +119,7 @@ func flip() (up bool) {
 
 // permute2 returns a slice of midiTriple. Each triple is built from an interval
 // with the first note repeated as the third note, e.g. {3, 5, 3} or {3, -7, 3}
-func permute2(scale []int) (permutations []midiTriple) {
+func permute2(scale []int) (permutations []midiPattern) {
 	for _, p := range scale {
 		for _, q := range scale {
 			permutations = append(permutations, tripleFromPitchPair(p, q, flip()))
@@ -120,8 +131,8 @@ func permute2(scale []int) (permutations []midiTriple) {
 // permute3 returns a slice of midiTriple containing
 // all possible permutations of 3 distinct notes in the
 // scale.
-func permute3(scale []int) []midiTriple {
-	var permutations []midiTriple
+func permute3(scale []int) []midiPattern {
+	var permutations []midiPattern
 	for i, p := range scale {
 		for j, q := range scale {
 			if j == i {
@@ -131,7 +142,7 @@ func permute3(scale []int) []midiTriple {
 				if k == i || k == j {
 					continue
 				}
-				t := midiTriple{p, q, r}
+				t := midiPattern{p, q, r}
 				permutations = append(permutations, t)
 			}
 		}
@@ -212,22 +223,46 @@ func generateIntervalSequences(midilo int, midihi int, tempo int, instrument int
 	return
 }
 
-// generateIntervalPairSequences returns an etudeSequence with 12 triples of
+// generateTwoIntervalSequence returns an etudeSequence with 12 triples of
 // equal interval sizes, one beginning on each pitch in the Chromatic scale.
-func generateIntervalPairlSequence(midilo int, midihi int, tempo int, instrument int, iname string, i1, i2 int) (sequence etudeSequence) {
+func generateTwoIntervalSequence(midilo int, midihi int, tempo int, instrument int, iname string, i1, i2 int) (sequence etudeSequence) {
 	// Get the chromatic scale as midi numbers in the range 0 - 11
 	midiChromaticScaleNums := getChromaticScale()
 	// Generate all triples
-	triples := []midiTriple{}
+	patterns := []midiPattern{}
 	for p := range midiChromaticScaleNums {
 		t := tripleFrom2Intervals(p, i1, i2)
-		shuffleTriplePitches(&t) // randomize the order
-		triples = append(triples, t)
+		shufflePatternPitches(&t) // randomize the order
+		patterns = append(patterns, t)
 	}
 
 	// construct the sequence
 	sequence = etudeSequence{
-		seq:        triples,
+		seq:        patterns,
+		midilo:     midilo,
+		midihi:     midihi,
+		tempo:      tempo,
+		instrument: instrument,
+	}
+	return
+}
+
+// generateThreeIntervalSequence returns an etudeSequence with 12 quads of
+// equal interval sizes, one beginning on each pitch in the Chromatic scale.
+func generateThreeIntervalSequence(midilo int, midihi int, tempo int, instrument int, iname string, i1, i2, i3 int) (sequence etudeSequence) {
+	// Get the chromatic scale as midi numbers in the range 0 - 11
+	midiChromaticScaleNums := getChromaticScale()
+	// Generate all triples
+	patterns := []midiPattern{}
+	for p := range midiChromaticScaleNums {
+		q := quadFrom3Intervals(p, i1, i2, i3)
+		shufflePatternPitches(&q) // randomize the order
+		patterns = append(patterns, q)
+	}
+
+	// construct the sequence
+	sequence = etudeSequence{
+		seq:        patterns,
 		midilo:     midilo,
 		midihi:     midihi,
 		tempo:      tempo,
@@ -459,7 +494,7 @@ func generateKeySequences(keynum int, midilo int, midihi int, tempo int, instrum
 // disk.
 func mkMidi(sequence *etudeSequence, noTighten bool) {
 	// Shuffle the sequence
-	shuffleTriples(sequence.seq)
+	shufflePatterns(sequence.seq)
 
 	// Constrain the sequence assuming a prior pitch halfway between the limits.
 	prior := (sequence.midilo + sequence.midihi) / 2
@@ -467,27 +502,27 @@ func mkMidi(sequence *etudeSequence, noTighten bool) {
 	for i := 0; i < seqlen; i++ {
 		t := &(sequence.seq[i])
 		constrain(t, prior, sequence.midilo, sequence.midihi, noTighten)
-		prior = t[2]
+		prior = (*t)[2]
 	}
 	// Write the etude
 	writeMidiFile(sequence)
 
 }
 
-// shuffleTriplePitches puts the pitches of a midiTriple in random order using
+// shufflePatternPitches puts the pitches of a midiPattern in random order using
 // the Fisher-Yates algorithm.
-func shuffleTriplePitches(t *midiTriple) {
-	N := 3
+func shufflePatternPitches(t *midiPattern) {
+	N := len(*t)
 	for i := 0; i < N; i++ {
 		// choose index uniformly in [i, N-1]
 		r := i + rand.Intn(N-i)
-		t[r], t[i] = t[i], t[r]
+		(*t)[r], (*t)[i] = (*t)[i], (*t)[r]
 	}
 }
 
-// shuffleTriples puts a slice of midiTriple in random order using the
+// shufflePatterns puts a slice of midiPatterns in random order using the
 // Fisher-Yates algorithm.
-func shuffleTriples(slc []midiTriple) {
+func shufflePatterns(slc []midiPattern) {
 	N := len(slc)
 	for i := 0; i < N; i++ {
 		// choose index uniformly in [i, N-1]
@@ -587,7 +622,7 @@ func writeMidiFile(sequence *etudeSequence) {
 	}
 	var offset int
 	for i, t := range sequence.seq {
-		var u midiTriple
+		var u midiPattern
 		if i < len(sequence.seq)-1 {
 			u = sequence.seq[i+1]
 		} else {
@@ -682,7 +717,7 @@ func writeMidiFile(sequence *etudeSequence) {
 //
 // For the final triple in the sequence, it is recommended to pass the same value
 // for t and u.
-func fourBarsMusic(t, u midiTriple, advancing bool, offset int) *bytes.Buffer {
+func fourBarsMusic(t, u midiPattern, advancing bool, offset int) *bytes.Buffer {
 	// These are the only variable length delta times we need.
 	noBeats := byte(0x00)
 	oneBeatHi := byte(0x87)
@@ -726,10 +761,18 @@ func fourBarsMusic(t, u midiTriple, advancing bool, offset int) *bytes.Buffer {
 			// 2nd beat
 			pitch = byte(t[1])
 			mkBeat(buf, pitch, velocity2, 0)
+			switch len(t) {
+			case 3:
+				// 3rd beat (4th beat is a rest, so we append a one beat delay after the Note Off event.
+				pitch = byte(t[2])
+				mkBeat(buf, pitch, velocity2, 1)
+			case 4:
+				pitch = byte(t[2])
+				mkBeat(buf, pitch, velocity2, 0)
+				pitch = byte(t[3])
+				mkBeat(buf, pitch, velocity2, 0)
 
-			// 3rd beat (4th beat is a rest, so we append a one beat delay after the Note Off event.
-			pitch = byte(t[2])
-			mkBeat(buf, pitch, velocity2, 1)
+			}
 			continue
 		}
 		// advancing
@@ -939,11 +982,11 @@ func adjustSuccessor(p0 int, p1 int) (adjustedP1 int) {
 // tighten puts the pitches of a midiTriple in close sequential position,
 // e.g. 13 19 16 -> 13 7 4, so that each note is within 6 semitones of the
 // its predecessor.
-func tighten(t *midiTriple) {
+func tighten(t *midiPattern) {
 	// adjust second pitch relative to first
-	t[1] = adjustSuccessor(t[0], t[1])
+	(*t)[1] = adjustSuccessor((*t)[0], (*t)[1])
 	// adjust third pitch relative to (adjusted) second.
-	t[2] = adjustSuccessor(t[1], t[2])
+	(*t)[2] = adjustSuccessor((*t)[1], (*t)[2])
 }
 
 // constrain applies tighten to a midiTriple, then adjusts its octave
@@ -951,7 +994,7 @@ func tighten(t *midiTriple) {
 // of a previous triple. Then it checks to see if any of the adjusted
 // pitches are above midihi or below midilow and re-adjusts the octave
 // as needed to keep the pitches within the limits.
-func constrain(t *midiTriple, prior int, midilo int, midihi int, noTighten bool) {
+func constrain(t *midiPattern, prior int, midilo int, midihi int, noTighten bool) {
 	if midilo > 127 || midihi > 127 || midihi-midilo < 24 {
 		msg := fmt.Sprintf("Invalid midi limits %v, %v", midilo, midihi)
 		panic(msg) // Programming error. Bad limits should be rejected at startup
@@ -962,21 +1005,21 @@ func constrain(t *midiTriple, prior int, midilo int, midihi int, noTighten bool)
 	}
 	// Shift tightened triple so that first pitch is as
 	// close as possible to prior.
-	offset := adjustSuccessor(prior, t[0]) - t[0]
-	for i := 0; i < len(t); i++ {
-		t[i] += offset
+	offset := adjustSuccessor(prior, (*t)[0]) - (*t)[0]
+	for i := 0; i < len(*t); i++ {
+		(*t)[i] += offset
 	}
 	// If needed, shift pitches by octaves until all are between midilo and midihi inclusive.
 	lo := int(midilo)
-	for t[0] < lo || t[1] < lo || t[2] < lo {
-		t[0] += 12
-		t[1] += 12
-		t[2] += 12
+	for (*t)[0] < lo || (*t)[1] < lo || (*t)[2] < lo {
+		(*t)[0] += 12
+		(*t)[1] += 12
+		(*t)[2] += 12
 	}
 	hi := int(midihi)
-	for t[0] > hi || t[1] > hi || t[2] > hi {
-		t[0] -= 12
-		t[1] -= 12
-		t[2] -= 12
+	for (*t)[0] > hi || (*t)[1] > hi || (*t)[2] > hi {
+		(*t)[0] -= 12
+		(*t)[1] -= 12
+		(*t)[2] -= 12
 	}
 }
