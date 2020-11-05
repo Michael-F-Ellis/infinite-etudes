@@ -351,11 +351,11 @@ func validKeyName(name string) (ok bool) {
 	return
 }
 
-var scaleInfo = []nameInfo{
+var patternInfo = []nameInfo{
+	{"interval", "One Interval", "One Interval", 0},
+	{"intervalpair", "Two Intervals", "Two Intervals", 0},
+	{"intervaltriple", "Three Intervals", "Three Intervals", 0},
 	{"allintervals", "All Intervals", "All Intervals", 0},
-	{"interval", "Interval", "Interval", 0},
-	{"intervalpair", "Interval Pairs", "Interval Pairs", 0},
-	{"intervaltriple", "Interval Triples", "Interval Triples", 0},
 	{"pentatonic", "Pentatonic", "Pentatonic", 0},
 	{"final", "Chromatic Final", "Chromatic Final", 0},
 	{"plus_four", "Plus Four", "Plus Four", 0},
@@ -367,7 +367,7 @@ var scaleInfo = []nameInfo{
 
 // validPattern returns true if the scale name is in the ones we support.
 func validPattern(name string) (ok bool) {
-	for _, s := range scaleInfo {
+	for _, s := range patternInfo {
 		if s.fileName == name {
 			ok = true
 			break

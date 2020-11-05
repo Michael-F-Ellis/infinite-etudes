@@ -48,11 +48,11 @@ func indexBody() (body *HtmlTree) {
 	// Etude menus:
 	// Scale pattern
 	var scales []interface{}
-	for _, ptn := range scaleInfo { // scaleInfo is defined in server.go
+	for _, ptn := range patternInfo { // scaleInfo is defined in server.go
 		value := fmt.Sprintf(`value="%s"`, ptn.fileName)
 		scales = append(scales, Option(value, ptn.uiName))
 	}
-	scaleSelect := Label(``, "Pattern", Select("id=scale-select", scales...))
+	scaleSelect := Div(`class="Column" id=scale-div`, Label(``, "Pattern", Select("id=scale-select", scales...)))
 	// scaleSelectLabel := Label(`class=sel-label`, "Pattern")
 
 	// Key
@@ -61,16 +61,17 @@ func indexBody() (body *HtmlTree) {
 		value := fmt.Sprintf(`value="%s" aria-label="%s"`, k.fileName, k.uiAria)
 		keys = append(keys, Option(value, k.uiName))
 	}
-	keySelect := Label(``, "Key", Select("id=key-select", keys...))
+	keySelect := Div(`class="Column" id="key-div"`, Label(``, "Tonic", Select("id=key-select", keys...)))
 	// Interval1 and Interval2
 	var intervals []interface{}
 	for _, v := range intervalInfo {
 		value := fmt.Sprintf(`value="%s" aria-label="%s"`, v.fileName, v.uiAria)
-		intervals = append(intervals, Option(value, v.uiName))
+		uival := fmt.Sprintf("%d (%s)", v.size, v.uiName)
+		intervals = append(intervals, Option(value, uival))
 	}
-	interval1Select := Label(``, "Interval 1", Select("id=interval1-select", intervals...))
-	interval2Select := Label(``, "Interval 2", Select("id=interval2-select", intervals...))
-	interval3Select := Label(``, "Interval 3", Select("id=interval3-select", intervals...))
+	interval1Select := Div(`class="Column" id="interval1-div"`, Label(``, "Interval 1", Select("id=interval1-select", intervals...)))
+	interval2Select := Div(`class="Column" id="interval2-div"`, Label(``, "Interval 2", Select("id=interval2-select", intervals...)))
+	interval3Select := Div(`class="Column" id="interval3-div"`, Label(``, "Interval 3", Select("id=interval3-select", intervals...)))
 	// Instrument sound
 	var sounds []interface{}
 	for _, iinfo := range supportedInstruments {
@@ -78,7 +79,7 @@ func indexBody() (body *HtmlTree) {
 		value := fmt.Sprintf(`value="%s"`, iinfo.name)
 		sounds = append(sounds, Option(value, name))
 	}
-	soundSelect := Label(``, "Instrument", Select("id=sound-select", sounds...))
+	soundSelect := Div(`class="Column" id="sound-div"`, Label(``, "Instrument", Select("id=sound-select", sounds...)))
 
 	// Rythhm pattern
 	var rhythms []interface{}
@@ -87,7 +88,7 @@ func indexBody() (body *HtmlTree) {
 		value := fmt.Sprintf(`value="%s"`, rhy)
 		rhythms = append(rhythms, Option(value, name))
 	}
-	rhythmSelect := Label(``, "Rhythm", Select("id=rhythm-select", rhythms...))
+	rhythmSelect := Div(`class="Column" id="rhythm-div"`, Label(``, "Rhythm", Select("id=rhythm-select", rhythms...)))
 
 	// Tempo values : we support 60 - 180 in increments of 4 bpm
 	var tempos []interface{}
@@ -103,7 +104,7 @@ func indexBody() (body *HtmlTree) {
 		}
 		tempos = append(tempos, Option(value, name))
 	}
-	tempoSelect := Label(``, "Tempo", Select("id=tempo-select", tempos...))
+	tempoSelect := Div(`class="Column" id="tempo-div"`, Label(``, "Tempo", Select("id=tempo-select", tempos...)))
 
 	// Controls
 	playBtn := Button(`onclick="playStart()"`, "Play")
@@ -112,7 +113,8 @@ func indexBody() (body *HtmlTree) {
 
 	// Assemble everything into the body element.
 	body = Body("", header,
-		Div("", scaleSelect, keySelect, interval1Select, interval2Select, interval3Select, soundSelect, rhythmSelect, tempoSelect),
+		Div(`class="Row" id="scale-row"`, scaleSelect, keySelect, interval1Select, interval2Select, interval3Select),
+		Div(`class="Row"`, soundSelect, rhythmSelect, tempoSelect),
 		Div(`style="padding-top:1vh;"`, playBtn, stopBtn, downloadBtn),
 		quickStart(),
 		forTheCurious(),
@@ -133,8 +135,8 @@ func quickStart() (div *HtmlTree) {
 	div = Div("",
 		H3("", "For the impatient"),
 		Ol("",
-			Li("", `Choose a scale pattern,`),
-			Li("", `Choose a key,`),
+			Li("", `Choose a pattern,`),
+			Li("", `Choose a tonic note (or a set of intervals),`),
 			Li("", `Choose an instrument sound,`),
 			Li("", `Click 'Play' and play along.`),
 		),
@@ -544,7 +546,6 @@ func indexCSS() *HtmlTree {
     select {
 	  display: inline-block;
 	  font-size: 125%;
-	  margin-left: 5%;
 	  margin-bottom: 1%;
 	  background-color: white;
 	}
@@ -569,7 +570,18 @@ func indexCSS() *HtmlTree {
     pre {font-size: 75%; margin-left: 5%}
 	/* hover color for buttons */
     input[type=submit]:hover {background-color: #0a0}
-    input[type=button]:hover {background-color: #0a0}
+	input[type=button]:hover {background-color: #0a0}
+	/* */
+	.Row {
+    display: table;
+    width: auto;
+    table-layout: auto;
+    border-spacing: 10px;
+    }
+    .Column{
+    display: table-cell;
+    /* background-color: red; */
+    }
 	`)
 }
 
@@ -594,37 +606,37 @@ func indexJS() (script *HtmlTree) {
 		// manageInputs adjusts the enable status of the key and interval widgets
 		// when scale-select value changes
 		function manageInputs() {
-			var key = document.getElementById("key-select")
-			var interval1 = document.getElementById("interval1-select")
-			var interval2 = document.getElementById("interval2-select")
-			var interval3 = document.getElementById("interval3-select")
+			var key = document.getElementById("key-div")
+			var interval1 = document.getElementById("interval1-div")
+			var interval2 = document.getElementById("interval2-div")
+			var interval3 = document.getElementById("interval3-div")
 			var scalePattern = document.getElementById("scale-select").value
 			if (scalePattern == "interval") {
-				interval1.disabled=false
-				interval2.disabled=true
-				interval3.disabled=true
-				key.disabled=true
+				interval1.style.display=""
+				interval2.style.display="none"
+				interval3.style.display="none"
+				key.style.display="none"
 				return
 			}
 			if (scalePattern == "intervalpair") {
-				interval1.disabled=false
-				interval2.disabled=false
-				interval3.disabled=true
-				key.disabled=true
+				interval1.style.display=""
+				interval2.style.display=""
+				interval3.style.display="none"
+				key.style.display="none"
 				return
 			}
 			if (scalePattern == "intervaltriple") {
-				interval1.disabled=false
-				interval2.disabled=false
-				interval3.disabled=false
-				key.disabled=true
+				interval1.style.display=""
+				interval2.style.display=""
+				interval3.style.display=""
+				key.style.display="none"
 				return
 			}
 			// all the other patterns are chosen by key
-			interval1.disabled=true
-			interval2.disabled=true
-			interval3.disabled=true
-			key.disabled=false
+			interval1.style.display="none"
+			interval2.style.display="none"
+			interval3.style.display="none"
+			key.style.display=""
 			return
 		}
 		// Read the selects and return the URL for the etude to be played or downloaded.
