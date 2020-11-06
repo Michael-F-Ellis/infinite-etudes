@@ -109,12 +109,13 @@ func TestGenerateKeySequences(t *testing.T) {
 		instrument: "acoustic_grand_piano",
 		tempo:      "120",
 		rhythm:     "steady",
+		repeats:    3,
 	}
 	s := generateKeySequences(0, 36, 84, 120, 0, req)
 	if len(s) != 6 {
 		t.Errorf("expected 6 sequences, got %d", len(s))
 	}
-	if s[0].req.midiFilename() != "c_pentatonic_acoustic_grand_piano_steady_120.mid" {
+	if s[0].req.midiFilename() != "c_pentatonic_acoustic_grand_piano_steady_120_3.mid" {
 		t.Errorf("expected name of first sequence to be c_pentatonic, got %s", s[0].req.midiFilename())
 	}
 	// verify that all 300 permutations are accounted for
@@ -130,7 +131,7 @@ func TestGenerateKeySequences(t *testing.T) {
 	four := midiMajorScaleNums[3]
 	seven := midiMajorScaleNums[6]
 	r5 := s[4]
-	if r5.req.midiFilename() != "c_raised_five_acoustic_grand_piano_steady_120.mid" {
+	if r5.req.midiFilename() != "c_raised_five_acoustic_grand_piano_steady_120_3.mid" {
 		t.Errorf("expected fifth sequence filename to start with 'c_raised_5', got %s", r5.req.midiFilename())
 	}
 	for _, x := range r5.seq {
@@ -147,12 +148,13 @@ func TestGenerateIntervalSequences(t *testing.T) {
 		instrument: "acoustic_grand_piano",
 		tempo:      "120",
 		rhythm:     "steady",
+		repeats:    3,
 	}
 	s := generateIntervalSequences(36, 84, 120, 0, req)
 	if len(s) != 12 {
 		t.Errorf("expected 12 sequences, got %d", len(s))
 	}
-	if s[0].req.midiFilename() != "c_allintervals_acoustic_grand_piano_steady_120.mid" {
+	if s[0].req.midiFilename() != "c_allintervals_acoustic_grand_piano_steady_120_3.mid" {
 		t.Errorf("expected name of first sequence to be c_intervals, got %s", s[0].filename)
 	}
 	// verify that all 144 permutations are accounted for
@@ -171,13 +173,14 @@ func TestGenerateEqualIntervalSequences(t *testing.T) {
 		rhythm:     "steady",
 		interval1:  "minor2",
 		pattern:    "interval",
+		repeats:    3,
 	}
 	s := generateEqualIntervalSequences(36, 84, 120, 0, req)
 	if len(s) != 12 {
 		t.Errorf("expected 12 sequences, got %d", len(s))
 	}
 	fname_got := s[0].req.midiFilename()
-	fname_exp := "interval_minor2_acoustic_grand_piano_steady_120.mid"
+	fname_exp := "interval_minor2_acoustic_grand_piano_steady_120_3.mid"
 	if fname_got != fname_exp {
 		t.Errorf("expected file name of first sequence to be %s, got %s", fname_exp, fname_got)
 	}
@@ -196,12 +199,13 @@ func TestGenerateFinalSequences(t *testing.T) {
 		instrument: "acoustic_grand_piano",
 		tempo:      "120",
 		rhythm:     "steady",
+		repeats:    3,
 	}
 	s := generateFinalSequences(36, 84, 120, 0, req)
 	if len(s) != 12 {
 		t.Errorf("expected 12 sequences, got %d", len(s))
 	}
-	if s[0].req.midiFilename() != "c_final_acoustic_grand_piano_steady_120.mid" {
+	if s[0].req.midiFilename() != "c_final_acoustic_grand_piano_steady_120_3.mid" {
 		t.Errorf("expected name of first sequence to be c_final, got %s", s[0].filename)
 	}
 	// verify that all 1320 permutations are accounted for
@@ -364,7 +368,7 @@ func TestQuadNormalRhythm(t *testing.T) {
 		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x00,
 		0x90, 0x04, 0x51, 0x87, 0x40, 0x80, 0x04, 0x51, 0x00,
 	}
-	x := fourBarsMusic(pitches[0], pitches[1], false, 0)
+	x := nBarsMusic(4, pitches[0], pitches[1], false, 0)
 	if diff := deep.Equal(x.Bytes()[:], exp); diff != nil {
 		t.Errorf("%v", diff)
 	}
@@ -374,38 +378,30 @@ func TestQuadNormalRhythm(t *testing.T) {
 	}
 
 }
-func TestFourBarsNormalRhythm(t *testing.T) {
+func TestNBarsNormalRhythm(t *testing.T) {
 	pitches := []midiPattern{{1, 2, 3}, {4, 5, 6}}
-	exp := []byte{
-		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00,
-		0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
-		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
-		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00,
-		0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
-		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
-		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00,
-		0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
-		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
+	oneBarMidi := []byte{
 		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00,
 		0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
 		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
 	}
-	x := fourBarsMusic(pitches[0], pitches[1], false, 0)
-	if diff := deep.Equal(x.Bytes()[:], exp); diff != nil {
-		t.Errorf("%v", diff)
-	}
-	n := len(x.Bytes())
-	if n != len(exp) {
-		t.Errorf("expected %d bytes, got %d", 4*len(exp), n)
-	}
+	exp := []byte{}
+	exp = append(exp, oneBarMidi...)
+	for n := 2; n < 5; n++ {
+		exp = append(exp, oneBarMidi...)
 
+		got := nBarsMusic(n, pitches[0], pitches[1], false, 0)
+		if diff := deep.Equal(got.Bytes()[:], exp); diff != nil {
+			t.Errorf("%v", diff)
+		}
+	}
 }
 
 func TestFourBarsAdvancingRhythm(t *testing.T) {
 	var offset int
 	var music *bytes.Buffer
 	pitches := []midiPattern{{1, 2, 3}, {4, 5, 6}}
-	music = fourBarsMusic(pitches[0], pitches[1], true, offset)
+	music = nBarsMusic(4, pitches[0], pitches[1], true, offset)
 	exp := []byte{
 		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00, 0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00, 0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
 		0x90, 0x01, 0x65, 0x87, 0x40, 0x80, 0x01, 0x65, 0x00, 0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00, 0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
@@ -421,7 +417,7 @@ func TestFourBarsAdvancingRhythm(t *testing.T) {
 	}
 
 	offset = 1
-	music = fourBarsMusic(pitches[0], pitches[1], true, offset)
+	music = nBarsMusic(4, pitches[0], pitches[1], true, offset)
 	exp = []byte{
 		0x90, 0x02, 0x65, 0x87, 0x40, 0x80, 0x02, 0x65, 0x00, 0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40, 0x90, 0x01, 0x51, 0x87, 0x40, 0x80, 0x01, 0x51, 0x00,
 		0x90, 0x02, 0x65, 0x87, 0x40, 0x80, 0x02, 0x65, 0x00, 0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40, 0x90, 0x01, 0x51, 0x87, 0x40, 0x80, 0x01, 0x51, 0x00,
@@ -437,7 +433,7 @@ func TestFourBarsAdvancingRhythm(t *testing.T) {
 	}
 
 	offset = 2
-	music = fourBarsMusic(pitches[0], pitches[1], true, offset)
+	music = nBarsMusic(4, pitches[0], pitches[1], true, offset)
 	exp = []byte{
 		0x90, 0x03, 0x65, 0x87, 0x40, 0x80, 0x03, 0x65, 0x87, 0x40, 0x90, 0x01, 0x51, 0x87, 0x40, 0x80, 0x01, 0x51, 0x00, 0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
 		0x90, 0x03, 0x65, 0x87, 0x40, 0x80, 0x03, 0x65, 0x87, 0x40, 0x90, 0x01, 0x51, 0x87, 0x40, 0x80, 0x01, 0x51, 0x00, 0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00,
@@ -453,7 +449,7 @@ func TestFourBarsAdvancingRhythm(t *testing.T) {
 	}
 
 	offset = 3
-	music = fourBarsMusic(pitches[0], pitches[1], true, offset)
+	music = nBarsMusic(4, pitches[0], pitches[1], true, offset)
 	exp = []byte{
 		0x90, 0x01, 0x51, 0x87, 0x40, 0x80, 0x01, 0x51, 0x00, 0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00, 0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,
 		0x90, 0x01, 0x51, 0x87, 0x40, 0x80, 0x01, 0x51, 0x00, 0x90, 0x02, 0x51, 0x87, 0x40, 0x80, 0x02, 0x51, 0x00, 0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x87, 0x40,

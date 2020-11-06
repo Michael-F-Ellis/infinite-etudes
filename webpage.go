@@ -81,7 +81,7 @@ func indexBody() (body *HtmlTree) {
 	}
 	soundSelect := Div(`class="Column" id="sound-div"`, Label(``, "Instrument", Select("id=sound-select", sounds...)))
 
-	// Rythhm pattern
+	// Rhythm pattern
 	var rhythms []interface{}
 	for _, rhy := range []string{"steady", "advancing"} {
 		name := rhy + " rhythm"
@@ -106,6 +106,14 @@ func indexBody() (body *HtmlTree) {
 	}
 	tempoSelect := Div(`class="Column" id="tempo-div"`, Label(``, "Tempo", Select("id=tempo-select", tempos...)))
 
+	// Repeats
+	var repeats []interface{}
+	for _, reps := range []string{"3", "2", "1"} {
+		attrs := fmt.Sprintf(`value="%s"`, reps)
+		repeats = append(repeats, Option(attrs, reps))
+	}
+	repeatSelect := Div(`class="Column" id="repeat-div"`, Label(``, "Repeats", Select("id=repeat-select", repeats...)))
+
 	// Controls
 	playBtn := Button(`onclick="playStart()"`, "Play")
 	stopBtn := Button(`onclick="playStop()"`, "Stop")
@@ -114,7 +122,7 @@ func indexBody() (body *HtmlTree) {
 	// Assemble everything into the body element.
 	body = Body("", header,
 		Div(`class="Row" id="scale-row"`, scaleSelect, keySelect, interval1Select, interval2Select, interval3Select),
-		Div(`class="Row"`, soundSelect, rhythmSelect, tempoSelect),
+		Div(`class="Row"`, soundSelect, rhythmSelect, tempoSelect, repeatSelect),
 		Div(`style="padding-top:1vh;"`, playBtn, stopBtn, downloadBtn),
 		quickStart(),
 		forTheCurious(),
@@ -656,7 +664,8 @@ func indexJS() (script *HtmlTree) {
 		  sound = document.getElementById("sound-select").value
 		  rhythm = document.getElementById("rhythm-select").value
 		  tempo = document.getElementById("tempo-select").value
-		  return "/etude/" + key + "/" + scale + "/" + interval1 + "/" + interval2 + "/" + interval3 + "/" + sound + "/" + rhythm + "/" + tempo
+		  repeats = document.getElementById("repeat-select").value
+		  return "/etude/" + key + "/" + scale + "/" + interval1 + "/" + interval2 + "/" + interval3 + "/" + sound + "/" + rhythm + "/" + tempo + "/" + repeats
 		}
 
 		// Read the selects and returns a proposed filename for the etude to be downloaded.
@@ -672,17 +681,18 @@ func indexJS() (script *HtmlTree) {
 		  sound = document.getElementById("sound-select").value
 		  rhythm = document.getElementById("rhythm-select").value
 		  tempo = document.getElementById("tempo-select").value
+		  repeats = document.getElementById("repeat-select").value
 		  if (scale=="interval"){
-			  return scale + "_" + interval1 + "_" + sound + "_" + rhythm + "_" + tempo + ".midi" 
+			  return scale + "_" + interval1 + "_" + sound + "_" + rhythm + "_" + tempo + "_" + repeats  + ".midi" 
 		  }
 		  if (scale=="intervalpair"){
-			  return scale + "_" + interval1 + "_" + interval2 + "_" + sound + "_" + rhythm + "_" + tempo + ".midi" 
+			  return scale + "_" + interval1 + "_" + interval2 + "_" + sound + "_" + rhythm + "_" + tempo + "_" + repeats  + ".midi" 
 		  }
 		  if (scale=="intervaltriple"){
-			  return scale + "_" + interval1 + "_" + interval2 + "_"  + interval3 + "_" + sound + "_" + rhythm + "_" + tempo + ".midi" 
+			  return scale + "_" + interval1 + "_" + interval2 + "_"  + interval3 + "_" + sound + "_" + rhythm + "_" + tempo + "_" + repeats  + ".midi" 
 		  }
 		  // any other scale 
-		  return key + "_" + scale + "_" + sound + "_" + rhythm + "_" + tempo + ".midi"
+		  return key + "_" + scale + "_" + sound + "_" + rhythm + "_" + tempo + "_" + repeats  + ".midi"
 		}
 		// randomKey returns a keyname chosen randomly from a list of supported
 		// keys.

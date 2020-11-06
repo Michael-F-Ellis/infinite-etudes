@@ -109,19 +109,21 @@ type etudeRequest struct {
 	instrument  string
 	rhythm      string
 	tempo       string
+	repeats     int
 }
 
 func (r *etudeRequest) midiFilename() (f string) {
 	var parts []string
+	repeats := fmt.Sprintf("%d", r.repeats)
 	switch r.pattern {
 	case "interval":
-		parts = []string{r.pattern, r.interval1, r.instrument, r.rhythm, r.tempo}
+		parts = []string{r.pattern, r.interval1, r.instrument, r.rhythm, r.tempo, repeats}
 	case "intervalpair":
-		parts = []string{r.pattern, r.interval1, r.interval2, r.instrument, r.rhythm, r.tempo}
+		parts = []string{r.pattern, r.interval1, r.interval2, r.instrument, r.rhythm, r.tempo, repeats}
 	case "intervaltriple":
-		parts = []string{r.pattern, r.interval1, r.interval2, r.interval3, r.instrument, r.rhythm, r.tempo}
+		parts = []string{r.pattern, r.interval1, r.interval2, r.interval3, r.instrument, r.rhythm, r.tempo, repeats}
 	default:
-		parts = []string{r.tonalCenter, r.pattern, r.instrument, r.rhythm, r.tempo}
+		parts = []string{r.tonalCenter, r.pattern, r.instrument, r.rhythm, r.tempo, repeats}
 	}
 	f = strings.Join(parts, "_") + ".mid"
 	return
@@ -142,6 +144,10 @@ func (r *etudeRequest) midiFilename() (f string) {
 // app will generate it so it can be returned.
 func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 	path := strings.Split(r.URL.Path, "/")
+	if len(path) != 11 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	// Note first element of what is an empty string
 	// log.Println(what)
 	if path[1] != "etude" {
@@ -156,6 +162,13 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 	req.instrument = path[7]
 	req.rhythm = path[8]
 	req.tempo = path[9]
+	repeats, err := strconv.Atoi(path[10])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf(`can't convert "%s" to repeat count: %v`, path[10], err)
+		return
+	}
+	req.repeats = repeats
 	if !validEtudeRequest(req) {
 		w.WriteHeader(http.StatusBadRequest)
 		return

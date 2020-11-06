@@ -629,7 +629,7 @@ func writeMidiFile(sequence *etudeSequence) {
 			// last triple in sequence, so pass a copy as the successor
 			u = t
 		}
-		music := fourBarsMusic(t, u, advancing, offset).Bytes()
+		music := nBarsMusic(1+sequence.req.repeats, t, u, advancing, offset).Bytes()
 		err = binary.Write(buf, binary.BigEndian, music)
 		if err != nil {
 			panic(err)
@@ -702,22 +702,27 @@ func writeMidiFile(sequence *etudeSequence) {
 
 }
 
-// fourBarsMusic returns a byte buffer containing four bars of  one midiTriple
+// nBarsMusic returns a byte buffer containing four bars of  one midiPattern
 // Two rhythm formats are supported with selection determined by the boolean
 // argument named advancing. When advancing is false, the rhythm is constant with
 // the pitches of each triple falling on beats 1, 2, 3 and a rest on beat 4. This
 // pattern is repeated in 4 identical bars.
 //
 // When advancing is true, the rhythm advances by 1 beat in the 4th bar so that
-// a sequence of triples may be cycled through 4 different patterns by successively
+// a sequence of patterns may be cycled through 4 different patterns by successively
 // incrementing the offset argument.
 //
-// The advancing format expects the arguments t and u to be successive triples from
+// The advancing format expects the arguments t and u to be successive patterns from
 // the sequence. The non-advancing format ignores u.
 //
-// For the final triple in the sequence, it is recommended to pass the same value
+// For the final pattern in the sequence, it is recommended to pass the same value
 // for t and u.
-func fourBarsMusic(t, u midiPattern, advancing bool, offset int) *bytes.Buffer {
+func nBarsMusic(nbars int, t, u midiPattern, advancing bool, offset int) *bytes.Buffer {
+	// Don't permit less than 2 bars. This ensures there is at least one repeat.  Default
+	// to 4 bars if nbars is less than 2.
+	if nbars < 2 {
+		nbars = 4
+	}
 	// These are the only variable length delta times we need.
 	noBeats := byte(0x00)
 	oneBeatHi := byte(0x87)
@@ -751,8 +756,9 @@ func fourBarsMusic(t, u midiPattern, advancing bool, offset int) *bytes.Buffer {
 		check(binary.Write(buf, binary.BigEndian, b))
 	}
 
-	// write all 4 bars for this triple
-	for i := 0; i < 4; i++ {
+	// write all n bars for this triple
+	for i := 0; i < nbars; i++ {
+		lastbar := nbars - 1
 		var pitch byte
 		if !advancing {
 			// first beat
@@ -786,7 +792,7 @@ func fourBarsMusic(t, u midiPattern, advancing bool, offset int) *bytes.Buffer {
 			pitch = byte(t[1])
 			mkBeat(buf, pitch, velocity2, 0)
 
-			if i < 3 {
+			if i < lastbar {
 				// 3rd beat
 				pitch = byte(t[2])
 				mkBeat(buf, pitch, velocity2, 1)
@@ -803,7 +809,7 @@ func fourBarsMusic(t, u midiPattern, advancing bool, offset int) *bytes.Buffer {
 			pitch = byte(t[1])
 			mkBeat(buf, pitch, velocity1, 0)
 			// 2nd beat
-			if i < 3 {
+			if i < lastbar {
 				pitch = byte(t[2])
 				mkBeat(buf, pitch, velocity2, 1)
 
@@ -825,7 +831,7 @@ func fourBarsMusic(t, u midiPattern, advancing bool, offset int) *bytes.Buffer {
 			mkBeat(buf, pitch, velocity2, 0)
 
 		case 2:
-			if i < 3 {
+			if i < lastbar {
 				// first beat
 				pitch = byte(t[2])
 				mkBeat(buf, pitch, velocity1, 1)
@@ -859,7 +865,7 @@ func fourBarsMusic(t, u midiPattern, advancing bool, offset int) *bytes.Buffer {
 
 		case 3:
 			// only 3 bars for this offset
-			if i == 3 {
+			if i == lastbar {
 				continue
 			}
 			// 2nd beat
