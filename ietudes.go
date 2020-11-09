@@ -157,6 +157,10 @@ func generateEqualIntervalSequences(midilo int, midihi int, tempo int, instrumen
 	midiChromaticScaleNums := getChromaticScale()
 	// Generate all intervals
 	triples := permute2(midiChromaticScaleNums)
+	// include unisons (permute2 doesn't generate them)
+	for n := range midiChromaticScaleNums {
+		triples = append(triples, midiPattern{n, n, n})
+	}
 
 	var intervalNames []string
 	for _, iinfo := range intervalInfo {
@@ -164,7 +168,7 @@ func generateEqualIntervalSequences(midilo int, midihi int, tempo int, instrumen
 	}
 
 	// construct the sequences
-	for i := 0; i < 12; i++ {
+	for i := 0; i < len(intervalNames); i++ {
 		sequences = append(sequences, etudeSequence{
 			midilo:     midilo,
 			midihi:     midihi,
@@ -183,7 +187,7 @@ func generateEqualIntervalSequences(midilo int, midihi int, tempo int, instrumen
 		if diff < 0 {
 			diff = -diff
 		}
-		diff -= 1
+		// diff -= 1
 		sequences[diff].seq = append(sequences[diff].seq, t)
 	}
 	return
@@ -196,7 +200,10 @@ func generateIntervalSequences(midilo int, midihi int, tempo int, instrument int
 	midiChromaticScaleNums := getChromaticScale()
 	// Generate all intervals
 	triples := permute2(midiChromaticScaleNums)
-
+	// include unisons (permute2 doesn't generate them)
+	for n := range midiChromaticScaleNums {
+		triples = append(triples, midiPattern{n, n, n})
+	}
 	// construct the sequences
 	for pitch := 0; pitch < 12; pitch++ {
 		pitchname := keyNames[pitch]
@@ -664,15 +671,16 @@ func writeMidiFile(sequence *etudeSequence) {
 	if err != nil {
 		panic(err)
 	}
+	nbars := 1 + sequence.req.repeats
 	for i := 0; i < len(sequence.seq); i++ {
 		var music []byte
 		switch {
 		case i == 0:
-			music = metronomeBars(5).Bytes()
+			music = metronomeBars(nbars + 1).Bytes()
 		case advancing && (i%4 == 3):
-			music = metronomeBars(3).Bytes()
+			music = metronomeBars(nbars - 1).Bytes()
 		default:
-			music = metronomeBars(4).Bytes()
+			music = metronomeBars(nbars).Bytes()
 		}
 		err = binary.Write(buf, binary.BigEndian, music)
 		if err != nil {

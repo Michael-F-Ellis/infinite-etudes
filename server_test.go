@@ -152,7 +152,10 @@ func TestBadEtudeRequest(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	// call flag.Parse() here if TestMain uses flags
-	err := os.Mkdir("test", 0777) // set up a temporary dir for generated files
+
+	// set up a temporary dir for generated files
+	_ = os.RemoveAll("test") // in case prior run crashed
+	err := os.Mkdir("test", 0777)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(-1)

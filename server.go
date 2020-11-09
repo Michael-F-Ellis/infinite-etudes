@@ -301,6 +301,7 @@ var keyInfo = []nameInfo{
 }
 
 var intervalInfo = []nameInfo{
+	{"unison", "Unison", "Unison", 0},
 	{"minor2", "Minor 2", "Minor Second", 1},
 	{"major2", "Major 2", "Major Second", 2},
 	{"minor3", "Minor 3", "Minor Third", 3},

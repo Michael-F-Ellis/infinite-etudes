@@ -157,12 +157,12 @@ func TestGenerateIntervalSequences(t *testing.T) {
 	if s[0].req.midiFilename() != "c_allintervals_acoustic_grand_piano_steady_120_3.mid" {
 		t.Errorf("expected name of first sequence to be c_intervals, got %s", s[0].filename)
 	}
-	// verify that all 144 permutations are accounted for
+	// verify that all 156 permutations are accounted for
 	n := 0
 	for _, seq := range s {
 		n += len(seq.seq)
 	}
-	if n != 144 {
+	if n != 156 {
 		t.Errorf("expected 144 midiTriples total, got %d", n)
 	}
 }
@@ -176,20 +176,20 @@ func TestGenerateEqualIntervalSequences(t *testing.T) {
 		repeats:    3,
 	}
 	s := generateEqualIntervalSequences(36, 84, 120, 0, req)
-	if len(s) != 12 {
-		t.Errorf("expected 12 sequences, got %d", len(s))
+	if len(s) != 13 {
+		t.Errorf("expected 13 sequences, got %d", len(s))
 	}
 	fname_got := s[0].req.midiFilename()
-	fname_exp := "interval_minor2_acoustic_grand_piano_steady_120_3.mid"
+	fname_exp := "interval_unison_acoustic_grand_piano_steady_120_3.mid"
 	if fname_got != fname_exp {
 		t.Errorf("expected file name of first sequence to be %s, got %s", fname_exp, fname_got)
 	}
-	// verify that all 144 permutations are accounted for
+	// verify that all 156 permutations are accounted for
 	n := 0
 	for _, seq := range s {
 		n += len(seq.seq)
 	}
-	if n != 144 {
+	if n != 156 {
 		t.Errorf("expected 144 midiTriples total, got %d", n)
 	}
 }
