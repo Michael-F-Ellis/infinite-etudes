@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"testing"
 	"time"
 )
@@ -67,9 +66,7 @@ func TestGoodEtudeRequest(t *testing.T) {
 			t.Errorf("response didn't match the file content")
 		}
 		// now test the age check
-		maxage, _ := strconv.Atoi(os.Getenv("ETUDE_MAX_AGE"))
-		maxduration := time.Duration(maxage) * time.Second
-		time.Sleep(maxduration)
+		time.Sleep(time.Duration(expireSeconds) * time.Second)
 		resp2, err := http.Get(tcase.url)
 		if err != nil {
 			t.Errorf("GET failed: %v", err)
@@ -171,7 +168,8 @@ func TestMain(m *testing.M) {
 		fmt.Printf("%v\n", err)
 		os.Exit(-1)
 	}
-	go serveEtudes(testhost, 1, midijspath) // max etude age = 1 second so we don't wait forever while testing.
+	expireSeconds = 1
+	go serveEtudes(testhost, midijspath) // max etude age = 1 second so we don't wait forever while testing.
 	exitcode := m.Run()
 	err = os.Chdir(wd)
 	if err != nil {

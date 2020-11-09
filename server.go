@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -23,7 +24,7 @@ func randString(chars []rune, n uint) (out string) {
 }
 */
 // serveEtudes serves etude midi files from the current working directory.
-func serveEtudes(hostport string, maxAgeSeconds int, midijsPath string) {
+func serveEtudes(hostport string, midijsPath string) {
 	err := mkWebPages()
 	if err != nil {
 		log.Fatalf("could not write web pages: %v", err)
@@ -34,8 +35,6 @@ func serveEtudes(hostport string, maxAgeSeconds int, midijsPath string) {
 	}
 	os.Setenv("MIDIJS", midijsPath)
 	defer os.Unsetenv("MIDIJS")
-	os.Setenv("ETUDE_MAX_AGE", fmt.Sprintf("%d", maxAgeSeconds))
-	defer os.Unsetenv("ETUDE_MAX_AGE")
 	http.Handle("/", http.HandlerFunc(indexHndlr))
 	http.Handle("/etude/", http.HandlerFunc(etudeHndlr))
 	http.Handle("/midijs/", http.HandlerFunc(midijsHndlr))
@@ -181,33 +180,47 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s served\n", r.RemoteAddr, filename)
 }
 
+// removeExpiredMidiFiles deletes midi files in the current working
+// directory that are older than expireSeconds
+func removeExpiredMidiFiles() {
+	fnames, _ := filepath.Glob("*.mid")
+	for _, fname := range fnames {
+		finfo, err := os.Stat(fname)
+		if err != nil {
+			// something's really wrong
+			log.Fatalf("error statting %s: %v", fname, err)
+		}
+		if time.Since(finfo.ModTime()) > time.Duration(expireSeconds)*time.Second {
+			// file expired, remove it
+			err = os.Remove(fname)
+			if err != nil {
+				// something's really wrong
+				log.Fatalf("error removing %s: %v", fname, err)
+			}
+		}
+	}
+
+}
+
+var etudeMutex sync.Mutex
+
 // makeEtudesIfNeeded generates a full set of etudes in the current
 // working directory if the requested file doesn't exist or is older
 // than the age limit set by serveEtudes in os.Environ. Otherwise
 // it does nothing.
 func makeEtudesIfNeeded(filename string, req etudeRequest) {
-	var exists = true // initial assumption
-	finfo, err := os.Stat(filename)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			// something's really wrong
-			log.Fatalf("error statting %s: %v", filename, err)
-		}
-		exists = false
-	}
-	// if file exists, we need to check its age
-	if exists {
-		maxage, e := strconv.Atoi(os.Getenv("ETUDE_MAX_AGE"))
-		if e != nil {
-			log.Fatalf("programming error. can't convert ETUDE_MAX_AGE '%s' to integer", os.Getenv("ETUDE_MAX_AGE"))
-		}
+	// use the mutex to ensure that multiple requests can't
+	// create or delete files while a request is in process
+	etudeMutex.Lock()
+	defer etudeMutex.Unlock()
+	// Remove all expired files
+	removeExpiredMidiFiles()
 
-		maxduration := time.Duration(maxage) * time.Second
-		modtime := finfo.ModTime()
-		if time.Since(modtime) < maxduration {
-			// nothing to do
-			return
-		}
+	// See if file exists
+	_, err := os.Stat(filename)
+	if !os.IsNotExist(err) { // See https://gist.github.com/mattes/d13e273314c3b3ade33f to understand this slightly weird test
+		// file exists, nothing to do
+		return
 	}
 	// need to generate if we get to here
 	iInfo, _ := getSupportedInstrumentByName(req.instrument) // already validated. ignore err value

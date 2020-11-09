@@ -111,7 +111,8 @@ func userHomeDir() string {
 	return os.Getenv("HOME")
 }
 
-var debug bool // enables some diagnostic output when true
+var debug bool        // enables some diagnostic output when true
+var expireSeconds int // max age for generated etude files
 
 func main() {
 	// initialize standard logger to write to "etudes.log"
@@ -154,8 +155,7 @@ func main() {
 	var hostport string
 	flag.StringVar(&hostport, "p", "localhost:8080", "hostname (or IP) and port to serve on. (server-mode only)")
 
-	var expireSeconds int
-	flag.IntVar(&expireSeconds, "x", 3600, "Maximum age in seconds for generated files (server-mode only)")
+	flag.IntVar(&expireSeconds, "x", 60, "Maximum age in seconds for generated files (server-mode only)")
 
 	// make sure all flags are defined before calling this
 	flag.Parse()
@@ -183,7 +183,7 @@ func main() {
 	}
 
 	if serve {
-		serveEtudes(hostport, expireSeconds, midijsPath)
+		serveEtudes(hostport, midijsPath)
 	} else {
 		// create the midi files
 		req := etudeRequest{}
