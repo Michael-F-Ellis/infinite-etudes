@@ -154,12 +154,17 @@ func quickStart() (div *HtmlTree) {
 
 func forTheCurious() (div *HtmlTree) {
 	heading := "For the curious"
-	p1 := `Infinite Etudes generates ear/finger training
-	etudes for instrumentalists and vocalists. By default, the etudes follow a simple four
+	p0 := `Infinite Etudes generates ear/finger training etudes for instrumentalists.
+	The emphasis is on improving your ability to play what you hear by thoroughly exploring
+	all the combinations of 2, 3 and 4 pitches over the full range of your instrument.`
+
+	p1 := `By default, the etudes follow a simple four
 	bar form: a sequence of 3 different notes is played on beats 1, 2, and 3
 	and a rest on beat 4. Each bar is played four times before moving on -- so
-	you have 3 chances to play the sequence after the first hearing.
+	you have 3 chances to play the sequence after the first hearing. 
 	`
+	p1a := `As an example, here's an excerpt showing two sequences from an etude 
+	based on a pentatonic scale in E-flat.`
 
 	p2 := `Each etude contains all possible 3-note sequences in the key for
 	the chosen scale pattern. The sequences are presented in random order. New
@@ -234,21 +239,35 @@ func forTheCurious() (div *HtmlTree) {
 	p13 := `<strong>Harmonic Minor 2</strong> contains all the sequences (55
 	total) from 1,2,3,4,♯5,6,7 that contain ♯5 and one or both of 4 and 7. It takes 7:20 to play.`
 
-	p14 := `<strong>Intervals</strong> are the simplest and shortest patterns. Each etude presents all twelve chromatic pitches
-	relative to the chosen key note and takes just over 90 seconds to play. <b>NEW</b> You can now choose patterns that concentrate
-	exclusively on one interval, e.g. "Minor 6". These are a great way to get the sound and feel of all 12 intervals in your ears and
-	fingers over the full range of your instrument.`
+	p14 := `<strong>Intervals</strong> .`
+
+	p15 := `<strong>All Intervals</strong>`
+
+	p16 := `<strong>Two Intervals</strong>`
+
+	p17 := `<strong>Three Interval</strong>`
 
 	div = Div("",
 		H3("", heading),
+		P("", p0),
 		P("", p1),
+		P("", p1a),
+		Img(`src="img/eflat_pentatonic_excerpt.png" class="example"`),
 		P("", p2),
 		P("", p3),
 		P("", p4),
 		P("", "Here are the patterns."),
 		P("", p14),
+		Img(`src="img/one_interval_excerpt.png" class="example"`),
+		P("", p15),
+		Img(`src="img/bflat_allintervals_excerpt.png" class="example"`),
+		P("", p16),
+		Img(`src="img/two_interval_excerpt.png" class="example"`),
+		P("", p17),
+		Img(`src="img/three_interval_excerpt.png" class="example"`),
 		P("", p5),
 		P("", p6),
+		Img(`src="img/c_chromatic_excerpt.png" class="example"`),
 		P("", p7),
 		P("", p7a),
 		P("", p8),

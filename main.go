@@ -149,6 +149,9 @@ func main() {
 	var serve bool
 	flag.BoolVar(&serve, "s", false, "Run application as a server.")
 
+	var imgPath string
+	flag.StringVar(&imgPath, "g", filepath.Join(userHomeDir(), "go", "src", "github.com", "Michael-F-Ellis", "infinite-etudes", "img"), "Path to img files on your host (server-mode only)")
+
 	var midijsPath string
 	flag.StringVar(&midijsPath, "m", filepath.Join(userHomeDir(), "go", "src", "github.com", "Michael-F-Ellis", "infinite-etudes", "midijs"), "Path to midijs files on your host (server-mode only)")
 
@@ -183,7 +186,7 @@ func main() {
 	}
 
 	if serve {
-		serveEtudes(hostport, midijsPath)
+		serveEtudes(hostport, midijsPath, imgPath)
 	} else {
 		// create the midi files
 		req := etudeRequest{}

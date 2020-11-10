@@ -24,7 +24,7 @@ func randString(chars []rune, n uint) (out string) {
 }
 */
 // serveEtudes serves etude midi files from the current working directory.
-func serveEtudes(hostport string, midijsPath string) {
+func serveEtudes(hostport string, midijsPath string, imgPath string) {
 	err := mkWebPages()
 	if err != nil {
 		log.Fatalf("could not write web pages: %v", err)
@@ -35,8 +35,17 @@ func serveEtudes(hostport string, midijsPath string) {
 	}
 	os.Setenv("MIDIJS", midijsPath)
 	defer os.Unsetenv("MIDIJS")
+
+	err = validDirPath(imgPath)
+	if err != nil {
+		log.Fatalf("invalid image path: %v", err)
+	}
+	os.Setenv("IMG", imgPath)
+	defer os.Unsetenv("IMG")
+
 	http.Handle("/", http.HandlerFunc(indexHndlr))
 	http.Handle("/etude/", http.HandlerFunc(etudeHndlr))
+	http.Handle("/img/", http.HandlerFunc(imgHndlr))
 	http.Handle("/midijs/", http.HandlerFunc(midijsHndlr))
 	log.Printf("midijs path is %s", os.Getenv("MIDIJS"))
 	var serveSecure bool
@@ -83,6 +92,20 @@ func getCertPaths() (certpath string, keypath string, err error) {
 // indexHndlr returns index.html
 func indexHndlr(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "index.html")
+}
+
+// imgHndlr returns image files
+func imgHndlr(w http.ResponseWriter, r *http.Request) {
+	what := strings.Split(r.URL.Path, "/")
+	if what[1] != "img" {
+		log.Fatalf("programming error. got image request path that didn't start with 'img': %s", r.URL.Path)
+	}
+
+	dir := os.Getenv("IMG")
+	pathelements := append([]string{dir}, what[2:]...)
+	path := filepath.Join(pathelements...)
+	http.ServeFile(w, r, path)
+
 }
 
 // midijsHndlr returns files from the MIDIJS directory.

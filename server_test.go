@@ -166,13 +166,14 @@ func TestMain(m *testing.M) {
 	// Run all tests and clean up
 	wd, _ := os.Getwd()
 	midijspath := filepath.Join(wd, "midijs")
+	imgpath := filepath.Join(wd, "img")
 	err = os.Chdir(filepath.Join(wd, "test"))
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(-1)
 	}
 	expireSeconds = 1
-	go serveEtudes(testhost, midijspath) // max etude age = 1 second so we don't wait forever while testing.
+	go serveEtudes(testhost, midijspath, imgpath) // max etude age = 1 second so we don't wait forever while testing.
 	exitcode := m.Run()
 	err = os.Chdir(wd)
 	if err != nil {
