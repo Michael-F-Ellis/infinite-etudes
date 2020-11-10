@@ -1025,15 +1025,35 @@ func constrain(t *midiPattern, prior int, midilo int, midihi int, noTighten bool
 	}
 	// If needed, shift pitches by octaves until all are between midilo and midihi inclusive.
 	lo := int(midilo)
-	for (*t)[0] < lo || (*t)[1] < lo || (*t)[2] < lo {
-		(*t)[0] += 12
-		(*t)[1] += 12
-		(*t)[2] += 12
+	// anylow tests if any pitches are too low
+	anylow := func() bool {
+		for _, p := range *t {
+			if p < lo {
+				return true
+			}
+		}
+		return false
+	}
+	// adjust until none are too low
+	for anylow() {
+		for i := range *t {
+			(*t)[i] += 12
+		}
 	}
 	hi := int(midihi)
-	for (*t)[0] > hi || (*t)[1] > hi || (*t)[2] > hi {
-		(*t)[0] -= 12
-		(*t)[1] -= 12
-		(*t)[2] -= 12
+	// anyhigh tests if any pitches are too high
+	anyhigh := func() bool {
+		for _, p := range *t {
+			if p > hi {
+				return true
+			}
+		}
+		return false
+	}
+	// adjust until none are too high
+	for anyhigh() {
+		for i := range *t {
+			(*t)[i] -= 12
+		}
 	}
 }
