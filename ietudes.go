@@ -128,7 +128,7 @@ func permute2(scale []int) (permutations []midiPattern) {
 	return
 }
 
-// permute3 returns a slice of midiTriple containing
+// permute3 returns a slice of midiPattern containing
 // all possible permutations of 3 distinct notes in the
 // scale.
 func permute3(scale []int) []midiPattern {
@@ -148,6 +148,33 @@ func permute3(scale []int) []midiPattern {
 		}
 	}
 	return permutations
+}
+
+// permute4 returns a slice of midiPattern containing all
+// possible permutations of 4 distinct notes in the scale
+func permute4(scale []int) []midiPattern {
+	var permutations []midiPattern
+	for i, p := range scale {
+		for j, q := range scale {
+			if j == i {
+				continue
+			}
+			for k, r := range scale {
+				if k == i || k == j {
+					continue
+				}
+				for l, s := range scale {
+					if l == i || l == j || l == k {
+						continue
+					}
+					t := midiPattern{p, q, r, s}
+					permutations = append(permutations, t)
+				}
+			}
+		}
+	}
+	return permutations
+
 }
 
 // generateEqualIntervalSequences returns a slice of etudeSequences as described in the usage instructions.
@@ -503,13 +530,21 @@ func mkMidi(sequence *etudeSequence, noTighten bool) {
 	// Shuffle the sequence
 	shufflePatterns(sequence.seq)
 
-	// Constrain the sequence assuming a prior pitch halfway between the limits.
-	prior := (sequence.midilo + sequence.midihi) / 2
+	// Constrain the sequence assuming random prior pitch within the
+	// instrumen's midi range.
+	prior := rand.Intn(1+sequence.midihi-sequence.midilo) + sequence.midilo
 	seqlen := len(sequence.seq)
 	for i := 0; i < seqlen; i++ {
 		t := &(sequence.seq[i])
 		constrain(t, prior, sequence.midilo, sequence.midihi, noTighten)
 		prior = (*t)[2]
+		// for the special case of an "allintervals" request swap
+		// the middle pitch (the tonic) with the first and last pitches.
+		if sequence.req.pattern == "allintervals" {
+			(*t)[0] = (*t)[1]
+			(*t)[1] = (*t)[2]
+			(*t)[2] = (*t)[0]
+		}
 	}
 	// Write the etude
 	writeMidiFile(sequence)

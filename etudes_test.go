@@ -104,6 +104,16 @@ func TestPermute3(t *testing.T) {
 	}
 }
 
+func TestPermute4(t *testing.T) {
+	p := permute4([]int{0, 2, 4, 5, 7, 9, 11})
+	if len(p) != 840 {
+		t.Errorf("expected 840 permutations, got %d", len(p))
+	}
+	if diff := deep.Equal(p[0], midiPattern{0, 2, 4, 5}); diff != nil {
+		t.Errorf("expected first triple to be %v, got %v", [4]int{0, 2, 4, 5}, p[0])
+	}
+}
+
 func TestGenerateKeySequences(t *testing.T) {
 	req := etudeRequest{
 		instrument: "acoustic_grand_piano",
@@ -293,18 +303,56 @@ func TestMkMidi(t *testing.T) {
 		tempo:       "120",
 	}
 	x.seq = []midiPattern{{1, 2, 3}, {4, 5, 6}}
-	exp.seq = []midiPattern{{61, 62, 63}, {64, 65, 66}}
-	exp2.seq = []midiPattern{{64, 65, 66}, {61, 62, 63}}
 	mkMidi(&x, false)
-	if !(reflect.DeepEqual(x.seq, exp.seq) || reflect.DeepEqual(x.seq, exp2.seq)) {
-		t.Errorf("expected %v or %v, got %v", exp.seq, exp2.seq, x.seq)
+	// verify that the pitches in both sequences have been shifted
+	// modulo 12 and that they are between midihi and midilo.
+	modulus := x.seq[0][0] / 12
+	if modulus*12 < 36 {
+		t.Errorf("midi pitches too low: %v", x)
+	}
+	if modulus*12 > 72 {
+		t.Errorf("midi pitches too high: %v", x)
+	}
+	// now translate the values back to the original
+	// using the modulus we calculated
+	var y []midiPattern
+	for _, ptn := range x.seq {
+		var yptn midiPattern
+		for _, v := range ptn {
+			yptn = append(yptn, v-modulus*12)
+		}
+		y = append(y, yptn)
+	}
+	exp.seq = []midiPattern{{1, 2, 3}, {4, 5, 6}}
+	exp2.seq = []midiPattern{{4, 5, 6}, {1, 2, 3}}
+	if !(reflect.DeepEqual(y, exp.seq) || reflect.DeepEqual(y, exp2.seq)) {
+		t.Errorf("expected %v or %v, got %v", exp.seq, exp2.seq, y)
 	}
 	x.seq = []midiPattern{{1, 2, 3, 4}, {4, 5, 6, 7}}
-	exp.seq = []midiPattern{{61, 62, 63, 64}, {64, 65, 66, 67}}
-	exp2.seq = []midiPattern{{64, 65, 66, 67}, {61, 62, 63, 64}}
 	mkMidi(&x, false)
-	if !(reflect.DeepEqual(x.seq, exp.seq) || reflect.DeepEqual(x.seq, exp2.seq)) {
-		t.Errorf("expected %v or %v, got %v", exp.seq, exp2.seq, x.seq)
+	// verify that the pitches in both sequences have been shifted
+	// modulo 12 and that they are between midihi and midilo.
+	modulus = x.seq[0][0] / 12
+	if modulus*12 < 36 {
+		t.Errorf("midi pitches too low: %v", x)
+	}
+	if modulus*12 > 72 {
+		t.Errorf("midi pitches too high: %v", x)
+	}
+	// now translate the values back to the original
+	// using the modulus we calculated
+	y = []midiPattern{}
+	for _, ptn := range x.seq {
+		var yptn midiPattern
+		for _, v := range ptn {
+			yptn = append(yptn, v-modulus*12)
+		}
+		y = append(y, yptn)
+	}
+	exp.seq = []midiPattern{{1, 2, 3, 4}, {4, 5, 6, 7}}
+	exp2.seq = []midiPattern{{4, 5, 6, 7}, {1, 2, 3, 7}}
+	if !(reflect.DeepEqual(y, exp.seq) || reflect.DeepEqual(y, exp2.seq)) {
+		t.Errorf("expected %v or %v, got %v", exp.seq, exp2.seq, y)
 	}
 
 }
