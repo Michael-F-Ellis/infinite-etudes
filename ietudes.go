@@ -788,10 +788,9 @@ func writeMidiFile(sequence *etudeSequence) {
 // For the final pattern in the sequence, it is recommended to pass the same value
 // for t and u.
 func nBarsMusic(nbars int, t, u midiPattern, advancing bool, offset int) *bytes.Buffer {
-	// Don't permit less than 2 bars. This ensures there is at least one repeat.  Default
-	// to 4 bars if nbars is less than 2.
-	if nbars < 2 {
-		nbars = 4
+	// There is no valid reason to call this function with nbars < 1, so panic if that happens.
+	if nbars < 1 {
+		panic(fmt.Sprintf("attempted to create etude with %d bars per pattern.", nbars))
 	}
 	// These are the only variable length delta times we need.
 	noBeats := byte(0x00)
