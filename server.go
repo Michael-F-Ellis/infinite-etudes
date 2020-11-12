@@ -405,7 +405,7 @@ var patternInfo = []nameInfo{
 	{"interval", "One Interval", "One Interval", 0},
 	{"intervalpair", "Two Intervals", "Two Intervals", 0},
 	{"intervaltriple", "Three Intervals", "Three Intervals", 0},
-	{"allintervals", "All Intervals", "All Intervals", 0},
+	{"allintervals", "Tonic Intervals", "Tonic Intervals", 0},
 	{"pentatonic", "Pentatonic", "Pentatonic", 0},
 	{"final", "Chromatic Final", "Chromatic Final", 0},
 	{"plus_four", "Plus Four", "Plus Four", 0},

@@ -239,9 +239,12 @@ func forTheCurious() (div *HtmlTree) {
 	p13 := `<strong>Harmonic Minor 2</strong> contains all the sequences (55
 	total) from 1,2,3,4,♯5,6,7 that contain ♯5 and one or both of 4 and 7. It takes 7:20 to play.`
 
-	p14 := `<strong>Intervals</strong> .`
+	p14 := `<strong>One Interval</strong> presents 12 instances of the same interval pair, i.e. 3 notes,
+	in random order. Each instance begins on a different pitch so that all 12
+	pitches are covered.`
 
-	p15 := `<strong>All Intervals</strong>`
+	p15 := `<strong>Tonic Intervals</strong> presents 12 instances of intervals, i.e., all
+	possible pitches relative to the chosen tonic pitch.`
 
 	p16 := `<strong>Two Intervals</strong>`
 
@@ -259,12 +262,12 @@ func forTheCurious() (div *HtmlTree) {
 		P("", "Here are the patterns."),
 		P("", p14),
 		Img(`src="img/one_interval_excerpt.png" class="example"`),
-		P("", p15),
-		Img(`src="img/bflat_allintervals_excerpt.png" class="example"`),
 		P("", p16),
 		Img(`src="img/two_interval_excerpt.png" class="example"`),
 		P("", p17),
 		Img(`src="img/three_interval_excerpt.png" class="example"`),
+		P("", p15),
+		Img(`src="img/bflat_allintervals_excerpt.png" class="example"`),
 		P("", p5),
 		P("", p6),
 		Img(`src="img/c_chromatic_excerpt.png" class="example"`),

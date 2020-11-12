@@ -237,8 +237,8 @@ func TestGenerateTwoIntervalSequence(t *testing.T) {
 
 func TestGenerateThreeIntervalSequence(t *testing.T) {
 	s := generateThreeIntervalSequence(36, 84, 120, 0, "", 2, 2, 2)
-	if len(s.seq) != 12 {
-		t.Errorf("expected 12 quads, got %d", len(s.seq))
+	if len(s.seq) != 24 {
+		t.Errorf("expected 24 quads, got %d", len(s.seq))
 	}
 	log.Println(s)
 }
@@ -350,7 +350,7 @@ func TestMkMidi(t *testing.T) {
 		y = append(y, yptn)
 	}
 	exp.seq = []midiPattern{{1, 2, 3, 4}, {4, 5, 6, 7}}
-	exp2.seq = []midiPattern{{4, 5, 6, 7}, {1, 2, 3, 7}}
+	exp2.seq = []midiPattern{{4, 5, 6, 7}, {1, 2, 3, 4}}
 	if !(reflect.DeepEqual(y, exp.seq) || reflect.DeepEqual(y, exp2.seq)) {
 		t.Errorf("expected %v or %v, got %v", exp.seq, exp2.seq, y)
 	}

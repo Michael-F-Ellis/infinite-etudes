@@ -117,12 +117,13 @@ func flip() (up bool) {
 	return
 }
 
-// permute2 returns a slice of midiTriple. Each triple is built from an interval
+// permute2 returns a slice of midiPattern. Each element is built from an interval
 // with the first note repeated as the third note, e.g. {3, 5, 3} or {3, -7, 3}
 func permute2(scale []int) (permutations []midiPattern) {
 	for _, p := range scale {
-		for _, q := range scale {
-			permutations = append(permutations, tripleFromPitchPair(p, q, flip()))
+		for i, q := range scale {
+			// append midiPatterns alternately inverting them.
+			permutations = append(permutations, tripleFromPitchPair(p, q, i%2 == 0))
 		}
 	}
 	return
@@ -269,6 +270,20 @@ func generateTwoIntervalSequence(midilo int, midihi int, tempo int, instrument i
 		shufflePatternPitches(&t) // randomize the order
 		patterns = append(patterns, t)
 	}
+	indices := permute3([]int{0, 1, 2})   // 6 possible note orders
+	indices = append(indices, indices...) // double the list
+	shufflePatterns(indices)              // shuffle the note orders
+	// now rearrange the pattern pitches using the list of shuffled note orders to
+	// guarantee each possible note order will appear exactly twice.
+	for i, p := range patterns {
+		ptn := make(midiPattern, 3)
+		copy(ptn, patterns[i])
+		idx := indices[i]
+		for j := range p {
+			ptn[j] = p[idx[j]]
+		}
+		patterns[i] = ptn
+	}
 
 	// construct the sequence
 	sequence = etudeSequence{
@@ -290,8 +305,20 @@ func generateThreeIntervalSequence(midilo int, midihi int, tempo int, instrument
 	patterns := []midiPattern{}
 	for p := range midiChromaticScaleNums {
 		q := quadFrom3Intervals(p, i1, i2, i3)
-		shufflePatternPitches(&q) // randomize the order
-		patterns = append(patterns, q)
+		patterns = append(patterns, q, q)
+	}
+	indices := permute4([]int{0, 1, 2, 3}) // 24 possible note orders
+	shufflePatterns(indices)               // shuffle the note orders
+	// now rearrange the pattern pitches using the list of shuffled note orders to
+	// guarantee each possible note order will appear exactly once.
+	for i, p := range patterns {
+		ptn := make(midiPattern, 4)
+		copy(ptn, patterns[i])
+		idx := indices[i]
+		for j := range p {
+			ptn[j] = p[idx[j]]
+		}
+		patterns[i] = ptn
 	}
 
 	// construct the sequence
