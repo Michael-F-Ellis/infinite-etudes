@@ -108,7 +108,7 @@ func indexBody() (body *HtmlTree) {
 
 	// Repeats
 	var repeats []interface{}
-	for _, reps := range []string{"3", "2", "1"} {
+	for _, reps := range []string{"3", "2", "1", "0"} {
 		attrs := fmt.Sprintf(`value="%s"`, reps)
 		repeats = append(repeats, Option(attrs, reps))
 	}
