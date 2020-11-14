@@ -267,7 +267,7 @@ func forTheCurious() (div *HtmlTree) {
 		P("", p17),
 		Img(`src="img/three_interval_excerpt.png" class="example"`),
 		P("", p15),
-		Img(`src="img/bflat_allintervals_excerpt.png" class="example"`),
+		Img(`src="img/allintervals_excerpt.png" class="example"`),
 		P("", p5),
 		P("", p6),
 		Img(`src="img/c_chromatic_excerpt.png" class="example"`),

@@ -287,7 +287,17 @@ func TestConstrain(t *testing.T) {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
 }
+func TestMkIntervalEtudes(t *testing.T) {
+	r := etudeRequest{
+		tonalCenter: "c",
+		pattern:     "pentatonic",
+		instrument:  "trumpet",
+		rhythm:      "steady",
+		tempo:       "120",
+	}
+	mkIntervalEtudes(36, 84, 120, 0, r)
 
+}
 func TestMkMidi(t *testing.T) {
 	var x etudeSequence
 	var exp etudeSequence

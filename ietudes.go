@@ -249,7 +249,7 @@ func generateIntervalSequences(midilo int, midihi int, tempo int, instrument int
 
 	// filter the triples into the corresponding etude sequences
 	for _, t := range triples {
-		pitch := t[1] % 12
+		pitch := t[0] % 12
 		if pitch < 0 {
 			pitch += 12
 		}
@@ -565,13 +565,15 @@ func mkMidi(sequence *etudeSequence, noTighten bool) {
 		t := &(sequence.seq[i])
 		constrain(t, prior, sequence.midilo, sequence.midihi, noTighten)
 		prior = (*t)[2]
-		// for the special case of an "allintervals" request swap
-		// the middle pitch (the tonic) with the first and last pitches.
-		if sequence.req.pattern == "allintervals" {
-			(*t)[0] = (*t)[1]
-			(*t)[1] = (*t)[2]
-			(*t)[2] = (*t)[0]
-		}
+		/*
+			// for the special case of an "allintervals" request swap
+			// the middle pitch (the tonic) with the first and last pitches.
+			if sequence.req.pattern == "allintervals" {
+				(*t)[0] = (*t)[1]
+				(*t)[1] = (*t)[2]
+				(*t)[2] = (*t)[0]
+			}
+		*/
 	}
 	// Write the etude
 	writeMidiFile(sequence)
