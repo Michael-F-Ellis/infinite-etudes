@@ -740,11 +740,11 @@ func writeMidiFile(sequence *etudeSequence) {
 		var music []byte
 		switch {
 		case i == 0:
-			music = metronomeBars(nbars + 1).Bytes()
+			music = metronomeBars(nbars+1, &sequence.req).Bytes()
 		case advancing && (i%4 == 3):
-			music = metronomeBars(nbars - 1).Bytes()
+			music = metronomeBars(nbars-1, &sequence.req).Bytes()
 		default:
-			music = metronomeBars(nbars).Bytes()
+			music = metronomeBars(nbars, &sequence.req).Bytes()
 		}
 		err = binary.Write(buf, binary.BigEndian, music)
 		if err != nil {
@@ -964,18 +964,16 @@ func nBarsMusic(nbars int, t, u midiPattern, advancing bool, offset int) *bytes.
 
 // metronomeBars returns a byte buffer containing n bars of metronome click.
 // Downbeats use a High Wood Block sound. Other beats use a Low Wood Block,
-func metronomeBars(n int) *bytes.Buffer {
+func metronomeBars(n int, req *etudeRequest) *bytes.Buffer {
 	// These are the only variable length delta times we need.
 	noBeats := byte(0x00)
 	oneBeatHi := byte(0x87)
 	oneBeatLo := byte(0x40)
 	// fourBeats := []byte{0x9e, 0x00}
-
 	velocity1 := byte(0x30) // downbeat
 	velocity2 := byte(0x10) // other beats
-
-	on := byte(0x99)  // Note On, channel 10
-	off := byte(0x89) // Note off, channel 10
+	on := byte(0x99)        // Note On, channel 10
+	off := byte(0x89)       // Note off, channel 10
 
 	wbh := byte(0x4c) // wood block hi for downbeats
 	wbl := byte(0x4d) // wood block lo for other beats
@@ -1011,6 +1009,20 @@ func metronomeBars(n int) *bytes.Buffer {
 		mkBeat(buf, wbl, velocity2, 0)
 		// 4th beat
 		mkBeat(buf, wbl, velocity2, 0)
+		// adjust metronome velocity after initial count-in
+		if i == 0 {
+			switch req.metronome {
+			case metronomeOn:
+				// no adjusment
+			case metronomeDownbeatOnly:
+				velocity2 = 0
+			case metronomeOff:
+				velocity1, velocity2 = 0, 0
+			default:
+				panic("programming error: %d is not a supported value for etudeRequest.metronome.")
+			}
+
+		}
 	}
 	return buf
 }

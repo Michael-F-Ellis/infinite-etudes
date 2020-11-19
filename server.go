@@ -130,9 +130,18 @@ type etudeRequest struct {
 	interval3   string
 	instrument  string
 	rhythm      string
-	tempo       string
-	repeats     int
+	tempo       string // beats per minute
+	repeats     int    // number of repeats (0-3)
+	metronome   int    // On, DownbeatOnly, Off
+	silent      []bool // true indicated the corresponding repeat should be silent
+
 }
+
+const (
+	metronomeOn int = iota
+	metronomeDownbeatOnly
+	metronomeOff
+)
 
 func (r *etudeRequest) midiFilename() (f string) {
 	var parts []string

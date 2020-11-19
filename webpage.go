@@ -8,6 +8,27 @@ import (
 	. "github.com/Michael-F-Ellis/goht" // dot import makes sense here
 )
 
+const (
+	whiteCircle string = "&#x25ef;"
+	greenCircle string = "&#x1f7e2;"
+)
+
+type SilenceOption struct {
+	value int    // numerical value
+	html  string // three circles (white or green) indicate which repeats are silent.
+}
+
+var silencePatterns = []SilenceOption{
+	{0, greenCircle + greenCircle + greenCircle},
+	{1, greenCircle + greenCircle + whiteCircle},
+	{2, greenCircle + whiteCircle + greenCircle},
+	{4, whiteCircle + greenCircle + greenCircle},
+	{3, greenCircle + whiteCircle + whiteCircle},
+	{5, whiteCircle + greenCircle + whiteCircle},
+	{6, whiteCircle + whiteCircle + greenCircle},
+	{7, whiteCircle + whiteCircle + whiteCircle},
+}
+
 // mkWebPages constructs the application web pages in the current working
 // directory.
 func mkWebPages() (err error) {
@@ -90,7 +111,14 @@ func indexBody() (body *HtmlTree) {
 	}
 	rhythmSelect := Div(`class="Column" id="rhythm-div"`, Label(``, "Rhythm", Select("id=rhythm-select", rhythms...)))
 
-	// Tempo values : we support 60 - 180 in increments of 4 bpm
+	// Metronome
+	var metros []interface{}
+	for _, ptn := range []string{"on", "downbeat", "off"} {
+		attrs := fmt.Sprintf(`value="%s"`, ptn)
+		metros = append(metros, Option(attrs, ptn))
+	}
+	metroSelect := Div(`class="Column" id="metro-div"`, Label(``, "Metronome", Select("id=metro-select", metros...))) // Metronome control
+
 	var tempos []interface{}
 	var tempoValues []int
 	for i := 60; i < 244; i += 4 {
@@ -114,6 +142,14 @@ func indexBody() (body *HtmlTree) {
 	}
 	repeatSelect := Div(`class="Column" id="repeat-div"`, Label(``, "Repeats", Select("id=repeat-select", repeats...)))
 
+	// Silences
+	var silences []interface{}
+	for _, ptn := range silencePatterns {
+		attrs := fmt.Sprintf(`value="%d"`, ptn.value)
+		silences = append(silences, Option(attrs, ptn.html))
+	}
+	silenceSelect := Div(`class="Column" id="silence-div"`, Label(``, "Audible", Select("id=silence-select", silences...)))
+
 	// Controls
 	playBtn := Button(`onclick="playStart()"`, "Play")
 	stopBtn := Button(`onclick="playStop()"`, "Stop")
@@ -122,7 +158,7 @@ func indexBody() (body *HtmlTree) {
 	// Assemble everything into the body element.
 	body = Body("", header,
 		Div(`class="Row" id="scale-row"`, scaleSelect, keySelect, interval1Select, interval2Select, interval3Select),
-		Div(`class="Row"`, soundSelect, rhythmSelect, tempoSelect, repeatSelect),
+		Div(`class="Row"`, soundSelect, rhythmSelect, metroSelect, tempoSelect, repeatSelect, silenceSelect),
 		Div(`style="padding-top:1vh;"`, playBtn, stopBtn, downloadBtn),
 		quickStart(),
 		forTheCurious(),
