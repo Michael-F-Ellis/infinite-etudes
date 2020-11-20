@@ -718,29 +718,25 @@ func writeMidiFile(sequence *etudeSequence) {
 
 	// compose the metronome track
 	buf = new(bytes.Buffer)
-	err = binary.Write(buf, binary.BigEndian, byte(0x00))
-	if err != nil {
-		panic(err)
-	}
-	nbars := 1 + sequence.req.repeats
-	for i := 0; i < len(sequence.seq); i++ {
-		var music []byte
-		switch {
-		case i == 0:
-			music = metronomeBars(nbars+1, &sequence.req).Bytes()
-		default:
-			music = metronomeBars(nbars, &sequence.req).Bytes()
-		}
-		err = binary.Write(buf, binary.BigEndian, music)
+	bufferMusic := func(bytes []byte) {
+		err = binary.Write(buf, binary.BigEndian, bytes)
 		if err != nil {
 			panic(err)
 		}
 	}
-	// end of track
-	err = binary.Write(buf, binary.BigEndian, eot)
-	if err != nil {
-		panic(err)
+	bufferMusic([]byte{0x00})
+
+	// one bar count-in
+	countin := metronomeBars(1, &etudeRequest{metronome: metronomeOn}).Bytes()
+	bufferMusic(countin)
+	//
+	nbars := 1 + sequence.req.repeats
+	for i := 0; i < len(sequence.seq); i++ {
+		music := metronomeBars(nbars, &sequence.req).Bytes()
+		bufferMusic(music)
 	}
+	// end of track
+	bufferMusic(eot)
 
 	// write the metronome track
 	// prepend the track header.
@@ -844,11 +840,24 @@ func metronomeBars(n int, req *etudeRequest) *bytes.Buffer {
 	noBeats := byte(0x00)
 	oneBeatHi := byte(0x87)
 	oneBeatLo := byte(0x40)
-	// fourBeats := []byte{0x9e, 0x00}
-	velocity1 := byte(0x30) // downbeat
-	velocity2 := byte(0x10) // other beats
-	on := byte(0x99)        // Note On, channel 10
-	off := byte(0x89)       // Note off, channel 10
+	// adjust velocities according to request
+	var velocity1, velocity2 byte
+	switch req.metronome {
+	case metronomeOn:
+		velocity1 = byte(0x30) // downbeat
+		velocity2 = byte(0x10) // other beats
+		// no adjusment
+	case metronomeDownbeatOnly:
+		velocity1 = byte(0x30) // downbeat
+		velocity2 = byte(0x00) // other beats
+	case metronomeOff:
+		velocity1, velocity2 = 0, 0
+	default:
+		panic("programming error: %d is not a supported value for etudeRequest.metronome.")
+	}
+
+	on := byte(0x99)  // Note On, channel 10
+	off := byte(0x89) // Note off, channel 10
 
 	wbh := byte(0x4c) // wood block hi for downbeats
 	wbl := byte(0x4d) // wood block lo for other beats
@@ -875,20 +884,6 @@ func metronomeBars(n int, req *etudeRequest) *bytes.Buffer {
 		mkBeat(buf, wbl, velocity2)
 		// 4th beat
 		mkBeat(buf, wbl, velocity2)
-		// adjust metronome velocity after initial count-in
-		if i == 0 {
-			switch req.metronome {
-			case metronomeOn:
-				// no adjusment
-			case metronomeDownbeatOnly:
-				velocity2 = 0
-			case metronomeOff:
-				velocity1, velocity2 = 0, 0
-			default:
-				panic("programming error: %d is not a supported value for etudeRequest.metronome.")
-			}
-
-		}
 	}
 	return buf
 }
