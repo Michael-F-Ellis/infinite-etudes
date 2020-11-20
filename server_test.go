@@ -43,12 +43,12 @@ func TestGoodEtudeRequest(t *testing.T) {
 	}
 	testTable := []testcase{
 		{
-			url:      "http://" + testhost + "/etude/aflat/pentatonic/minor2/minor2/minor2/trumpet/steady/120/3",
-			filename: "aflat_pentatonic_trumpet_steady_120_3.mid",
+			url:      "http://" + testhost + "/etude/aflat/pentatonic/minor2/minor2/minor2/trumpet/on/120/3",
+			filename: "aflat_pentatonic_trumpet_on_120_3.mid",
 		},
 		{
-			url:      "http://" + testhost + "/etude/aflat/intervalpair/minor2/minor2/minor2/trumpet/steady/120/1",
-			filename: "intervalpair_minor2_minor2_trumpet_steady_120_1.mid",
+			url:      "http://" + testhost + "/etude/aflat/intervalpair/minor2/minor2/minor2/trumpet/on/120/1",
+			filename: "intervalpair_minor2_minor2_trumpet_on_120_1.mid",
 		},
 	}
 	for _, tcase := range testTable {
@@ -85,7 +85,7 @@ func TestGoodEtudeRequest(t *testing.T) {
 func TestVocalEtudeRequest(t *testing.T) {
 	// because multiple vocal parts are mapped to the same midi number
 	var err error
-	url := "http://" + testhost + "/etude/aflat/pentatonic/minor2/minor2/minor2/choir_aahs_tenor/advancing/120/3"
+	url := "http://" + testhost + "/etude/aflat/pentatonic/minor2/minor2/minor2/choir_aahs_tenor/off/120/3"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Errorf("GET failed: %v", err)
@@ -95,7 +95,7 @@ func TestVocalEtudeRequest(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status code %v, got %v", http.StatusOK, resp.StatusCode)
 	}
-	exp, _ := ioutil.ReadFile("aflat_pentatonic_choir_aahs_tenor_advancing_120_3.mid")
+	exp, _ := ioutil.ReadFile("aflat_pentatonic_choir_aahs_tenor_off_120_3.mid")
 	got, _ := ioutil.ReadAll(resp.Body)
 	if !bytes.Equal(got, exp) {
 		t.Errorf("response didn't match the file content")
@@ -103,7 +103,7 @@ func TestVocalEtudeRequest(t *testing.T) {
 }
 func TestValidEtudeRequest(t *testing.T) {
 	badRequests := []etudeRequest{
-		{tonalCenter: "hsharp", pattern: "pentatonic", instrument: "trumpet", rhythm: "steady", tempo: "120"},
+		{tonalCenter: "hsharp", pattern: "pentatonic", instrument: "trumpet", tempo: "120"},
 	}
 	for _, req := range badRequests {
 		ok := validEtudeRequest(req)
@@ -112,8 +112,8 @@ func TestValidEtudeRequest(t *testing.T) {
 		}
 	}
 	goodRequests := []etudeRequest{
-		{tonalCenter: "", pattern: "intervalpair", interval1: "minor3", interval2: "major3", instrument: "trumpet", rhythm: "steady", tempo: "120"},
-		{tonalCenter: "", pattern: "intervaltriple", interval1: "minor3", interval2: "major3", interval3: "minor3", instrument: "trumpet", rhythm: "steady", tempo: "120"},
+		{tonalCenter: "", pattern: "intervalpair", interval1: "minor3", interval2: "major3", instrument: "trumpet", metronome: metronomeDownbeatOnly, tempo: "120"},
+		{tonalCenter: "", pattern: "intervaltriple", interval1: "minor3", interval2: "major3", interval3: "minor3", instrument: "trumpet", metronome: metronomeOff, tempo: "120"},
 	}
 	for _, req := range goodRequests {
 		ok := validEtudeRequest(req)
@@ -125,14 +125,14 @@ func TestValidEtudeRequest(t *testing.T) {
 }
 func TestBadEtudeRequest(t *testing.T) {
 	badRequests := []string{
-		"/etude/c/pentatonic/minor2/minor2/minor2/trumpet/steady/120",            // no repeat count
-		"/etude/hsharp/pentatonic/minor2/minor2/minor2/trumpet/steady/120/3",     // bad tonal center
-		"/etude/c/schizotonic/minor2/minor2/minor2/trumpet/steady/120/3",         // bad pattern
-		"/etude/c/interval/fermented2/minor2/minor2/trumpet/steady/120/3",        // bad interval1
-		"/etude/c/intervalpairs/minor2/minor2/toxic2/trumpet/steady/120/3",       // bad interval2
-		"/etude/c/pentatonic/minor2/minor2/toxic2/fromixhorn/steady/120/3",       // bad instrument
-		"/etude/c/pentatonic/minor2/minor2/minor2/trumpet/jittery/120/3",         // bad rhythm
-		"/etude/c/pentatonic/minor2/minor2/minor2/trumpet/steady/allaregretto/3", // bad tempo
+		"/etude/c/pentatonic/minor2/minor2/minor2/trumpet/on/120",            // no repeat count
+		"/etude/hsharp/pentatonic/minor2/minor2/minor2/trumpet/on/120/3",     // bad tonal center
+		"/etude/c/schizotonic/minor2/minor2/minor2/trumpet/on/120/3",         // bad pattern
+		"/etude/c/interval/fermented2/minor2/minor2/trumpet/on/120/3",        // bad interval1
+		"/etude/c/intervalpairs/minor2/minor2/toxic2/trumpet/on/120/3",       // bad interval2
+		"/etude/c/pentatonic/minor2/minor2/toxic2/fromixhorn/on/120/3",       // bad instrument
+		"/etude/c/pentatonic/minor2/minor2/minor2/trumpet/jittery/120/3",     // bad rhythm
+		"/etude/c/pentatonic/minor2/minor2/minor2/trumpet/on/allaregretto/3", // bad tempo
 	}
 	for _, path := range badRequests {
 		url := "http://" + testhost + path
@@ -185,7 +185,7 @@ func TestMain(m *testing.M) {
 }
 
 func BenchmarkMkAllEtudes(b *testing.B) {
-	req := etudeRequest{instrument: "viola", rhythm: "steady"}
+	req := etudeRequest{instrument: "viola"}
 	for i := 0; i < b.N; i++ {
 		mkAllEtudes(48, 84, 120, 15, req)
 	}

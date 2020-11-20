@@ -15,7 +15,6 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -619,7 +618,6 @@ func low3(n uint32) (u24 [3]byte) {
 func writeMidiFile(sequence *etudeSequence) {
 	// update the filename with the rhythm pattern
 	sequence.filename = sequence.req.midiFilename()
-	advancing := sequence.req.rhythm == "advancing"
 	// open the file
 	fd, err := os.Create(sequence.filename)
 	if err != nil {
@@ -691,22 +689,11 @@ func writeMidiFile(sequence *etudeSequence) {
 			panic(err)
 		}
 	}
-	var offset int
-	for i, t := range sequence.seq {
-		var u midiPattern
-		if i < len(sequence.seq)-1 {
-			u = sequence.seq[i+1]
-		} else {
-			// last triple in sequence, so pass a copy as the successor
-			u = t
-		}
-		music := nBarsMusic(1+sequence.req.repeats, t, u, advancing, offset).Bytes()
+	for _, t := range sequence.seq {
+		music := nBarsMusic(1+sequence.req.repeats, t).Bytes()
 		err = binary.Write(buf, binary.BigEndian, music)
 		if err != nil {
 			panic(err)
-		}
-		if advancing {
-			offset = (offset + 1) % 4
 		}
 	}
 	// end of track (note last delta is already in place)
@@ -741,8 +728,6 @@ func writeMidiFile(sequence *etudeSequence) {
 		switch {
 		case i == 0:
 			music = metronomeBars(nbars+1, &sequence.req).Bytes()
-		case advancing && (i%4 == 3):
-			music = metronomeBars(nbars-1, &sequence.req).Bytes()
 		default:
 			music = metronomeBars(nbars, &sequence.req).Bytes()
 		}
@@ -789,15 +774,15 @@ func writeMidiFile(sequence *etudeSequence) {
 //
 // For the final pattern in the sequence, it is recommended to pass the same value
 // for t and u.
-func nBarsMusic(nbars int, t, u midiPattern, advancing bool, offset int) *bytes.Buffer {
+func nBarsMusic(nbars int, ptn midiPattern) *bytes.Buffer {
 	// There is no valid reason to call this function with nbars < 1, so panic if that happens.
 	if nbars < 1 {
 		panic(fmt.Sprintf("attempted to create etude with %d bars per pattern.", nbars))
 	}
 	// These are the only variable length delta times we need.
 	noBeats := byte(0x00)
-	oneBeatHi := byte(0x87)
-	oneBeatLo := byte(0x40)
+	oneBeatHiByte := byte(0x87)
+	oneBeatLoByte := byte(0x40)
 	// fourBeats := []byte{0x9e, 0x00}
 
 	velocity1 := byte(0x65) // downbeat
@@ -812,151 +797,41 @@ func nBarsMusic(nbars int, t, u midiPattern, advancing bool, offset int) *bytes.
 			panic(e)
 		}
 	}
-	// mkBeat writes MIDI for one beat with note on and off events.
-	mkBeat := func(buf *bytes.Buffer, pitch byte, velocity byte, after int) {
+	// mkBeat writes MIDI for one beat with note on and off events with
+	// the specified pitch and velocity. If addRest is true, it appends
+	// a second beat of silence.
+	mkBeat := func(buf *bytes.Buffer, pitch byte, velocity byte, addRest bool) {
 		var b []byte
-		switch after {
-		case 0:
-			b = []byte{on, pitch, velocity, oneBeatHi, oneBeatLo, off, pitch, velocity, noBeats}
-		case 1:
-			b = []byte{on, pitch, velocity, oneBeatHi, oneBeatLo, off, pitch, velocity, oneBeatHi, oneBeatLo}
-		default:
-			panic(errors.New("programming error: arg after must be 0 or 1"))
+		switch addRest {
+		case false:
+			b = []byte{on, pitch, velocity, oneBeatHiByte, oneBeatLoByte, off, pitch, velocity, noBeats}
+		case true:
+			b = []byte{on, pitch, velocity, oneBeatHiByte, oneBeatLoByte, off, pitch, velocity, oneBeatHiByte, oneBeatLoByte}
 		}
-
 		check(binary.Write(buf, binary.BigEndian, b))
 	}
 
 	// write all n bars for this triple
 	for i := 0; i < nbars; i++ {
-		lastbar := nbars - 1
 		var pitch byte
-		if !advancing {
-			// first beat
-			pitch = byte(t[0])
-			mkBeat(buf, pitch, velocity1, 0)
-			// 2nd beat
-			pitch = byte(t[1])
-			mkBeat(buf, pitch, velocity2, 0)
-			switch len(t) {
-			case 3:
-				// 3rd beat (4th beat is a rest, so we append a one beat delay after the Note Off event.
-				pitch = byte(t[2])
-				mkBeat(buf, pitch, velocity2, 1)
-			case 4:
-				pitch = byte(t[2])
-				mkBeat(buf, pitch, velocity2, 0)
-				pitch = byte(t[3])
-				mkBeat(buf, pitch, velocity2, 0)
+		// first beat
+		pitch = byte(ptn[0])
+		mkBeat(buf, pitch, velocity1, false)
+		// 2nd beat
+		pitch = byte(ptn[1])
+		mkBeat(buf, pitch, velocity2, false)
+		switch len(ptn) {
+		case 3: // triple pattern
+			// 3rd beat (4th beat is a rest, so we append a one beat of silence.
+			pitch = byte(ptn[2])
+			mkBeat(buf, pitch, velocity2, true)
+		case 4: // quad pattern
+			// 3rd and 4th beats
+			pitch = byte(ptn[2])
+			mkBeat(buf, pitch, velocity2, false)
+			pitch = byte(ptn[3])
+			mkBeat(buf, pitch, velocity2, false)
 
-			}
-			continue
-		}
-		// advancing
-		// 3rd beat
-		switch offset {
-		case 0:
-			// first beat
-			pitch = byte(t[0])
-			mkBeat(buf, pitch, velocity1, 0)
-			// 2nd beat
-			pitch = byte(t[1])
-			mkBeat(buf, pitch, velocity2, 0)
-
-			if i < lastbar {
-				// 3rd beat
-				pitch = byte(t[2])
-				mkBeat(buf, pitch, velocity2, 1)
-				continue
-			}
-			pitch = byte(t[2])
-			mkBeat(buf, pitch, velocity2, 0)
-
-			// 4th beat
-			pitch = byte(u[0])
-			mkBeat(buf, pitch, velocity2, 0)
-		case 1:
-			// first beat
-			pitch = byte(t[1])
-			mkBeat(buf, pitch, velocity1, 0)
-			// 2nd beat
-			if i < lastbar {
-				pitch = byte(t[2])
-				mkBeat(buf, pitch, velocity2, 1)
-
-				// 4th beat
-				pitch = byte(t[0])
-				mkBeat(buf, pitch, velocity2, 0)
-				continue
-			}
-			// 2nd beat
-			pitch = byte(t[2])
-			mkBeat(buf, pitch, velocity2, 0)
-
-			// 3rd beat
-			pitch = byte(u[0])
-			mkBeat(buf, pitch, velocity2, 0)
-
-			// 4th beat
-			pitch = byte(u[1])
-			mkBeat(buf, pitch, velocity2, 0)
-
-		case 2:
-			if i < lastbar {
-				// first beat
-				pitch = byte(t[2])
-				mkBeat(buf, pitch, velocity1, 1)
-
-				// 2nd beat is a rest
-
-				// 3rd beat
-				pitch = byte(t[0])
-				mkBeat(buf, pitch, velocity2, 0)
-
-				// 4th beat
-				pitch = byte(t[1])
-				mkBeat(buf, pitch, velocity2, 0)
-				continue
-			}
-			// 1st beat
-			pitch = byte(t[2])
-			mkBeat(buf, pitch, velocity1, 0)
-
-			// 2nd beat
-			pitch = byte(u[0])
-			mkBeat(buf, pitch, velocity2, 0)
-
-			// 3rd beat
-			pitch = byte(u[1])
-			mkBeat(buf, pitch, velocity2, 0)
-
-			// 4th beat
-			pitch = byte(u[2])
-			mkBeat(buf, pitch, velocity2, 1)
-
-		case 3:
-			// only 3 bars for this offset
-			if i == lastbar {
-				continue
-			}
-			// 2nd beat
-			pitch = byte(t[0])
-			mkBeat(buf, pitch, velocity2, 0)
-
-			// 3rd beat
-			pitch = byte(t[1])
-			mkBeat(buf, pitch, velocity2, 0)
-
-			if i < 2 {
-				// 4th beat
-				pitch = byte(t[2])
-				mkBeat(buf, pitch, velocity2, 1)
-				continue
-			}
-
-			// 4th beat
-			pitch = byte(t[2])
-			mkBeat(buf, pitch, velocity2, 0)
 		}
 	}
 	return buf
@@ -985,30 +860,21 @@ func metronomeBars(n int, req *etudeRequest) *bytes.Buffer {
 		}
 	}
 	// mkBeat writes MIDI for one beat with note on and off events.
-	mkBeat := func(buf *bytes.Buffer, pitch byte, velocity byte, after int) {
-		var b []byte
-		switch after {
-		case 0:
-			b = []byte{on, pitch, velocity, oneBeatHi, oneBeatLo, off, pitch, velocity, noBeats}
-		case 1:
-			b = []byte{on, pitch, velocity, oneBeatHi, oneBeatLo, off, pitch, velocity, oneBeatHi, oneBeatLo}
-		default:
-			panic(errors.New("programming error: arg after must be 0 or 1"))
-		}
-
+	mkBeat := func(buf *bytes.Buffer, pitch byte, velocity byte) {
+		b := []byte{on, pitch, velocity, oneBeatHi, oneBeatLo, off, pitch, velocity, noBeats}
 		check(binary.Write(buf, binary.BigEndian, b))
 	}
 
 	// write as many bars as requested
 	for i := 0; i < n; i++ {
 		// first beat
-		mkBeat(buf, wbh, velocity1, 0)
+		mkBeat(buf, wbh, velocity1)
 		// 2nd beat
-		mkBeat(buf, wbl, velocity2, 0)
+		mkBeat(buf, wbl, velocity2)
 		// 3rd beat
-		mkBeat(buf, wbl, velocity2, 0)
+		mkBeat(buf, wbl, velocity2)
 		// 4th beat
-		mkBeat(buf, wbl, velocity2, 0)
+		mkBeat(buf, wbl, velocity2)
 		// adjust metronome velocity after initial count-in
 		if i == 0 {
 			switch req.metronome {

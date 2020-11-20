@@ -129,7 +129,6 @@ type etudeRequest struct {
 	interval2   string
 	interval3   string
 	instrument  string
-	rhythm      string
 	tempo       string // beats per minute
 	repeats     int    // number of repeats (0-3)
 	metronome   int    // On, DownbeatOnly, Off
@@ -143,18 +142,32 @@ const (
 	metronomeOff
 )
 
+// metronomeString returns a string representation of the metronome integer value.
+func metronomeString(req *etudeRequest) (s string) {
+	switch req.metronome {
+	case metronomeOn:
+		s = "on"
+	case metronomeDownbeatOnly:
+		s = "downbeat"
+	case metronomeOff:
+		s = "off"
+	default:
+		s = "invalid"
+	}
+	return
+}
 func (r *etudeRequest) midiFilename() (f string) {
 	var parts []string
 	repeats := fmt.Sprintf("%d", r.repeats)
 	switch r.pattern {
 	case "interval":
-		parts = []string{r.pattern, r.interval1, r.instrument, r.rhythm, r.tempo, repeats}
+		parts = []string{r.pattern, r.interval1, r.instrument, metronomeString(r), r.tempo, repeats}
 	case "intervalpair":
-		parts = []string{r.pattern, r.interval1, r.interval2, r.instrument, r.rhythm, r.tempo, repeats}
+		parts = []string{r.pattern, r.interval1, r.interval2, r.instrument, metronomeString(r), r.tempo, repeats}
 	case "intervaltriple":
-		parts = []string{r.pattern, r.interval1, r.interval2, r.interval3, r.instrument, r.rhythm, r.tempo, repeats}
+		parts = []string{r.pattern, r.interval1, r.interval2, r.interval3, r.instrument, metronomeString(r), r.tempo, repeats}
 	default:
-		parts = []string{r.tonalCenter, r.pattern, r.instrument, r.rhythm, r.tempo, repeats}
+		parts = []string{r.tonalCenter, r.pattern, r.instrument, metronomeString(r), r.tempo, repeats}
 	}
 	f = strings.Join(parts, "_") + ".mid"
 	return
@@ -191,7 +204,16 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 	req.interval2 = path[5]
 	req.interval3 = path[6]
 	req.instrument = path[7]
-	req.rhythm = path[8]
+	switch path[8] {
+	case "on":
+		req.metronome = metronomeOn
+	case "downbeat":
+		req.metronome = metronomeDownbeatOnly
+	case "off":
+		req.metronome = metronomeOff
+	default:
+		req.metronome = 4 // invalid
+	}
 	req.tempo = path[9]
 	repeats, err := strconv.Atoi(path[10])
 	if err != nil {
@@ -299,7 +321,7 @@ func validEtudeRequest(req etudeRequest) (ok bool) {
 	if !validInstrumentName(req.instrument) {
 		return
 	}
-	if !validRhythmPattern(req.rhythm) {
+	if !validMetronomePattern(metronomeString(&req)) {
 		return
 	}
 	if !validTempo(req.tempo) {
@@ -445,11 +467,9 @@ func validInstrumentName(name string) (ok bool) {
 	return
 }
 
-func validRhythmPattern(name string) (ok bool) {
+func validMetronomePattern(name string) (ok bool) {
 	switch name {
-	case "steady":
-		ok = true
-	case "advancing":
+	case "on", "downbeat", "off":
 		ok = true
 	}
 	return

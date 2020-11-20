@@ -190,11 +190,6 @@ func main() {
 	} else {
 		// create the midi files
 		req := etudeRequest{}
-		if advancing {
-			req.rhythm = "advancing"
-		} else {
-			req.rhythm = "steady"
-		}
 		req.instrument, _ = gmSoundName(instrument)
 		mkAllEtudes(midilo, midihi, tempo, instrument, req)
 	}
