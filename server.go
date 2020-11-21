@@ -132,7 +132,7 @@ type etudeRequest struct {
 	tempo       string // beats per minute
 	repeats     int    // number of repeats (0-3)
 	metronome   int    // On, DownbeatOnly, Off
-	silent      []bool // true indicated the corresponding repeat should be silent
+	silent      int    // true indicated the corresponding repeat should be silent
 
 }
 
@@ -159,15 +159,17 @@ func metronomeString(req *etudeRequest) (s string) {
 func (r *etudeRequest) midiFilename() (f string) {
 	var parts []string
 	repeats := fmt.Sprintf("%d", r.repeats)
+	silence := fmt.Sprintf("%d", r.silent)
+
 	switch r.pattern {
 	case "interval":
-		parts = []string{r.pattern, r.interval1, r.instrument, metronomeString(r), r.tempo, repeats}
+		parts = []string{r.pattern, r.interval1, r.instrument, metronomeString(r), r.tempo, repeats, silence}
 	case "intervalpair":
-		parts = []string{r.pattern, r.interval1, r.interval2, r.instrument, metronomeString(r), r.tempo, repeats}
+		parts = []string{r.pattern, r.interval1, r.interval2, r.instrument, metronomeString(r), r.tempo, repeats, silence}
 	case "intervaltriple":
-		parts = []string{r.pattern, r.interval1, r.interval2, r.interval3, r.instrument, metronomeString(r), r.tempo, repeats}
+		parts = []string{r.pattern, r.interval1, r.interval2, r.interval3, r.instrument, metronomeString(r), r.tempo, repeats, silence}
 	default:
-		parts = []string{r.tonalCenter, r.pattern, r.instrument, metronomeString(r), r.tempo, repeats}
+		parts = []string{r.tonalCenter, r.pattern, r.instrument, metronomeString(r), r.tempo, repeats, silence}
 	}
 	f = strings.Join(parts, "_") + ".mid"
 	return
@@ -188,7 +190,7 @@ func (r *etudeRequest) midiFilename() (f string) {
 // app will generate it so it can be returned.
 func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 	path := strings.Split(r.URL.Path, "/")
-	if len(path) != 11 {
+	if len(path) != 12 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -222,6 +224,11 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.repeats = repeats
+	req.silent, err = strconv.Atoi(path[11])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	if !validEtudeRequest(req) {
 		w.WriteHeader(http.StatusBadRequest)
 		return

@@ -690,7 +690,7 @@ func writeMidiFile(sequence *etudeSequence) {
 		}
 	}
 	for _, t := range sequence.seq {
-		music := nBarsMusic(1+sequence.req.repeats, t).Bytes()
+		music := nBarsMusic(t, &sequence.req).Bytes()
 		err = binary.Write(buf, binary.BigEndian, music)
 		if err != nil {
 			panic(err)
@@ -756,21 +756,9 @@ func writeMidiFile(sequence *etudeSequence) {
 }
 
 // nBarsMusic returns a byte buffer containing four bars of  one midiPattern
-// Two rhythm formats are supported with selection determined by the boolean
-// argument named advancing. When advancing is false, the rhythm is constant with
-// the pitches of each triple falling on beats 1, 2, 3 and a rest on beat 4. This
-// pattern is repeated in 4 identical bars.
-//
-// When advancing is true, the rhythm advances by 1 beat in the 4th bar so that
-// a sequence of patterns may be cycled through 4 different patterns by successively
-// incrementing the offset argument.
-//
-// The advancing format expects the arguments t and u to be successive patterns from
-// the sequence. The non-advancing format ignores u.
-//
-// For the final pattern in the sequence, it is recommended to pass the same value
-// for t and u.
-func nBarsMusic(nbars int, ptn midiPattern) *bytes.Buffer {
+func nBarsMusic(ptn midiPattern, req *etudeRequest) *bytes.Buffer {
+	nbars := 1 + req.repeats
+	silent := iToBools(req.silent, 3)
 	// There is no valid reason to call this function with nbars < 1, so panic if that happens.
 	if nbars < 1 {
 		panic(fmt.Sprintf("attempted to create etude with %d bars per pattern.", nbars))
@@ -806,27 +794,41 @@ func nBarsMusic(nbars int, ptn midiPattern) *bytes.Buffer {
 		}
 		check(binary.Write(buf, binary.BigEndian, b))
 	}
-
-	// write all n bars for this triple
+	silence := func(barnum int, velocity byte) (adjustedVelocity byte) {
+		switch barnum {
+		case 0:
+			adjustedVelocity = velocity
+		default:
+			if silent[barnum-1] {
+				adjustedVelocity = 0
+			} else {
+				adjustedVelocity = velocity
+			}
+		}
+		return
+	}
+	// write all n bars for this pattern
 	for i := 0; i < nbars; i++ {
+		v1 := silence(i, velocity1)
+		v2 := silence(i, velocity2)
 		var pitch byte
 		// first beat
 		pitch = byte(ptn[0])
-		mkBeat(buf, pitch, velocity1, false)
+		mkBeat(buf, pitch, v1, false)
 		// 2nd beat
 		pitch = byte(ptn[1])
-		mkBeat(buf, pitch, velocity2, false)
+		mkBeat(buf, pitch, v2, false)
 		switch len(ptn) {
 		case 3: // triple pattern
 			// 3rd beat (4th beat is a rest, so we append a one beat of silence.
 			pitch = byte(ptn[2])
-			mkBeat(buf, pitch, velocity2, true)
+			mkBeat(buf, pitch, v2, true)
 		case 4: // quad pattern
 			// 3rd and 4th beats
 			pitch = byte(ptn[2])
-			mkBeat(buf, pitch, velocity2, false)
+			mkBeat(buf, pitch, v2, false)
 			pitch = byte(ptn[3])
-			mkBeat(buf, pitch, velocity2, false)
+			mkBeat(buf, pitch, v2, false)
 
 		}
 	}
@@ -900,21 +902,6 @@ func keySignature(s *etudeSequence) []byte {
 // in s preceeded by 0 delta time,
 func trackInstrument(s *etudeSequence) []byte {
 	return []byte{0x00, 0xC0, byte(s.instrument)}
-}
-
-// composeFileName returns a string containing a filename of the form
-// key_scaledescription_intrument.mid, e.g
-// "gflat_pentatonic_acoustic_grand_piano.mid"
-func composeFileName(sequence *etudeSequence, instrument int) string {
-	front := sequence.filename
-	sname, err := gmSoundName(instrument)
-	if err != nil {
-		msg := fmt.Sprintf("couldn't get instrument name: %v", err)
-		panic(msg)
-	}
-	iname := gmSoundFileNamePrefix(sname)
-	extension := ".mid"
-	return front + "_" + iname + extension
 }
 
 // adjustSuccessor returns a pitch adjusted to be within

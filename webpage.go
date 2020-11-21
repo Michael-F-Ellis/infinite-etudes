@@ -9,24 +9,24 @@ import (
 )
 
 const (
-	whiteCircle string = "&#x25ef;"
-	greenCircle string = "&#x1f7e2;"
+	crossMark string = "&#x2717;"
+	checkMark string = "&#x2713;"
 )
 
 type SilenceOption struct {
-	value int    // numerical value
+	value int    // binary mask. 1-bits are silent
 	html  string // three circles (white or green) indicate which repeats are silent.
 }
 
 var silencePatterns = []SilenceOption{
-	{0, greenCircle + greenCircle + greenCircle},
-	{1, greenCircle + greenCircle + whiteCircle},
-	{2, greenCircle + whiteCircle + greenCircle},
-	{4, whiteCircle + greenCircle + greenCircle},
-	{3, greenCircle + whiteCircle + whiteCircle},
-	{5, whiteCircle + greenCircle + whiteCircle},
-	{6, whiteCircle + whiteCircle + greenCircle},
-	{7, whiteCircle + whiteCircle + whiteCircle},
+	{0, checkMark + checkMark + checkMark},
+	{1, checkMark + checkMark + crossMark},
+	{2, checkMark + crossMark + checkMark},
+	{4, crossMark + checkMark + checkMark},
+	{3, checkMark + crossMark + crossMark},
+	{5, crossMark + checkMark + crossMark},
+	{6, crossMark + crossMark + checkMark},
+	{7, crossMark + crossMark + crossMark},
 }
 
 // mkWebPages constructs the application web pages in the current working
@@ -139,7 +139,7 @@ func indexBody() (body *HtmlTree) {
 		attrs := fmt.Sprintf(`value="%d"`, ptn.value)
 		silences = append(silences, Option(attrs, ptn.html))
 	}
-	silenceSelect := Div(`class="Column" id="silence-div"`, Label(``, "Audible", Select("id=silence-select", silences...)))
+	silenceSelect := Div(`class="Column" id="silence-div"`, Label(``, "Muting", Select("id=silence-select", silences...)))
 
 	// Controls
 	playBtn := Button(`onclick="playStart()"`, "Play")
@@ -714,7 +714,8 @@ func indexJS() (script *HtmlTree) {
 		  metronome = document.getElementById("metro-select").value
 		  tempo = document.getElementById("tempo-select").value
 		  repeats = document.getElementById("repeat-select").value
-		  return "/etude/" + key + "/" + scale + "/" + interval1 + "/" + interval2 + "/" + interval3 + "/" + sound + "/" + metronome + "/" + tempo + "/" + repeats
+		  silent = document.getElementById("silence-select").value
+		  return "/etude/" + key + "/" + scale + "/" + interval1 + "/" + interval2 + "/" + interval3 + "/" + sound + "/" + metronome + "/" + tempo + "/" + repeats + "/" + silent
 		}
 
 		// Read the selects and returns a proposed filename for the etude to be downloaded.
@@ -731,17 +732,18 @@ func indexJS() (script *HtmlTree) {
 		  metronome = document.getElementById("metro-select").value
 		  tempo = document.getElementById("tempo-select").value
 		  repeats = document.getElementById("repeat-select").value
+		  silent = document.getElementById("silence-select").value
 		  if (scale=="interval"){
-			  return scale + "_" + interval1 + "_" + sound + "_" + metronome + "_" + tempo + "_" + repeats  + ".midi" 
+			  return scale + "_" + interval1 + "_" + sound + "_" + metronome + "_" + tempo + "_" + repeats  + "_"+ silent + ".midi" 
 		  }
 		  if (scale=="intervalpair"){
-			  return scale + "_" + interval1 + "_" + interval2 + "_" + sound + "_" + metronome + "_" + tempo + "_" + repeats  + ".midi" 
+			  return scale + "_" + interval1 + "_" + interval2 + "_" + sound + "_" + metronome + "_" + tempo + "_" + repeats  + "_" + silent + ".midi" 
 		  }
 		  if (scale=="intervaltriple"){
-			  return scale + "_" + interval1 + "_" + interval2 + "_"  + interval3 + "_" + sound + "_" + metronome + "_" + tempo + "_" + repeats  + ".midi" 
+			  return scale + "_" + interval1 + "_" + interval2 + "_"  + interval3 + "_" + sound + "_" + metronome + "_" + tempo + "_" + repeats  + "_" + silent + ".midi" 
 		  }
 		  // any other scale 
-		  return key + "_" + scale + "_" + sound + "_" + metronome + "_" + tempo + "_" + repeats  + ".midi"
+		  return key + "_" + scale + "_" + sound + "_" + metronome + "_" + tempo + "_" + repeats  + "_" + silent + ".midi"
 		}
 		// randomKey returns a keyname chosen randomly from a list of supported
 		// keys.

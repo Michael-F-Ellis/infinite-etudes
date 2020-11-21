@@ -123,7 +123,7 @@ func TestGenerateKeySequences(t *testing.T) {
 	if len(s) != 6 {
 		t.Errorf("expected 6 sequences, got %d", len(s))
 	}
-	if s[0].req.midiFilename() != "c_pentatonic_acoustic_grand_piano_on_120_3.mid" {
+	if s[0].req.midiFilename() != "c_pentatonic_acoustic_grand_piano_on_120_3_0.mid" {
 		t.Errorf("expected name of first sequence to be c_pentatonic, got %s", s[0].req.midiFilename())
 	}
 	// verify that all 300 permutations are accounted for
@@ -139,7 +139,7 @@ func TestGenerateKeySequences(t *testing.T) {
 	four := midiMajorScaleNums[3]
 	seven := midiMajorScaleNums[6]
 	r5 := s[4]
-	if r5.req.midiFilename() != "c_raised_five_acoustic_grand_piano_on_120_3.mid" {
+	if r5.req.midiFilename() != "c_raised_five_acoustic_grand_piano_on_120_3_0.mid" {
 		t.Errorf("expected fifth sequence filename to start with 'c_raised_5', got %s", r5.req.midiFilename())
 	}
 	for _, x := range r5.seq {
@@ -161,7 +161,7 @@ func TestGenerateIntervalSequences(t *testing.T) {
 	if len(s) != 12 {
 		t.Errorf("expected 12 sequences, got %d", len(s))
 	}
-	if s[0].req.midiFilename() != "c_allintervals_acoustic_grand_piano_on_120_3.mid" {
+	if s[0].req.midiFilename() != "c_allintervals_acoustic_grand_piano_on_120_3_0.mid" {
 		t.Errorf("expected name of first sequence to be c_intervals, got %s", s[0].filename)
 	}
 	// verify that all 156 permutations are accounted for
@@ -186,7 +186,7 @@ func TestGenerateEqualIntervalSequences(t *testing.T) {
 		t.Errorf("expected 13 sequences, got %d", len(s))
 	}
 	fname_got := s[0].req.midiFilename()
-	fname_exp := "interval_unison_acoustic_grand_piano_on_120_3.mid"
+	fname_exp := "interval_unison_acoustic_grand_piano_on_120_3_0.mid"
 	if fname_got != fname_exp {
 		t.Errorf("expected file name of first sequence to be %s, got %s", fname_exp, fname_got)
 	}
@@ -210,7 +210,7 @@ func TestGenerateFinalSequences(t *testing.T) {
 	if len(s) != 12 {
 		t.Errorf("expected 12 sequences, got %d", len(s))
 	}
-	if s[0].req.midiFilename() != "c_final_acoustic_grand_piano_on_120_3.mid" {
+	if s[0].req.midiFilename() != "c_final_acoustic_grand_piano_on_120_3_0.mid" {
 		t.Errorf("expected name of first sequence to be c_final, got %s", s[0].filename)
 	}
 	// verify that all 1320 permutations are accounted for
@@ -389,16 +389,6 @@ func TestGMSoundFileNamePrefix(t *testing.T) {
 	}
 }
 
-func TestComposeFileName(t *testing.T) {
-	s := etudeSequence{filename: "eflat_pentatonic"}
-	exp := "eflat_pentatonic_electric_grand_piano.mid"
-	x := composeFileName(&s, 2)
-	if x != exp {
-		t.Errorf("expected %v, got %v", exp, x)
-	}
-
-}
-
 func TestQuadNormalRhythm(t *testing.T) {
 	pitches := []midiPattern{{1, 2, 3, 4}, {4, 5, 6, 7}}
 	exp := []byte{
@@ -419,7 +409,7 @@ func TestQuadNormalRhythm(t *testing.T) {
 		0x90, 0x03, 0x51, 0x87, 0x40, 0x80, 0x03, 0x51, 0x00,
 		0x90, 0x04, 0x51, 0x87, 0x40, 0x80, 0x04, 0x51, 0x00,
 	}
-	x := nBarsMusic(4, pitches[0])
+	x := nBarsMusic(pitches[0], &etudeRequest{repeats: 3})
 	if diff := deep.Equal(x.Bytes()[:], exp); diff != nil {
 		t.Errorf("%v", diff)
 	}
@@ -441,9 +431,9 @@ func TestNBarsNormalRhythm(t *testing.T) {
 	for n := 2; n < 5; n++ {
 		exp = append(exp, oneBarMidi...)
 
-		got := nBarsMusic(n, pitches[0])
+		got := nBarsMusic(pitches[0], &etudeRequest{repeats: n - 1})
 		if diff := deep.Equal(got.Bytes()[:], exp); diff != nil {
-			t.Errorf("%v", diff)
+			t.Errorf("%d: %v", n, diff)
 		}
 	}
 }

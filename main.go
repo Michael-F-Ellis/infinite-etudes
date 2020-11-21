@@ -310,3 +310,12 @@ func pitchHistogram(e etudeSequence) (histo string) {
 	}
 	return
 }
+
+// iToBools converts the first length bits of v to
+// a slice of bool, e.g. iToBools(4,3) -> [true, false, false]
+func iToBools(v, length int) (b []bool) {
+	for i := length - 1; i >= 0; i-- {
+		b = append(b, (v&(1<<i) > 0))
+	}
+	return
+}
