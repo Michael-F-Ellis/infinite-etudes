@@ -177,9 +177,9 @@ func permute4(scale []int) []midiPattern {
 
 }
 
-// generateEqualIntervalSequences returns a slice of etudeSequences as described in the usage instructions.
+// generateEqualIntervalSequence returns a slice of etudeSequences as described in the usage instructions.
 // Each sequence consists of triples of equal interval sizes
-func generateEqualIntervalSequences(midilo int, midihi int, tempo int, instrument int, req etudeRequest) (sequences []etudeSequence) {
+func generateEqualIntervalSequence(midilo int, midihi int, tempo int, instrument int, req etudeRequest) (sequence etudeSequence) {
 	// Get the chromatic scale as midi numbers in the range 0 - 11
 	midiChromaticScaleNums := getChromaticScale()
 	// Generate all intervals
@@ -189,40 +189,43 @@ func generateEqualIntervalSequences(midilo int, midihi int, tempo int, instrumen
 		triples = append(triples, midiPattern{n, n, n})
 	}
 
-	var intervalNames []string
+	var interval int = -1
 	for _, iinfo := range intervalInfo {
-		intervalNames = append(intervalNames, iinfo.fileName)
+		if iinfo.fileName != req.interval1 {
+			continue
+		}
+		interval = iinfo.size
+		break
+	}
+	if interval == -1 {
+		panic(fmt.Sprintf("%s is not a supported interval name", req.interval1))
 	}
 
-	// construct the sequences
-	for i := 0; i < len(intervalNames); i++ {
-		sequences = append(sequences, etudeSequence{
-			midilo:     midilo,
-			midihi:     midihi,
-			tempo:      tempo,
-			instrument: instrument,
-			req:        req,
-		})
-		sequences[i].req.interval1 = intervalNames[i]
-		sequences[i].req.pattern = "interval"
-
+	// construct the sequence
+	sequence = etudeSequence{
+		midilo:     midilo,
+		midihi:     midihi,
+		tempo:      tempo,
+		instrument: instrument,
+		req:        req,
 	}
-
 	// filter the triples into the corresponding etude sequences
 	for _, t := range triples {
 		diff := t[0] - t[1]
 		if diff < 0 {
 			diff = -diff
 		}
-		// diff -= 1
-		sequences[diff].seq = append(sequences[diff].seq, t)
+		if diff != interval {
+			continue
+		}
+		sequence.seq = append(sequence.seq, t)
 	}
 	return
 }
 
-// generateIntervalSequences returns a slice of 12 etudeSequences as described in the usage instructions.
+// generateIntervalSequence returns a slice of 12 etudeSequences as described in the usage instructions.
 // Each sequence consists of 12 triples with the middle pitch corresponding to pitchnum.
-func generateIntervalSequences(midilo int, midihi int, tempo int, instrument int, req etudeRequest) (sequences []etudeSequence) {
+func generateIntervalSequence(midilo int, midihi int, tempo int, instrument int, req etudeRequest) (sequence etudeSequence) {
 	// Get the chromatic scale as midi numbers in the range 0 - 11
 	midiChromaticScaleNums := getChromaticScale()
 	// Generate all intervals
@@ -231,28 +234,35 @@ func generateIntervalSequences(midilo int, midihi int, tempo int, instrument int
 	for n := range midiChromaticScaleNums {
 		triples = append(triples, midiPattern{n, n, n})
 	}
-	// construct the sequences
-	for pitch := 0; pitch < 12; pitch++ {
-		pitchname := keyNames[pitch]
-		sequences = append(sequences, etudeSequence{
-			midilo:     midilo,
-			midihi:     midihi,
-			tempo:      tempo,
-			instrument: instrument,
-			keyname:    pitchname,
-			req:        req,
-		})
-		sequences[pitch].req.tonalCenter = pitchname
-		sequences[pitch].req.pattern = "allintervals"
+	// construct the sequence
+	var pitch int = -1
+	for i, v := range keyNames {
+		if v == req.tonalCenter {
+			pitch = i
+		}
+	}
+	if pitch == -1 {
+		panic(fmt.Sprintf("%s is not a supported pitchname", req.tonalCenter))
+	}
+	sequence = etudeSequence{
+		midilo:     midilo,
+		midihi:     midihi,
+		tempo:      tempo,
+		instrument: instrument,
+		keyname:    req.tonalCenter,
+		req:        req,
 	}
 
-	// filter the triples into the corresponding etude sequences
+	// filter the matching triples into the sequence
 	for _, t := range triples {
-		pitch := t[0] % 12
-		if pitch < 0 {
-			pitch += 12
+		p := t[0] % 12
+		if p < 0 {
+			p += 12
 		}
-		sequences[pitch].seq = append(sequences[pitch].seq, t)
+		if p != pitch {
+			continue
+		}
+		sequence.seq = append(sequence.seq, t)
 	}
 	return
 }

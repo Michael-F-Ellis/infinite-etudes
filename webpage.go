@@ -112,7 +112,7 @@ func indexBody() (body *HtmlTree) {
 
 	var tempos []interface{}
 	var tempoValues []int
-	for i := 60; i < 244; i += 4 {
+	for i := 60; i < 484; i += 4 {
 		tempoValues = append(tempoValues, i)
 	}
 	for _, bpm := range tempoValues {
@@ -571,7 +571,8 @@ func indexCSS() *HtmlTree {
 	  margin: 0;
 	  height: 100%;
 	  overflow: auto;
-	  background-color: #DDA;
+	  background-color: #000;
+	  color: #CFC;
 	  }
     h1 {font-size: 300%; margin-bottom: 1vh}
     h2 {font-size: 200%}

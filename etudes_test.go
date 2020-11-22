@@ -153,50 +153,30 @@ func TestGenerateKeySequences(t *testing.T) {
 
 func TestGenerateIntervalSequences(t *testing.T) {
 	req := etudeRequest{
-		instrument: "acoustic_grand_piano",
-		tempo:      "120",
-		repeats:    3,
+		instrument:  "acoustic_grand_piano",
+		tempo:       "120",
+		repeats:     3,
+		pattern:     "allintervals",
+		tonalCenter: "c",
 	}
-	s := generateIntervalSequences(36, 84, 120, 0, req)
-	if len(s) != 12 {
-		t.Errorf("expected 12 sequences, got %d", len(s))
-	}
-	if s[0].req.midiFilename() != "c_allintervals_acoustic_grand_piano_on_120_3_0.mid" {
-		t.Errorf("expected name of first sequence to be c_intervals, got %s", s[0].filename)
-	}
-	// verify that all 156 permutations are accounted for
-	n := 0
-	for _, seq := range s {
-		n += len(seq.seq)
-	}
-	if n != 156 {
-		t.Errorf("expected 144 midiTriples total, got %d", n)
+	s := generateIntervalSequence(36, 84, 120, 0, req)
+	if s.req.midiFilename() != "c_allintervals_acoustic_grand_piano_on_120_3_0.mid" {
+		t.Errorf("expected name of first sequence to be c_intervals, got %s", s.filename)
 	}
 }
 func TestGenerateEqualIntervalSequences(t *testing.T) {
 	req := etudeRequest{
 		instrument: "acoustic_grand_piano",
 		tempo:      "120",
-		interval1:  "minor2",
+		interval1:  "unison",
 		pattern:    "interval",
 		repeats:    3,
 	}
-	s := generateEqualIntervalSequences(36, 84, 120, 0, req)
-	if len(s) != 13 {
-		t.Errorf("expected 13 sequences, got %d", len(s))
-	}
-	fname_got := s[0].req.midiFilename()
+	s := generateEqualIntervalSequence(36, 84, 120, 0, req)
+	fname_got := s.req.midiFilename()
 	fname_exp := "interval_unison_acoustic_grand_piano_on_120_3_0.mid"
 	if fname_got != fname_exp {
 		t.Errorf("expected file name of first sequence to be %s, got %s", fname_exp, fname_got)
-	}
-	// verify that all 156 permutations are accounted for
-	n := 0
-	for _, seq := range s {
-		n += len(seq.seq)
-	}
-	if n != 156 {
-		t.Errorf("expected 144 midiTriples total, got %d", n)
 	}
 }
 
@@ -281,16 +261,6 @@ func TestConstrain(t *testing.T) {
 	if diff := deep.Equal(x, exp); diff != nil {
 		t.Errorf("expected %v, got %v", exp, x)
 	}
-}
-func TestMkIntervalEtudes(t *testing.T) {
-	r := etudeRequest{
-		tonalCenter: "c",
-		pattern:     "pentatonic",
-		instrument:  "trumpet",
-		tempo:       "120",
-	}
-	mkIntervalEtudes(36, 84, 120, 0, r)
-
 }
 func TestMkMidi(t *testing.T) {
 	var x etudeSequence

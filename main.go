@@ -224,6 +224,12 @@ func usage() {
 func mkAllEtudes(midilo, midihi, tempo, instrument int, r etudeRequest) {
 	iname := r.instrument
 	switch r.pattern {
+	case "allintervals":
+		s := generateIntervalSequence(midilo, midihi, tempo, instrument, r)
+		mkMidi(&s, true)
+	case "interval":
+		s := generateEqualIntervalSequence(midilo, midihi, tempo, instrument, r)
+		mkMidi(&s, true)
 	case "intervalpair":
 		i1 := intervalSizeByName(r.interval1)
 		i2 := intervalSizeByName(r.interval2)
@@ -243,7 +249,6 @@ func mkAllEtudes(midilo, midihi, tempo, instrument int, r etudeRequest) {
 			mkKeyEtudes(i, midilo, midihi, tempo, instrument, r)
 		}
 		mkFinalEtudes(midilo, midihi, tempo, instrument, r)
-		mkIntervalEtudes(midilo, midihi, tempo, instrument, r)
 	}
 }
 
@@ -254,25 +259,6 @@ func mkKeyEtudes(keynum int, midilo int, midihi int, tempo int,
 	for _, sequence := range generateKeySequences(keynum, midilo, midihi, tempo, instrument, r) {
 		// sequence.req = r
 		mkMidi(&sequence, false)
-		if debug {
-			fmt.Println(pitchHistogram(sequence))
-		}
-	}
-}
-
-// mkIntervalEtudes generates the 12 interval files associated with pitch numbers where
-// 0->c, 1->dflat, 2->d, ... 11->b and the 12 interval files associated with interval
-// sizes from m2 to P8
-func mkIntervalEtudes(midilo int, midihi int, tempo int,
-	instrument int, req etudeRequest) {
-	for _, sequence := range generateIntervalSequences(midilo, midihi, tempo, instrument, req) {
-		mkMidi(&sequence, true)
-		if debug {
-			fmt.Println(pitchHistogram(sequence))
-		}
-	}
-	for _, sequence := range generateEqualIntervalSequences(midilo, midihi, tempo, instrument, req) {
-		mkMidi(&sequence, true)
 		if debug {
 			fmt.Println(pitchHistogram(sequence))
 		}
