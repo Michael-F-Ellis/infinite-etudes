@@ -290,7 +290,7 @@ func makeEtudesIfNeeded(filename string, req etudeRequest) {
 	midilo := iInfo.midilo
 	midihi := iInfo.midihi
 	tempo, _ := strconv.Atoi(req.tempo)
-	mkAllEtudes(midilo, midihi, tempo, instrument, req)
+	mkRequestedEtude(midilo, midihi, tempo, instrument, req)
 }
 
 // validEtudeRequest returns true if the request is correctly formed
@@ -444,13 +444,6 @@ var patternInfo = []nameInfo{
 	{"intervalpair", "Two Intervals", "Two Intervals", 0},
 	{"intervaltriple", "Three Intervals", "Three Intervals", 0},
 	{"allintervals", "Tonic Intervals", "Tonic Intervals", 0},
-	{"pentatonic", "Pentatonic", "Pentatonic", 0},
-	{"final", "Chromatic Final", "Chromatic Final", 0},
-	{"plus_four", "Plus Four", "Plus Four", 0},
-	{"plus_seven", "Plus Seven", "Plus Seven", 0},
-	{"four_and_seven", "Four and Seven", "Four and Seven", 0},
-	{"raised_five", "Harmonic Minor 1", "Harmonic Minor 1", 0},
-	{"raised_five_with_four_or_seven", "Harmonic Minor 2", "Harmonic Minor 2", 0},
 }
 
 // validPattern returns true if the scale name is in the ones we support.

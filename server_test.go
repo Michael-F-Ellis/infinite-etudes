@@ -43,8 +43,8 @@ func TestGoodEtudeRequest(t *testing.T) {
 	}
 	testTable := []testcase{
 		{
-			url:      "http://" + testhost + "/etude/aflat/pentatonic/minor2/minor2/minor2/trumpet/on/120/3/0",
-			filename: "aflat_pentatonic_trumpet_on_120_3_0.mid",
+			url:      "http://" + testhost + "/etude/aflat/allintervals/minor2/minor2/minor2/trumpet/on/120/3/0",
+			filename: "aflat_allintervals_trumpet_on_120_3_0.mid",
 		},
 		{
 			url:      "http://" + testhost + "/etude/aflat/intervalpair/minor2/minor2/minor2/trumpet/on/120/1/0",
@@ -85,7 +85,7 @@ func TestGoodEtudeRequest(t *testing.T) {
 func TestVocalEtudeRequest(t *testing.T) {
 	// because multiple vocal parts are mapped to the same midi number
 	var err error
-	url := "http://" + testhost + "/etude/aflat/pentatonic/minor2/minor2/minor2/choir_aahs_tenor/off/120/3/0"
+	url := "http://" + testhost + "/etude/aflat/allintervals/minor2/minor2/minor2/choir_aahs_tenor/off/120/3/0"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Errorf("GET failed: %v", err)
@@ -95,7 +95,7 @@ func TestVocalEtudeRequest(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status code %v, got %v", http.StatusOK, resp.StatusCode)
 	}
-	exp, _ := ioutil.ReadFile("aflat_pentatonic_choir_aahs_tenor_off_120_3_0.mid")
+	exp, _ := ioutil.ReadFile("aflat_allintervals_choir_aahs_tenor_off_120_3_0.mid")
 	got, _ := ioutil.ReadAll(resp.Body)
 	if !bytes.Equal(got, exp) {
 		t.Errorf("response didn't match the file content")
@@ -185,8 +185,8 @@ func TestMain(m *testing.M) {
 }
 
 func BenchmarkMkAllEtudes(b *testing.B) {
-	req := etudeRequest{instrument: "viola"}
+	req := etudeRequest{instrument: "viola", pattern: "allintervals", tonalCenter: "c"}
 	for i := 0; i < b.N; i++ {
-		mkAllEtudes(48, 84, 120, 15, req)
+		mkRequestedEtude(48, 84, 120, 15, req)
 	}
 }
