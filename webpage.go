@@ -63,7 +63,7 @@ func mkIndex() (err error) {
 
 func indexBody() (body *HtmlTree) {
 	header := Div(`style="text-align:center; margin-bottom:2vh;"`,
-		H2("class=title", "Infinite Etudes Web App"),
+		H2("class=title", "Infinite Etudes"),
 		Em("", "Ear training for your fingers"),
 	)
 	// Etude menus:
@@ -149,17 +149,16 @@ func indexBody() (body *HtmlTree) {
 	// Assemble everything into the body element.
 	body = Body("", header,
 		Div(`class="Row" id="scale-row"`, scaleSelect, keySelect, interval1Select, interval2Select, interval3Select),
-		Div(`class="Row"`, soundSelect, metroSelect, tempoSelect, repeatSelect, silenceSelect),
+		Div(`class="Row"`, soundSelect, metroSelect),
+		Div(`class="Row"`, tempoSelect, repeatSelect, silenceSelect),
 		Div(`style="padding-top:1vh;"`, playBtn, stopBtn, downloadBtn),
 		quickStart(),
 		forTheCurious(),
 		forVocalists(),
-		tempo(),
-		rhythmPatterns(),
-		intervalsOctavesRanges(),
+		controls(),
 		custom(),
 		variations(),
-		faq(),
+		// faq(),
 		biblio(),
 		coda(),
 	)
@@ -185,127 +184,66 @@ func forTheCurious() (div *HtmlTree) {
 	The emphasis is on improving your ability to play what you hear by thoroughly exploring
 	all the combinations of 2, 3 and 4 pitches over the full range of your instrument.`
 
-	p1 := `By default, the etudes follow a simple four
-	bar form: a sequence of 3 different notes is played on beats 1, 2, and 3
-	and a rest on beat 4. Each bar is played four times before moving on -- so
-	you have 3 chances to play the sequence after the first hearing. 
+	p1 := `The etudes follow a simple four
+	bar form: a sequence of different notes is played on beats 1, 2, and 3
+	and a rest on beat 4. By default, each bar is played four times before moving on -- so
+	you have 3 chances to play the sequence after the first hearing. You can control
+	the number of repeats.  You can also choose to silence one or more of the repeated
+	measure.
 	`
-	p1a := `As an example, here's an excerpt showing two sequences from an etude 
-	based on a pentatonic scale in E-flat.`
-
-	p2 := `Each etude contains all possible 3-note sequences in the key for
-	the chosen scale pattern. The sequences are presented in random order. New
-	etudes are generated every hour. The program is called 'Infinite Etudes'
-	because the number of possible orderings of the sequences easily exceeds
-	the number of stars in the universe. Luckily, the goal is to learn to
-	recognize and play the individual 3-note sequences. That turns out to be a
-	much more reasonable task (and the infinite sequence orderings are actually
-	helpful because they prevent you from relying on muscle memory.)
+	p2 := `The program is called 'Infinite Etudes' because the number of
+	possible orderings of the sequences easily exceeds the number of stars in
+	the universe, i.e. you'll never play the same etude twice. Luckily, the
+	goal is to learn to recognize and play the individual sequences. That
+	turns out to be a much more reasonable task (and the infinite sequence
+	orderings are actually helpful because they prevent you from relying on
+	muscle memory.)
     `
 
-	p3 := `So how many sequences are there? Well, there are 12 pitches in
-	the Western equal-tempered octave, so there are 12 * 11 * 10 = 1320
-	possible sequences of 3 different pitches.`
+	p14 := `<strong>One Interval</strong> presents 12 instances of the same
+	interval pair, i.e. 3 notes, in random order. Each instance begins on a
+	different pitch so that all 12 pitches are covered. <em>Note: For brevity, the
+	score examples shown here are captured with a repeat count of zero.</em>`
 
-	p4 := `Playing them all in one sitting with 4 bars devoted to each
-	sequence would take just under 3 hours at 120 bpm. I think you'd have to be
-	a little crazy to do that, but who am I to rein in your passion? For the
-	rest of us, breaking it down into keys and scale patterns allows practicing
-	in manageable chunks.`
+	p15 := `<strong>Tonic Intervals</strong> presents 13 different
+	intervals, i.e., all possible pitches relative to the chosen tonic
+	pitch. Use pattern is as a self-test to gauge your progress.`
 
-	p5 := `<strong>Pentatonic:</strong> If any scale can be said to be
-	universal across history and cultures, this is it. This pattern is also the
-	easiest because you're only dealing with 5 pitches at a time. There are 60
-	possible 3-note sequences in each key.  Each etude takes 8 minutes to
-	play.`
+	p16 := `<strong>Two Intervals</strong> is, as you might expect, a series
+	of three pitches specified by the interval1 and interval2 selectors. The
+	score example shows a typical etude produced by choosing 4 half steps (a
+	major third) for the lower interval and 3 half steps (a minor third) for
+	the upper interval, i.e. a a major triad in root position. It's important
+	to be able to recognize and play the notes of any interval pattern in any
+	order. For 3 notes, there are 6 possible orderings and the program
+	arranges for each ordering to occur twice among the 12 sequences
+	presented.`
 
-	p6 := `<strong>Chromatic Final:</strong> This one's special. It's
-	composed of all the sequences that end on the note you choose with the
-	'key' selector without regard for any particular scale or key. It's the longest
-	and most challenging of the patterns. For any given final note, there are
-	110 possible sequences. Each etude takes just under 15 minutes to play.`
-
-	p7 := `The good news is that this pattern is most efficient way to play
-	every possible sequence because there's no overlap between the etudes for
-	different final notes. <strong><em>In fact, you could stop reading right
-	here and just start playing this pattern with a different final note every
-	day.</em></strong> In 12 days that will take you through every possible 3-note chord
-	in every inversion and every possible 3 note fragment of every possible
-	scale. Not bad for only 15 minutes a day.`
-
-	p7a := `The other scale patterns don't introduce any new sequences.
-	They're included because you may find them useful for developing a sense of
-	how the sequences function in a tonal context.`
-
-	p8 := `<strong>Plus Four, Plus Seven, Four and Seven:</strong> These
-	patterns connect the pentatonic scale to the major scale (and its relative
-	minor. In music-speak, the pentatonic scale is degrees 1,2,3,5,6 of the
-	major scale that starts on the same note. So C pentatonic is C D E G A and
-	C major is C D E <strong>F</strong> G A <strong>B</strong>. F and B are 4 and 7
-	in C major.`
-
-	p9 := `<strong>Plus Four</strong> contains all the sequences that
-	consist of 4 and any two of 1,2,3,5,6. As there are 60 such sequences, the
-	etudes are 8 minutes long. <strong>Plus Seven</strong> is analogous. It
-	adds 7 instead of 4, creating another 60 sequences.`
-
-	p10 := `<strong>Four and Seven</strong> contains all the sequences that
-	contain both 4 and 7 plus one other note from the pentatonic scale.There
-	are only 30 such sequences. The etudes take 4 minutes to play.
-	Interestingly, these are the only sequences that can be said to exist in
-	exactly one key.  I'll leave it to you to work out why that's so :-)`
-
-	p11 := `<strong>Harmonic Minor 1</strong> and <strong>Harmonic Minor 2</strong>
-    explore the relative harmonic minor scale that's common in Middle
-    Eastern music. They're included because they complete the coverage of all
-    possible sequences (except pairs of adjacent half-steps) in a tonal context.`
-
-	p12 := `<strong>Harmonic Minor 1</strong> contains all the sequences (36
-    total) from 1,2,3,♯5,6 that contain ♯5. It takes just under 5 minutes to play.`
-
-	p13 := `<strong>Harmonic Minor 2</strong> contains all the sequences (55
-	total) from 1,2,3,4,♯5,6,7 that contain ♯5 and one or both of 4 and 7. It takes 7:20 to play.`
-
-	p14 := `<strong>One Interval</strong> presents 12 instances of the same interval pair, i.e. 3 notes,
-	in random order. Each instance begins on a different pitch so that all 12
-	pitches are covered.`
-
-	p15 := `<strong>Tonic Intervals</strong> presents 12 instances of intervals, i.e., all
-	possible pitches relative to the chosen tonic pitch.`
-
-	p16 := `<strong>Two Intervals</strong>`
-
-	p17 := `<strong>Three Interval</strong>`
+	p17 := `<strong>Three Intervals</strong> is similar to the Two Interval
+	pattern but uses 3 intervals to produce 4-note sequence. There are 24
+	examples in etudes produced with this pattern because you can play 4
+	notes in 24 different orders. The example shows a typical etude
+	constructed with a 2-2-1 pattern of half steps, corresponding to the
+	first 4 notes of a major scale.`
 
 	div = Div("",
 		H3("", heading),
 		P("", p0),
 		P("", p1),
-		P("", p1a),
-		Img(`src="img/eflat_pentatonic_excerpt.png" class="example"`),
 		P("", p2),
-		P("", p3),
-		P("", p4),
-		P("", "Here are the patterns."),
+		H3("", "Etude Patterns"),
+		H4("", "One Interval"),
 		P("", p14),
 		Img(`src="img/one_interval_excerpt.png" class="example"`),
-		P("", p16),
-		Img(`src="img/two_interval_excerpt.png" class="example"`),
-		P("", p17),
-		Img(`src="img/three_interval_excerpt.png" class="example"`),
+		H4("", "Tonic Intervals"),
 		P("", p15),
 		Img(`src="img/allintervals_excerpt.png" class="example"`),
-		P("", p5),
-		P("", p6),
-		Img(`src="img/c_chromatic_excerpt.png" class="example"`),
-		P("", p7),
-		P("", p7a),
-		P("", p8),
-		P("", p9),
-		P("", p10),
-		P("", p11),
-		P("", p12),
-		P("", p13),
+		H4("", "Two Intervals"),
+		P("", p16),
+		Img(`src="img/two_interval_excerpt.png" class="example"`),
+		H4("", "Three Intervals"),
+		P("", p17),
+		Img(`src="img/three_interval_excerpt.png" class="example"`),
 	)
 	return
 }
@@ -320,87 +258,57 @@ func forVocalists() (div *HtmlTree) {
 	return
 }
 
-func rhythmPatterns() (div *HtmlTree) {
-	p1 := `Infinite Etudes supports two ryhthm patterns via the rhythm select
-	menu. The "steady rhythm" pattern is the default. Each sequence of three
-	notes is played 4 times with the first note falling on the downbeat of a
-	measure and a rest on the fourth beat.`
+func controls() (div *HtmlTree) {
+	p1 := `The Pattern selector allows you to choose one of the patterns
+	described above. Your choice affects the visibility of the interval and
+	tonal center selectors. The interval selectors, (Interval1, Interval2 and
+	Interval3), appear according to the number intervals in the chosen
+	pattern. The interval choices are labeled by the number of half steps and
+	the corresponding musical name, e.g. "4 (Minor Third)". The Tonal Center
+	selector appears only when the Tonic Intervals pattern is selected.`
 
-	p2 := `The "advancing rhythm" pattern adds some rhythmic variety. It begins
-	in the same way as the steady rhythm pattern but omits the rest at the end
-	of the fourth repetition. The creates a cycle so that the second sequence has the
-	downbeat on the second note, the third sequence has the downbeat on the third note,
-	then fourth sequence has the downbeat on a rest. The point is to allow you to hear
-	and play the sequences at different starting points within a measure.`
+	p2 := `The Instrument selector provides a choice of common instrument sounds. Your choice also
+	determines the range of pitches that can occur within an etude.`
 
-	p3 := `You'll probably want to use the steady pattern until you're getting the
-    most of the notes right on the first or second repetition.`
+	p2a := `Each etude starts on a randomly selected pitch somewhere between
+	the lowest and highest notes that can commonly be played on your chosen
+	instrument. The sequence orderings are a random walk constructed to that
+	the first pitch of each sequence is "close" to the preceding pitch
+	without wandering outside the playable range of your instrument.`
 
-	div = Div("",
-		H3("", "Rhythm Patterns"),
-		P("", p1),
-		P("", p2),
-		P("", p3),
-	)
+	p3 := `By default the metronome gives an initial 1 measure count-in and
+	continues to click on each beat of the etude.  You can control this with the
+	Metronome selector. Choose "downbeat" to have it click only on beat 1 of each measure.
+	Choose "off" for silence after the count-in.`
 
-	return
-}
-
-func intervalsOctavesRanges() (div *HtmlTree) {
-	p1 := `What I said earlier about covering all possible sequences of
-	notes needs some clarification.  First, the program puts the notes of every
-	sequence in close voicing so that each note is no more than 6 semitones
-	from the note that came before it.`
-
-	p2 := `For example, the sequences 'E G C' and 'C G E' will always be
-	voiced so that the E is the lowest note and the C is the highest. The same
-	rule applies between the last note of a sequence and the first note of the
-	next. If the program generates 'E G C' followed by 'E F D' the E in the
-	second sequence will be an octave above the E in the first sequence.`
-
-	p3 := `If you find that explanation confusing, don't worry. What's going
-	on will be obvious after a few minutes of playing along. Just be aware that
-	none of the sequences presented will contain leaps of a 5th (7 semitones) or larger.
-	A simple way to incorporate larger leaps is to play one of the notes an octave higher
-	or lower.`
-
-	p4 := `This voicing rule has a couple of good consequences: The
-	notes of each sequence will always fit within one octave and the sequences,
-	being randomly chosen, will wander over the entire pitch range of your
-	instrument. The normal limits of each instrument are known to the program
-	and it will keep everything within the bounds of what's playable.`
-
-	div = Div("",
-		H3("", "Intervals, Octaves, Ranges"),
-		P("", p1),
-		P("", p4),
-		P("", p2),
-		P("", p3),
-	)
-	return
-}
-
-func tempo() (div *HtmlTree) {
-	p1 := `This web demo generates MIDI files in 4/4 time with the tempo
+	p4 := `Infinite Etudes generates MIDI files in 4/4 time with the tempo
 	defaulted to 120 beats per minute. If you need it slower or faster, use
-	the tempo selector to choose a value between 60 and 240 beats per
+	the Tempo selector to choose a value between 60 and 480 beats per
 	minute.`
 
-	p4 := `Having said that, let me offer a reason not to work at a much
-	slower tempo than the default. In a jam session you're going to encounter
-	120 bpm and faster and you'll be playing in eighths or sixteenths. I know
-	there's a saying among music teachers that "if you practice slowly and
-	never make a mistake, you'll never make a mistake" -- and slow practice
-	certainly has its place -- but that saying doesn't hold up in the
-	research on learning. Immediate feedback about mistakes is the important
-	consideration [Brown 2014, p90]. Assuming you can hear when two notes are
-	in unison, you'll always know when you've played a sequence right or
-	wrong with Infinite Etudes. So have at it boldly and smile at the notes
-	you miss. You'll have more fun and make better progress.`
+	p5 := `Use the Repeats selector to change the number of repeats for each sequence. The default is
+	3. You can set it to 2 or 1 to increase the challenge. You can also set it to 0, but that's
+	not useful unless you want to download an example to import into a score editor.`
+
+	p6 := `The Muting selector allows you silence one or more of the repeated
+	measures. The cross mark symbol, &#x2717;, indicates a silent measure and
+	the check mark, &#x2713;, indicates an audible one.`
+
 	div = Div("",
-		H3("", "Tempo"),
+		H3("", "Controls"),
+		H4("", "Pattern"),
 		P("", p1),
+		H4("", "Instrument"),
+		P("", p2),
+		P("", p2a),
+		H4("", "Metronome"),
+		P("", p3),
+		H4("", "Tempo"),
 		P("", p4),
+		H4("", "Repeats"),
+		P("", p5),
+		H4("", "Muting"),
+		P("", p6),
 	)
 	return
 }
@@ -412,16 +320,15 @@ func custom() (div *HtmlTree) {
 	also allows you to play the files through better equipment for more realistic sound.`
 
 	p2 := `You might also consider installing MuseScore, the excellent open
-	source notation editor. Version 3.1 and higher does a very good job importing Infinite
-	Etudes midi files. Besides controlling tempo, you can print the etude as sheet
-	music or play it back with real-time highlighting of each note as it's
-	played.`
+	source notation editor. Version 3.1 and higher does a very good job
+	importing Infinite Etudes midi files. Besides controlling tempo, you can
+	print the etude as sheet music or play it back with real-time
+	highlighting of each note as it's played.`
 
-	p3 := `A third option, if you have software skills, is to install Infinite
-	Etudes on your computer from the source code on <a
-	href="https://github.com/Michael-F-Ellis/infinite-etudes">GitHub.</a>. You
-	can control both tempo and the number of octaves from the command line
-	version.`
+	p3 := `A third option, if you have software skills, is to install
+	Infinite Etudes on your computer from the source code on <a
+	href="https://github.com/Michael-F-Ellis/infinite-etudes">GitHub.</a> and
+	adapt the program to your needs.`
 
 	div = Div("",
 		H3("", "Customizing"),
@@ -469,6 +376,7 @@ func variations() (div *HtmlTree) {
 	return
 }
 
+/*
 func faq() (div *HtmlTree) {
 	qa := func(q string, a ...string) (div *HtmlTree) {
 		var item []interface{}
@@ -498,7 +406,7 @@ func faq() (div *HtmlTree) {
 	)
 	return
 }
-
+*/
 func coda() (div *HtmlTree) {
 	p1 := `I wrote Infinite Etudes for two reasons: First, as a tool for my
 	own practice on piano and viola; second as a small project to develop a
@@ -589,7 +497,7 @@ func indexCSS() *HtmlTree {
         margin-left: 5%;
         margin-right: 10%;
         margin-top: 1%;
-        margin-bottom: 1%;
+        margin-bottom: 5%;
     }
     img.example {
         margin-left: 5%;
