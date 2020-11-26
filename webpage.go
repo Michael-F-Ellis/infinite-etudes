@@ -82,7 +82,7 @@ func indexBody() (body *HtmlTree) {
 		value := fmt.Sprintf(`value="%s" aria-label="%s"`, k.fileName, k.uiAria)
 		keys = append(keys, Option(value, k.uiName))
 	}
-	keySelect := Div(`class="Column" id="key-div"`, Label(``, "Tonic", Select("id=key-select", keys...)))
+	keySelect := Div(`class="Column" id="key-div"`, Label(``, "Tonal Center", Select("id=key-select", keys...)))
 	// Interval1 and Interval2
 	var intervals []interface{}
 	for _, v := range intervalInfo {
@@ -154,6 +154,7 @@ func indexBody() (body *HtmlTree) {
 		Div(`style="padding-top:1vh;"`, playBtn, stopBtn, downloadBtn),
 		quickStart(),
 		forTheCurious(),
+		forTheSerious(),
 		forVocalists(),
 		controls(),
 		custom(),
@@ -170,7 +171,7 @@ func quickStart() (div *HtmlTree) {
 		H3("", "For the impatient"),
 		Ol("",
 			Li("", `Choose a pattern,`),
-			Li("", `Choose a tonic note (or a set of intervals),`),
+			Li("", `Choose the interval(s) (or tonal center),`),
 			Li("", `Choose an instrument sound,`),
 			Li("", `Click 'Play' and play along.`),
 		),
@@ -184,21 +185,23 @@ func forTheCurious() (div *HtmlTree) {
 	The emphasis is on improving your ability to play what you hear by thoroughly exploring
 	all the combinations of 2, 3 and 4 pitches over the full range of your instrument.`
 
-	p1 := `The etudes follow a simple four
-	bar form: a sequence of different notes is played on beats 1, 2, and 3
-	and a rest on beat 4. By default, each bar is played four times before moving on -- so
-	you have 3 chances to play the sequence after the first hearing. You can control
-	the number of repeats.  You can also choose to silence one or more of the repeated
-	measure.
-	`
+	p1 := `The etudes follow a simple four bar form: a sequence of different
+	notes is played on beats 1, 2, and 3 and a rest on beat 4. By default,
+	each bar is played four times before moving on -- so you have 3 chances
+	to play the sequence after the first hearing. You can control the number
+	of repeats. You can also choose to silence one or more of the repeated
+	measure.`
+
 	p2 := `The program is called 'Infinite Etudes' because the number of
-	possible orderings of the sequences easily exceeds the number of stars in
-	the universe, i.e. you'll never play the same etude twice. Luckily, the
-	goal is to learn to recognize and play the individual sequences. That
-	turns out to be a much more reasonable task (and the infinite sequence
-	orderings are actually helpful because they prevent you from relying on
-	muscle memory.)
+	possible orderings of the sequences is so large that you'll never play
+	the same etude twice. Luckily, the goal is to learn to recognize and play
+	the individual sequences. That turns out to be a much more reasonable
+	task (and the infinite sequence orderings are actually helpful because
+	they prevent you from relying on muscle memory.)
     `
+	p3 := `Here are brief descriptions of the patterns currently supported by
+	Infinite Etudes accompanied by notated examples. For brevity, the score
+	examples shown here are captured with a repeat count of zero. `
 
 	p14 := `<strong>One Interval</strong> presents 12 instances of the same
 	interval pair, i.e. 3 notes, in random order. Each instance begins on a
@@ -231,7 +234,8 @@ func forTheCurious() (div *HtmlTree) {
 		P("", p0),
 		P("", p1),
 		P("", p2),
-		H3("", "Etude Patterns"),
+		H4("", "Etude Patterns"),
+		P(``, p3),
 		H4("", "One Interval"),
 		P("", p14),
 		Img(`src="img/one_interval_excerpt.png" class="example"`),
@@ -247,6 +251,63 @@ func forTheCurious() (div *HtmlTree) {
 	)
 	return
 }
+func forTheSerious() (div *HtmlTree) {
+	p0 := `First the bad news: this is probably going to sound daunting, but please bear with me ...`
+	p1 := `If you include unisons and octaves in the set of intervals to be used, there are
+	13*13 = 169 possible ways to put two intervals together to form a sequence of 3 pitches.
+	For sequences of 4 pitches, there are 13*13*13 = 2197 combinations of 3 intervals.`
+	p2 := `Now consider that each sequence can be started on any pitch.  If your instrument
+	has a 3 octave range, you're looking at (approximately) 6000 ways to play 3 notes and 79,000 ways
+	to play 4. And, remember, each 3 note sequence can be played in 6 different orders and each 4 note
+	sequence in 24 orders.`
+	p3 := `Ok, here's the good news: while it's probably true that if you searched all the music ever written or recorded you'd find
+	at least one instance of each of those combinations, it's also certainly true that most music uses a 
+	much smaller subset most of the time.`
+	p4 := `Your first goal should be to master recognising and playing single intervals at a brisk tempo over
+	the full range of your instrument. The One Interval and Tonic Intervals patterns are your friends. Use the
+	former to get solid on each of the 12 intervals and the latter to relate all the intervals to specific
+	pitches.`
+	p5 := `The next step is patterns of three notes created with the Two Intervals pattern. Here's a list
+	of 18 common patterns that cover scale fragments and simple chords. <strong>Important:</strong> The patterns in the list below
+	are in half-steps, e.g. "4-3" rather than "Major Third, Minor Third" to indicate a root position
+	major triad.`
+	ul1 := Ul(``,
+		Li(``, "Scalar Diatonic and Pentatonic: 1-2, 2-1, 2-2, 2-3, 3-2"),
+		Li(``, "Scalar Chromatic: 1-1, 1-3, 3-1"),
+		Li(``, `Root Position Triads: 4-3, 3-4, 3-3, 4-4`),
+		Li(``, `First Inversion Triads: 3-5, 4-5, 3-6`),
+		Li(``, `Second Inversion Triads: 5-4, 5-3, 6-3`),
+	)
+	p6 := `Once the three note patterns start to feel easy, start working on the following four-note combinations
+	with the Three Intervals pattern. These 35 patterns cover all the common scale fragments and chords, including
+	dominant, minor, diminished and augmented 7ths.`
+
+	ul2 := Ul(``,
+		Li(``, `Scalar Diatonic and Pentatonic: 1-2-2, 2-1-2, 2-2-1, 2-2-2, 2-3-2, 3-2-2, 2-2-3`),
+		Li(``, `Scalar Chromatic: 1-1-1, 1-2-1, 1-3-1, 2-1-3, 3-1-2`),
+		Li(``, `Root Position Triads &amp; 7ths: 4-3-5, 4-3-4, 4-3-3, 3-4-5, 3-4-4, 3-4-3, 3-3-3, 3-3-4, 4-4-2`),
+		Li(``, `First Inversion 7ths : 3-4-1, 3-3-2, 4-4-1, 3-4-2, 4-2-2`),
+		Li(``, `Second Inversion 7ths: 4-1-4, 3-2-4, 4-1-3, 4-2-3, 2-2-4`),
+		Li(``, `Third Inversion 7ths: 1-4-3, 2-4-3, 1-3-4, 2-3-3, 2-4-4`),
+	)
+
+	div = Div("",
+		H3("", "For the serious"),
+		P("", p0),
+		P("", p1),
+		P("", p2),
+		P("", p3),
+		P("", p4),
+		H4(``, `Two Intervals (3 notes)`),
+		P("", p5),
+		ul1,
+		H4(``, `Three Intervals (4 notes)`),
+		P("", p6),
+		ul2,
+	)
+	return
+}
+
 func forVocalists() (div *HtmlTree) {
 	p1 := `I conceived Infinite Etudes as an aid for instrumentalists. I've since
 	found it's also quite useful as a daily vocal workout for intonation. The
@@ -339,9 +400,10 @@ func custom() (div *HtmlTree) {
 	return
 }
 func variations() (div *HtmlTree) {
-	p1 := `As you progress, some sequences will become easy to recognize and
-	play before others. When you nail a particular sequence correctly and
-	confidently on first hearing (hooray!), you can put the remaining two bars
+	p1 := `As you progress, some patterns will become easy to recognize and
+	play before others. When you're nailing a particular pattern correctly and
+	confidently on first hearing (hooray!), you can either increase the tempo, decrease the
+	number of repeats, or leave the repeats at 3 and put the remaining two bars
 	to good use in a variety of ways. Here are a few suggestions, some simple
 	and some difficult:`
 	var variants = []string{

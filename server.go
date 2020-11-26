@@ -441,9 +441,9 @@ func validKeyName(name string) (ok bool) {
 
 var patternInfo = []nameInfo{
 	{"interval", "One Interval", "One Interval", 0},
+	{"allintervals", "Tonic Intervals", "Tonic Intervals", 0},
 	{"intervalpair", "Two Intervals", "Two Intervals", 0},
 	{"intervaltriple", "Three Intervals", "Three Intervals", 0},
-	{"allintervals", "Tonic Intervals", "Tonic Intervals", 0},
 }
 
 // validPattern returns true if the scale name is in the ones we support.
