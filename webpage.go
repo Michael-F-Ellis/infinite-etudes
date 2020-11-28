@@ -156,7 +156,7 @@ func indexBody() (body *HtmlTree) {
 		forTheCurious(),
 		forTheSerious(),
 		forVocalists(),
-		controls(),
+		userInterface(),
 		custom(),
 		variations(),
 		// faq(),
@@ -175,15 +175,26 @@ func quickStart() (div *HtmlTree) {
 			Li("", `Choose an instrument sound,`),
 			Li("", `Click 'Play' and play along.`),
 		),
+		P(``, `See `, A(`href="#ui"`, "User Interface"),
+			`for more about the other selectors above. To learn more about
+		the etude patterns, see `, A(`href="#patterns"`, "Patterns.")),
 	)
 	return
 }
 
 func forTheCurious() (div *HtmlTree) {
 	heading := "For the curious"
-	p0 := `Infinite Etudes generates ear/finger training etudes for instrumentalists.
-	The emphasis is on improving your ability to play what you hear by thoroughly exploring
-	all the combinations of 2, 3 and 4 pitches over the full range of your instrument.`
+	p0 := `Infinite Etudes generates ear/finger training etudes for
+	instrumentalists. The emphasis is on improving your ability to play what
+	you hear by thoroughly exploring combinations of 2, 3 and 4 pitches over
+	the full range of your instrument.`
+
+	p0a := `Infinite Etudes doesn't try to teach music theory or how to read and
+	write notation and it's not necessary to know them to use the program, though
+	it certainly doesn't hurt. If you're just starting out with your instrument, 
+	please make sure you've had at least some basic instruction in how to hold
+	your instrument comfortably with good posture and hand position and how to
+	play individual notes cleanly.`
 
 	p1 := `The etudes follow a simple four bar form: a sequence of different
 	notes is played on beats 1, 2, and 3 and a rest on beat 4. By default,
@@ -196,8 +207,9 @@ func forTheCurious() (div *HtmlTree) {
 	possible orderings of the sequences is so large that you'll never play
 	the same etude twice. Luckily, the goal is to learn to recognize and play
 	the individual sequences. That turns out to be a much more reasonable
-	task (and the infinite sequence orderings are actually helpful because
-	they prevent you from relying on muscle memory.)
+	task and the infinite sequence orderings are actually helpful because
+	they prevent you from relying on the muscle memory that develops
+	if you play the same etudes repeatedly.
     `
 	p3 := `Here are brief descriptions of the patterns currently supported by
 	Infinite Etudes accompanied by notated examples. For brevity, the score
@@ -208,9 +220,10 @@ func forTheCurious() (div *HtmlTree) {
 	different pitch so that all 12 pitches are covered. <em>Note: For brevity, the
 	score examples shown here are captured with a repeat count of zero.</em>`
 
-	p15 := `<strong>Tonic Intervals</strong> presents 13 different
-	intervals, i.e., all possible pitches relative to the chosen tonic
-	pitch. Use pattern is as a self-test to gauge your progress.`
+	p15 := `<strong>Tonic Intervals</strong> presents 13 different intervals,
+	i.e., all possible pitches relative to the chosen tonic pitch. Use this
+	pattern as a self-test to gauge your progress at distinguishing the
+	between the intervals.`
 
 	p16 := `<strong>Two Intervals</strong> is, as you might expect, a series
 	of three pitches specified by the interval1 and interval2 selectors. The
@@ -218,7 +231,7 @@ func forTheCurious() (div *HtmlTree) {
 	major third) for the lower interval and 3 half steps (a minor third) for
 	the upper interval, i.e. a a major triad in root position. It's important
 	to be able to recognize and play the notes of any interval pattern in any
-	order. For 3 notes, there are 6 possible orderings and the program
+	order. For 3 notes, there are 6 possible orderings. The program
 	arranges for each ordering to occur twice among the 12 sequences
 	presented.`
 
@@ -232,9 +245,10 @@ func forTheCurious() (div *HtmlTree) {
 	div = Div("",
 		H3("", heading),
 		P("", p0),
+		P("", p0a),
 		P("", p1),
 		P("", p2),
-		H4("", "Etude Patterns"),
+		A(`name="patterns"`, H4("", "Patterns")),
 		P(``, p3),
 		H4("", "One Interval"),
 		P("", p14),
@@ -252,25 +266,44 @@ func forTheCurious() (div *HtmlTree) {
 	return
 }
 func forTheSerious() (div *HtmlTree) {
-	p0 := `First the bad news: this is probably going to sound daunting, but please bear with me ...`
-	p1 := `If you include unisons and octaves in the set of intervals to be used, there are
-	13*13 = 169 possible ways to put two intervals together to form a sequence of 3 pitches.
-	For sequences of 4 pitches, there are 13*13*13 = 2197 combinations of 3 intervals.`
-	p2 := `Now consider that each sequence can be started on any pitch.  If your instrument
-	has a 3 octave range, you're looking at (approximately) 6000 ways to play 3 notes and 79,000 ways
-	to play 4. And, remember, each 3 note sequence can be played in 6 different orders and each 4 note
-	sequence in 24 orders.`
-	p3 := `Ok, here's the good news: while it's probably true that if you searched all the music ever written or recorded you'd find
-	at least one instance of each of those combinations, it's also certainly true that most music uses a 
-	much smaller subset most of the time.`
-	p4 := `Your first goal should be to master recognising and playing single intervals at a brisk tempo over
-	the full range of your instrument. The One Interval and Tonic Intervals patterns are your friends. Use the
-	former to get solid on each of the 12 intervals and the latter to relate all the intervals to specific
-	pitches.`
-	p5 := `The next step is patterns of three notes created with the Two Intervals pattern. Here's a list
-	of 18 common patterns that cover scale fragments and simple chords. <strong>Important:</strong> The patterns in the list below
-	are in half-steps, e.g. "4-3" rather than "Major Third, Minor Third" to indicate a root position
-	major triad.`
+	p0 := `First the bad news: Playing by ear has a lot in common with
+	learning to a speak a language fluently: you need to learn a lot of
+	vocabulary (among other things). For a language the vocabulary elements
+	are words, for music the elements are short sequences of pitches &mdash;
+	and there are a lot of them.`
+
+	p1 := `If you include unisons and octaves in the set of intervals to be
+	used, there are 13*13 = 169 possible ways to put two intervals together
+	to form a sequence of 3 pitches. For sequences of 4 pitches, there are
+	13*13*13 = 2197 combinations of 3 intervals.`
+
+	p2 := `Now consider that
+	each sequence can be started on any pitch. If your instrument has a 3
+	octave range, you're looking at (approximately) 6000 ways to play 3 notes
+	and 79,000 ways to play 4. And, remember, each 3 note sequence can be
+	played in 6 different orders and each 4 note sequence in 24 orders.`
+
+	p3 := `So here's the good news: while it's probably true that if you
+	searched all the music ever written or recorded you'd find at least one
+	instance of each of those combinations, it's also certainly true that
+	most music uses a much smaller subset most of the time. In fact, getting
+	fluent on the 12 intervals plus 18 interval pairs (3 notes) and 35 sets
+	of three intervals (4 notes) will take you a very long way. It's still a
+	lot of work but you can get there if you're willing to devote five to ten
+	minutes of your practice time every day.`
+
+	p4 := `Your first goal should be to master recognising and playing single
+	intervals at a brisk tempo over the full range of your instrument. The
+	One Interval and Tonic Intervals patterns are your friends. Use the
+	former to get solid on each of the 12 intervals and the latter to relate
+	all the intervals to specific pitches.`
+
+	p5 := `The next step is patterns of three notes created with the Two
+	Intervals pattern. Here's a list of 18 common patterns that cover scale
+	fragments and simple chords. <strong>Important:</strong> The patterns in
+	the list below are in half-steps, e.g. "4-3" rather than "Major Third,
+	Minor Third" to indicate a root position major triad.`
+
 	ul1 := Ul(``,
 		Li(``, "Scalar Diatonic and Pentatonic: 1-2, 2-1, 2-2, 2-3, 3-2"),
 		Li(``, "Scalar Chromatic: 1-1, 1-3, 3-1"),
@@ -319,14 +352,15 @@ func forVocalists() (div *HtmlTree) {
 	return
 }
 
-func controls() (div *HtmlTree) {
+func userInterface() (div *HtmlTree) {
 	p1 := `The Pattern selector allows you to choose one of the patterns
 	described above. Your choice affects the visibility of the interval and
 	tonal center selectors. The interval selectors, (Interval1, Interval2 and
 	Interval3), appear according to the number intervals in the chosen
-	pattern. The interval choices are labeled by the number of half steps and
-	the corresponding musical name, e.g. "4 (Minor Third)". The Tonal Center
-	selector appears only when the Tonic Intervals pattern is selected.`
+	pattern. The interval choices are labeled by the number of semitones
+	(half steps) and the corresponding musical name, e.g. "4 (Minor Third)".
+	The Tonal Center selector appears only when the Tonic Intervals pattern
+	is selected.`
 
 	p2 := `The Instrument selector provides a choice of common instrument sounds. Your choice also
 	determines the range of pitches that can occur within an etude.`
@@ -355,8 +389,13 @@ func controls() (div *HtmlTree) {
 	measures. The cross mark symbol, &#x2717;, indicates a silent measure and
 	the check mark, &#x2713;, indicates an audible one.`
 
+	p7 := `The Play button tells the server to generate and start playing a
+	new etude using the settings you've chosen in the the selectors. The Stop
+	button stops the playback before the end of the etude. The Download
+	button generates a new etude and allows you to save it as a MIDI file.`
+
 	div = Div("",
-		H3("", "Controls"),
+		A(`name="ui"`, H3("", "User Interface")),
 		H4("", "Pattern"),
 		P("", p1),
 		H4("", "Instrument"),
@@ -370,6 +409,8 @@ func controls() (div *HtmlTree) {
 		P("", p5),
 		H4("", "Muting"),
 		P("", p6),
+		H4("", "Play, Stop, Download"),
+		P("", p7),
 	)
 	return
 }
@@ -471,11 +512,11 @@ func faq() (div *HtmlTree) {
 */
 func coda() (div *HtmlTree) {
 	p1 := `I wrote Infinite Etudes for two reasons: First, as a tool for my
-	own practice on piano and viola; second as a small project to develop a
+	own practice on piano, guitar and viola; second as a small project to develop a
 	complete application in the Go programming language. I'm happy with it on
 	both counts and I hope you find it useful also. The source code is available
 	on <a href="https://github.com/Michael-F-Ellis/infinite-etudes">GitHub.</a>
-	<br><br>Mike Ellis<br>Weaverville NC<br>May 2019`
+	<br><br>Mike Ellis<br>Burlington, VT<br>Nov. 2020`
 	div = Div("",
 		H3("", "Coda"),
 		P("", p1),
