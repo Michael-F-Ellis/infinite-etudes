@@ -24,16 +24,16 @@ import (
 )
 
 const copyright = `
-Copyright 2019 Ellis & Grant, Inc. All rights reserved.  Use of the source
+Copyright 2019-2020 Ellis & Grant, Inc. All rights reserved.  Use of the source
 code is governed by an MIT-style license that can be found in the LICENSE
 file.
 `
 const description = `
-infinite-etudes generates ear training exercises for instrumentalists.
-Infinite-etudes is a high-performance self-contained web server
-that provides a simple user interface that allows the user to choose a key, a
-scale pattern and an instrument sound and play a freshly-generated etude in
-the web browser. A publically available instance is running at 
+Infinite-etudes generates ear training exercises for instrumentalists. The
+program contains a high-performance self-contained web server that provides a
+simple user interface that allows the user to choose a pattern of intervals,
+an instrument sound, and tempo to generate and play a freshly-generated etude
+in the web browser. A publically available instance is running at
 
 https://etudes.ellisandgrant.com
 

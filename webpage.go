@@ -63,6 +63,7 @@ func mkIndex() (err error) {
 
 func indexBody() (body *HtmlTree) {
 	header := Div(`style="text-align:center; margin-bottom:2vh;"`,
+		A(`name="top"`),
 		H2("class=title", "Infinite Etudes"),
 		Em("", "Ear training for your fingers"),
 	)
@@ -154,18 +155,31 @@ func indexBody() (body *HtmlTree) {
 		Div(`style="padding-top:1vh;"`, playBtn, stopBtn, downloadBtn),
 		quickStart(),
 		forTheCurious(),
+		toTop(),
 		forTheSerious(),
+		toTop(),
+		forBeginners(),
+		toTop(),
 		forVocalists(),
+		toTop(),
 		userInterface(),
+		toTop(),
 		custom(),
+		toTop(),
 		variations(),
+		toTop(),
 		// faq(),
 		biblio(),
+		toTop(),
 		coda(),
+		toTop(),
 	)
 	return
 }
-
+func toTop() (div *HtmlTree) {
+	div = Div(``, A(`href="#top" style="color:#88F;"`, Em(``, `top`)))
+	return
+}
 func quickStart() (div *HtmlTree) {
 	div = Div("",
 		H3("", "For the impatient"),
@@ -175,9 +189,11 @@ func quickStart() (div *HtmlTree) {
 			Li("", `Choose an instrument sound,`),
 			Li("", `Click 'Play' and play along.`),
 		),
-		P(``, `See `, A(`href="#ui"`, "User Interface"),
-			`for more about the other selectors above. To learn more about
-		the etude patterns, see `, A(`href="#patterns"`, "Patterns.")),
+		P(``, `See `, A(`href="#ui"`, "User Interface"), `for more about the
+		other selectors above. To learn more about the etude patterns, see `,
+			A(`href="#patterns"`, "Patterns."), `&nbsp;If you're new to your
+		instrument or to ear training, see `, A(`href="#beginners"`, `For
+		Beginners.`)),
 	)
 	return
 }
@@ -201,7 +217,7 @@ func forTheCurious() (div *HtmlTree) {
 	each bar is played four times before moving on -- so you have 3 chances
 	to play the sequence after the first hearing. You can control the number
 	of repeats. You can also choose to silence one or more of the repeated
-	measure.`
+	measures.`
 
 	p2 := `The program is called 'Infinite Etudes' because the number of
 	possible orderings of the sequences is so large that you'll never play
@@ -311,9 +327,10 @@ func forTheSerious() (div *HtmlTree) {
 		Li(``, `First Inversion Triads: 3-5, 4-5, 3-6`),
 		Li(``, `Second Inversion Triads: 5-4, 5-3, 6-3`),
 	)
-	p6 := `Once the three note patterns start to feel easy, start working on the following four-note combinations
-	with the Three Intervals pattern. These 35 patterns cover all the common scale fragments and chords, including
-	dominant, minor, diminished and augmented 7ths.`
+	p6 := `Once the three note patterns start to feel easy, start working on
+	the following four-note combinations with the Three Intervals pattern.
+	These 35 patterns cover all the common scale fragments and chords,
+	including dominant, minor, diminished and augmented 7ths.`
 
 	ul2 := Ul(``,
 		Li(``, `Scalar Diatonic and Pentatonic: 1-2-2, 2-1-2, 2-2-1, 2-2-2, 2-3-2, 3-2-2, 2-2-3`),
@@ -340,7 +357,52 @@ func forTheSerious() (div *HtmlTree) {
 	)
 	return
 }
+func forBeginners() (div *HtmlTree) {
+	p1 := `Infinite Etudes doesn't try to teach music theory or how to read
+	and write notation and it's not necessary to know these things to use the
+	program (though it certainly doesn't hurt). The only real prerequisite is
+	being able hear when a note you play on your instrument matches the
+	one being played by Infinite Etudes.`
 
+	p1a := `If you're just starting out with your instrument, please make
+	sure you've had at least some basic instruction in how to hold your
+	instrument comfortably with good posture and hand position and how to
+	play individual notes cleanly over the full range of your instrument.`
+
+	p2 := `If your instrument is tunable, make sure it's correctly tuned to
+	standard pitch (A4=440). You'll also want to adjust the play volume to a level
+	that's about the same volume as your instrument.  If you play Bass or any other
+	low-pitched instrument make sure to use good speakers or a headset for the output
+	from your computer or mobile device.`
+
+	p3 := `If you're not sure about your readiness, test yourself with the
+	with the simplest pattern and interval (One Interval, Unison) at the
+	slowest tempo (60 BPM) with 3 repeats. Each measure will contain a single
+	pitch and the entire measure will repeat 3 times after the first hearing.
+	At 60 BPM, you'll have 16 seconds to locate and play the right pitch
+	before the etude moves on to a new pitch. If you're not finding the pitch
+	at least half the time, you may want to wait until you've become more
+	familiar with your instrument.`
+
+	p4 := `Using Infinite Etudes for five minutes every day will serve you
+	better than an hour once a week. Your brain and neuromuscular system
+	consolidate learning during sleep and, truthfully, the amount of new
+	information we can absorb each day is limited. So be patient, please.
+	Start with the One Interval pattern working from the smallest intervals
+	(Minor2, Major2) up to the largest (Octave). Test yourself regularly with
+	the Tonic Intervals pattern and a random Tonal Center. Try to wait until
+	you're getting most of the intervals right on the first repeat before moving
+	to the Two Intervals pattern.`
+	div = Div("",
+		A(`name="beginners"`, H3("", "For Beginners")),
+		P("", p1),
+		P("", p1a),
+		P("", p2),
+		P("", p3),
+		P("", p4),
+	)
+	return
+}
 func forVocalists() (div *HtmlTree) {
 	p1 := `I conceived Infinite Etudes as an aid for instrumentalists. I've since
 	found it's also quite useful as a daily vocal workout for intonation. The
