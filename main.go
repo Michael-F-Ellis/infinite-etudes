@@ -148,7 +148,7 @@ func mkRequestedEtude(midilo, midihi, tempo, instrument int, r etudeRequest) {
 // a slice of bool, e.g. iToBools(4,3) -> [true, false, false]
 func iToBools(v, length int) (b []bool) {
 	for i := length - 1; i >= 0; i-- {
-		b = append(b, (v&(1<<i) > 0))
+		b = append(b, (v&(1<<uint(i)) > 0))
 	}
 	return
 }
