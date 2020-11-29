@@ -205,12 +205,9 @@ func forTheCurious() (div *HtmlTree) {
 	you hear by thoroughly exploring combinations of 2, 3 and 4 pitches over
 	the full range of your instrument.`
 
-	p0a := `Infinite Etudes doesn't try to teach music theory or how to read and
-	write notation and it's not necessary to know them to use the program, though
-	it certainly doesn't hurt. If you're just starting out with your instrument, 
-	please make sure you've had at least some basic instruction in how to hold
-	your instrument comfortably with good posture and hand position and how to
-	play individual notes cleanly.`
+	p0a := `Infinite Etudes doesn't try to teach music theory, melodic
+	structure or how to read and write notation and it's not necessary to
+	know these things to use the program, though it certainly doesn't hurt.`
 
 	p1 := `The etudes follow a simple four bar form: a sequence of different
 	notes is played on beats 1, 2, and 3 and a rest on beat 4. By default,
@@ -221,11 +218,9 @@ func forTheCurious() (div *HtmlTree) {
 
 	p2 := `The program is called 'Infinite Etudes' because the number of
 	possible orderings of the sequences is so large that you'll never play
-	the same etude twice. Luckily, the goal is to learn to recognize and play
-	the individual sequences. That turns out to be a much more reasonable
-	task and the infinite sequence orderings are actually helpful because
-	they prevent you from relying on the muscle memory that develops
-	if you play the same etudes repeatedly.
+	the same etude twice. That's an important part of the design. It prevents
+	you from relying on the muscle memory that develops if you play the same
+	etude repeatedly.
     `
 	p3 := `Here are brief descriptions of the patterns currently supported by
 	Infinite Etudes accompanied by notated examples. For brevity, the score
@@ -358,13 +353,10 @@ func forTheSerious() (div *HtmlTree) {
 	return
 }
 func forBeginners() (div *HtmlTree) {
-	p1 := `Infinite Etudes doesn't try to teach music theory or how to read
-	and write notation and it's not necessary to know these things to use the
-	program (though it certainly doesn't hurt). The only real prerequisite is
-	being able hear when a note you play on your instrument matches the
-	one being played by Infinite Etudes.`
+	p1a := `The only real prerequisite is being able hear when a note you play
+	on your instrument matches the one being played by Infinite Etudes.`
 
-	p1a := `If you're just starting out with your instrument, please make
+	p1 := `If you're just starting out with your instrument, please make
 	sure you've had at least some basic instruction in how to hold your
 	instrument comfortably with good posture and hand position and how to
 	play individual notes cleanly over the full range of your instrument.`
