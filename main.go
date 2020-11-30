@@ -1,15 +1,6 @@
 // Copyright 2019 Ellis & Grant, Inc. All rights reserved.
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
-/*
-etudes generates a set of 6 midi files for each of 12 key signature. Each set
-covers all possible combinations of 3 pitches within the key.
-
-Command line usage is
-
-   etudes [-h] [-t tempo] [-l midilow] [-u midihi ] [-i instrument]
-
-*/
 package main
 
 import (
@@ -33,7 +24,7 @@ Infinite-etudes generates ear training exercises for instrumentalists. The
 program contains a high-performance self-contained web server that provides a
 simple user interface that allows the user to choose a pattern of intervals,
 an instrument sound, and tempo to generate and play a freshly-generated etude
-in the web browser. A publically available instance is running at
+in the web browser. A public instance is running at
 
 https://etudes.ellisandgrant.com
 
@@ -113,42 +104,4 @@ func usage() {
 	flag.PrintDefaults()
 	fmt.Println(description)
 
-}
-
-// mkRequestedEtude creates the requested etude in the current directory. The
-// arguments are assumed to be previously vetted and are not checked.
-func mkRequestedEtude(midilo, midihi, tempo, instrument int, r etudeRequest) {
-	iname := r.instrument
-	switch r.pattern {
-	case "allintervals":
-		s := generateIntervalSequence(midilo, midihi, tempo, instrument, r)
-		mkMidi(&s, true)
-	case "interval":
-		s := generateEqualIntervalSequence(midilo, midihi, tempo, instrument, r)
-		mkMidi(&s, true)
-	case "intervalpair":
-		i1 := intervalSizeByName(r.interval1)
-		i2 := intervalSizeByName(r.interval2)
-		s := generateTwoIntervalSequence(midilo, midihi, tempo, instrument, iname, i1, i2)
-		s.req = r
-		mkMidi(&s, true) // no tighten
-	case "intervaltriple":
-		i1 := intervalSizeByName(r.interval1)
-		i2 := intervalSizeByName(r.interval2)
-		i3 := intervalSizeByName(r.interval3)
-		s := generateThreeIntervalSequence(midilo, midihi, tempo, instrument, iname, i1, i2, i3)
-		s.req = r
-		mkMidi(&s, true) // no tighten
-	default:
-		panic(fmt.Sprintf("%s is not a supported etude pattern", r.pattern))
-	}
-}
-
-// iToBools converts the first length bits of v to
-// a slice of bool, e.g. iToBools(4,3) -> [true, false, false]
-func iToBools(v, length int) (b []bool) {
-	for i := length - 1; i >= 0; i-- {
-		b = append(b, (v&(1<<uint(i)) > 0))
-	}
-	return
 }
