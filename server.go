@@ -176,18 +176,10 @@ func (r *etudeRequest) midiFilename() (f string) {
 }
 
 // etudeHndlr returns a midi file that matches the get request or a 404 for
-// incorrectly specified etudes. The pattern is
-// /etude/<key>/<scale>/<instrument>/<advancing> where <key> is a pitchname like
-// "c" or "aflat", <scale> is a scalename like "pentatonic", instrument is a
-// formatted General Midi instrument name like "acoustic_grand_piano" and
-// advancing is one of 'steady' or 'advancing' indicating the rhythm pattern to
-// use. An optional final component, <tempo> allows specifying a tempo in beats
-// per minute. Integer values between 20 and 600 are supported. If any of the
-// foregoing pattern components are unknown or unsupported by this app,
-// etudeHndlr gives a 400 response (StatusBadRequest). If the request matches a
-// valid filename, the file will be returned in the response body if it exists
-// and is younger than the maximum age imposed by this service. Otherwise the
-// app will generate it so it can be returned.
+// incorrectly specified etudes. If the request is valid and the file exists
+// already, it will be returned in the response body if it is younger than the
+// maximum age imposed by this service. Otherwise the app will generate it so it
+// can be returned.
 func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 	path := strings.Split(r.URL.Path, "/")
 	if len(path) != 12 {
