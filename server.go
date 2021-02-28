@@ -1,11 +1,12 @@
 package main
 
 import (
+	"embed"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -15,39 +16,20 @@ import (
 	"github.com/Michael-F-Ellis/infinite-etudes/internal/valid"
 )
 
-// randString returns a random string of length n chosen from chars.
-/*
-func randString(chars []rune, n uint) (out string) {
-	var outslice []rune
-	for i := 0; i < int(n); i++ {
-		outslice = append(outslice, chars[rand.Intn(int(n))])
-	}
-	out = string(outslice)
-	return
-}
-*/
+// Bundle our static files with the app
+//go:embed assets
+var assets embed.FS
+
 // serveEtudes serves etude midi files from the current working directory.
-func serveEtudes(hostport string, midijsPath string, imgPath string) {
+func serveEtudes(hostport string) {
 	var err error
-	err = validDirPath(midijsPath)
-	if err != nil {
-		log.Fatalf("invalid midijs path: %v", err)
-	}
-	os.Setenv("MIDIJS", midijsPath)
-	defer os.Unsetenv("MIDIJS")
-
-	err = validDirPath(imgPath)
-	if err != nil {
-		log.Fatalf("invalid image path: %v", err)
-	}
-	os.Setenv("IMG", imgPath)
-	defer os.Unsetenv("IMG")
-
 	mux := http.NewServeMux()
 	mux.HandleFunc("/etude/", etudeHndlr)
-	mux.HandleFunc("/img/", imgHndlr)
-	mux.HandleFunc("/midijs/", midijsHndlr)
-	mux.HandleFunc("/", indexHndlr)
+	assetSys, err := fs.Sub(assets, "assets")
+	if err != nil {
+		log.Fatalf("could not create assets subtree: %v", err)
+	}
+	mux.Handle("/", http.FileServer(http.FS(assetSys)))
 	log.Printf("midijs path is %s", os.Getenv("MIDIJS"))
 	var serveSecure bool
 	var certpath, certkeypath string
@@ -89,41 +71,6 @@ func getCertPaths() (certpath string, keypath string, err error) {
 		return
 	}
 	return
-}
-
-// indexHndlr returns index.html
-func indexHndlr(w http.ResponseWriter, r *http.Request) {
-	log.Printf("indexHndlr: %s requested", r.URL.String())
-	wd, _ := os.Getwd()
-	http.ServeFile(w, r, path.Join(wd, "assets", "index.html"))
-}
-
-// imgHndlr returns image files
-func imgHndlr(w http.ResponseWriter, r *http.Request) {
-	what := strings.Split(r.URL.Path, "/")
-	if what[1] != "img" {
-		log.Fatalf("programming error. got image request path that didn't start with 'img': %s", r.URL.Path)
-	}
-
-	dir := os.Getenv("IMG")
-	pathelements := append([]string{dir}, what[2:]...)
-	path := filepath.Join(pathelements...)
-	http.ServeFile(w, r, path)
-
-}
-
-// midijsHndlr returns files from the MIDIJS directory.
-func midijsHndlr(w http.ResponseWriter, r *http.Request) {
-	what := strings.Split(r.URL.Path, "/")
-	if what[1] != "midijs" {
-		log.Fatalf("programming error. got request path that didn't start with 'midijs': %s", r.URL.Path)
-	}
-
-	dir := os.Getenv("MIDIJS")
-	pathelements := append([]string{dir}, what[2:]...)
-	path := filepath.Join(pathelements...)
-	http.ServeFile(w, r, path)
-
 }
 
 type etudeRequest struct {

@@ -67,10 +67,11 @@ func main() {
 	// make sure all flags are defined before calling this
 	flag.Parse()
 
-	serveEtudes(hostport, midijsPath, imgPath)
+	serveEtudes(hostport)
 
 }
 
+/* OUT: No longer needed
 // validDirPath returns a non-nil error if path is not a directory on the host.
 func validDirPath(path string) (err error) {
 	finfo, err := os.Stat(path)
@@ -83,7 +84,7 @@ func validDirPath(path string) (err error) {
 	}
 	return
 }
-
+*/
 // usage extends the flag package's default help message.
 func usage() {
 	fmt.Println(copyright)
