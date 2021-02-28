@@ -5,11 +5,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Michael-F-Ellis/infinite-etudes/internal/valid"
 )
 
 // randString returns a random string of length n chosen from chars.
@@ -25,10 +28,7 @@ func randString(chars []rune, n uint) (out string) {
 */
 // serveEtudes serves etude midi files from the current working directory.
 func serveEtudes(hostport string, midijsPath string, imgPath string) {
-	err := mkWebPages()
-	if err != nil {
-		log.Fatalf("could not write web pages: %v", err)
-	}
+	var err error
 	err = validDirPath(midijsPath)
 	if err != nil {
 		log.Fatalf("invalid midijs path: %v", err)
@@ -43,10 +43,11 @@ func serveEtudes(hostport string, midijsPath string, imgPath string) {
 	os.Setenv("IMG", imgPath)
 	defer os.Unsetenv("IMG")
 
-	http.Handle("/", http.HandlerFunc(indexHndlr))
-	http.Handle("/etude/", http.HandlerFunc(etudeHndlr))
-	http.Handle("/img/", http.HandlerFunc(imgHndlr))
-	http.Handle("/midijs/", http.HandlerFunc(midijsHndlr))
+	mux := http.NewServeMux()
+	mux.HandleFunc("/etude/", etudeHndlr)
+	mux.HandleFunc("/img/", imgHndlr)
+	mux.HandleFunc("/midijs/", midijsHndlr)
+	mux.HandleFunc("/", indexHndlr)
 	log.Printf("midijs path is %s", os.Getenv("MIDIJS"))
 	var serveSecure bool
 	var certpath, certkeypath string
@@ -58,14 +59,15 @@ func serveEtudes(hostport string, midijsPath string, imgPath string) {
 		}
 		serveSecure = true
 	}
-	log.Printf("serving on %s\n", hostport)
+	wd, _ := os.Getwd()
+	log.Printf("serving on %s\n from %s", hostport, wd)
 	switch serveSecure {
 	case true:
-		if err := http.ListenAndServeTLS(hostport, certpath, certkeypath, nil); err != nil {
+		if err := http.ListenAndServeTLS(hostport, certpath, certkeypath, mux); err != nil {
 			log.Fatalf("Could not listen on port %s : %v", hostport, err)
 		}
 	default:
-		if err := http.ListenAndServe(hostport, nil); err != nil {
+		if err := http.ListenAndServe(hostport, mux); err != nil {
 			log.Fatalf("Could not listen on port %s : %v", hostport, err)
 		}
 	}
@@ -91,7 +93,9 @@ func getCertPaths() (certpath string, keypath string, err error) {
 
 // indexHndlr returns index.html
 func indexHndlr(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "index.html")
+	log.Printf("indexHndlr: %s requested", r.URL.String())
+	wd, _ := os.Getwd()
+	http.ServeFile(w, r, path.Join(wd, "assets", "index.html"))
 }
 
 // imgHndlr returns image files
@@ -276,11 +280,11 @@ func makeEtudesIfNeeded(filename string, req etudeRequest) {
 		return
 	}
 	// need to generate if we get to here
-	iInfo, _ := getSupportedInstrumentByName(req.instrument) // already validated. ignore err value
+	iInfo, _ := valid.InstrumentByName(req.instrument) // already validated. ignore err value
 	// fmt.Printf("%v %s\n", iInfo, filename)
-	instrument := iInfo.gmnumber - 1
-	midilo := iInfo.midilo
-	midihi := iInfo.midihi
+	instrument := iInfo.GMNumber - 1
+	midilo := iInfo.MidiLo
+	midihi := iInfo.MidiHi
 	tempo, _ := strconv.Atoi(req.tempo)
 	mkRequestedEtude(midilo, midihi, tempo, instrument, req)
 }
@@ -288,103 +292,53 @@ func makeEtudesIfNeeded(filename string, req etudeRequest) {
 // validEtudeRequest returns true if the request is correctly formed
 // and references a valid etude filename.
 func validEtudeRequest(req etudeRequest) (ok bool) {
-	if !validPattern(req.pattern) {
+	if !valid.Pattern(req.pattern) {
 		return
 	}
 
 	switch req.pattern { // Intervals get special handling
 	case "allintervals":
-		if !validKeyName(req.tonalCenter) {
+		if !valid.KeyName(req.tonalCenter) {
 			return
 		}
 	case "interval":
-		if !validIntervalName(req.interval1) {
+		if !valid.IntervalName(req.interval1) {
 			return
 		}
 	case "intervalpair":
-		if !validIntervalName(req.interval1) || !validIntervalName(req.interval2) {
+		if !valid.IntervalName(req.interval1) || !valid.IntervalName(req.interval2) {
 			return
 		}
 	case "intervaltriple":
-		if !validIntervalName(req.interval1) ||
-			!validIntervalName(req.interval2) ||
-			!validIntervalName(req.interval3) {
+		if !valid.IntervalName(req.interval1) ||
+			!valid.IntervalName(req.interval2) ||
+			!valid.IntervalName(req.interval3) {
 			return
 		}
 
 	default:
-		if !validKeyName(req.tonalCenter) {
+		if !valid.KeyName(req.tonalCenter) {
 			return
 		}
 	}
-	if !validInstrumentName(req.instrument) {
+	if !valid.InstrumentName(req.instrument) {
 		return
 	}
-	if !validMetronomePattern(metronomeString(&req)) {
+	if !valid.MetronomePattern(metronomeString(&req)) {
 		return
 	}
-	if !validTempo(req.tempo) {
+	if !valid.Tempo(req.tempo) {
 		return
 	}
 	ok = true
 	return
 }
 
-type nameInfo struct {
-	fileName string
-	uiName   string
-	uiAria   string // alternate text for screen readers
-	size     int    // interval size in half steps. Not meaningful for other parameters.
-}
-
-var keyInfo = []nameInfo{
-	{"c", "C", "C", 0},
-	{"dflat", "D♭", "D-flat", 0},
-	{"d", "D", "D", 0},
-	{"eflat", "E♭", "E-flat", 0},
-	{"e", "E", "E", 0},
-	{"f", "F", "F", 0},
-	{"gflat", "G♭", "G-flat", 0},
-	{"g", "G", "G", 0},
-	{"aflat", "A♭", "A-flat", 0},
-	{"a", "A", "A", 0},
-	{"bflat", "B♭", "B-flat", 0},
-	{"b", "B", "B", 0},
-	{"random", "Random", "Random", 0},
-}
-
-var intervalInfo = []nameInfo{
-	{"unison", "Unison", "Unison", 0},
-	{"minor2", "Minor 2", "Minor Second", 1},
-	{"major2", "Major 2", "Major Second", 2},
-	{"minor3", "Minor 3", "Minor Third", 3},
-	{"major3", "Major 3", "Major Third", 4},
-	{"perfect4", "Perfect 4", "Perfect Fourth", 5},
-	{"tritone", "Tritone", "Tritone", 6},
-	{"perfect5", "Perfect 5", "Perfect Fifth", 7},
-	{"minor6", "Minor 6", "Minor Sixth", 8},
-	{"major6", "Major 6", "Major Sixth", 9},
-	{"minor7", "Minor 7", "Minor Seventh", 10},
-	{"major7", "Major 7", "Major Seventh", 11},
-	{"octave", "Octave", "Octave", 12},
-}
-
 // intervalSizeByName returns the size of name in half-steps
 func intervalSizeByName(name string) (sz int) {
-	for _, inf := range intervalInfo {
-		if inf.fileName == name {
-			sz = inf.size
-			break
-		}
-	}
-	return
-}
-
-// validIntervalName returns true if the interval name is in the ones we support.
-func validIntervalName(name string) (ok bool) {
-	for _, k := range intervalInfo {
-		if k.fileName == name {
-			ok = true
+	for _, inf := range valid.IntervalInfo {
+		if inf.FileName == name {
+			sz = inf.Size
 			break
 		}
 	}
@@ -416,60 +370,6 @@ func extractIntervalPair(s string) (i1 int, i2 int, err error) {
 	if i2 < 1 || i2 > 12 {
 		err = fmt.Errorf("bad value for second interval: %d", i2)
 		return
-	}
-	return
-}
-
-// validKeyName returns true if the key name is in the ones we support.
-func validKeyName(name string) (ok bool) {
-	for _, k := range keyInfo {
-		if k.fileName == name {
-			ok = true
-			break
-		}
-	}
-	return
-}
-
-var patternInfo = []nameInfo{
-	{"interval", "One Interval", "One Interval", 0},
-	{"allintervals", "Tonic Intervals", "Tonic Intervals", 0},
-	{"intervalpair", "Two Intervals", "Two Intervals", 0},
-	{"intervaltriple", "Three Intervals", "Three Intervals", 0},
-}
-
-// validPattern returns true if the scale name is in the ones we support.
-func validPattern(name string) (ok bool) {
-	for _, s := range patternInfo {
-		if s.fileName == name {
-			ok = true
-			break
-		}
-	}
-	return
-}
-
-// validInstrumentName returns true if the instrument name is in the ones we
-// support.
-func validInstrumentName(name string) (ok bool) {
-	_, err := getSupportedInstrumentByName(name)
-	if err == nil {
-		ok = true
-	}
-	return
-}
-
-func validMetronomePattern(name string) (ok bool) {
-	switch name {
-	case "on", "downbeat", "off":
-		ok = true
-	}
-	return
-}
-func validTempo(ts string) (ok bool) {
-	_, err := strconv.Atoi(ts)
-	if err == nil {
-		ok = true
 	}
 	return
 }

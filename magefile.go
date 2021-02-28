@@ -1,11 +1,16 @@
+// +build mage
+
 package main
 
 import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 
 	. "github.com/Michael-F-Ellis/goht" // dot import makes sense here
+	"github.com/Michael-F-Ellis/infinite-etudes/internal/valid"
+	"github.com/magefile/mage/sh"
 )
 
 const (
@@ -27,6 +32,18 @@ var silencePatterns = []SilenceOption{
 	{5, crossMark + checkMark + crossMark},
 	{6, crossMark + crossMark + checkMark},
 	{7, crossMark + crossMark + crossMark},
+}
+
+var Default = Build
+
+func Build() {
+	must := func(err error) {
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	must(mkWebPages())
+	must(sh.Run("go", "build"))
 }
 
 // mkWebPages constructs the application web pages in the current working
@@ -57,7 +74,7 @@ func mkIndex() (err error) {
 	if err != nil {
 		return
 	}
-	err = ioutil.WriteFile("index.html", buf.Bytes(), 0644)
+	err = ioutil.WriteFile("assets/index.html", buf.Bytes(), 0644)
 	return
 }
 
@@ -70,25 +87,25 @@ func indexBody() (body *HtmlTree) {
 	// Etude menus:
 	// Scale pattern
 	var scales []interface{}
-	for _, ptn := range patternInfo { // scaleInfo is defined in server.go
-		value := fmt.Sprintf(`value="%s"`, ptn.fileName)
-		scales = append(scales, Option(value, ptn.uiName))
+	for _, ptn := range valid.PatternInfo { // scaleInfo is defined in server.go
+		value := fmt.Sprintf(`value="%s"`, ptn.FileName)
+		scales = append(scales, Option(value, ptn.UiName))
 	}
 	scaleSelect := Div(`class="Column" id=scale-div`, Label(``, "Pattern", Select("id=scale-select", scales...)))
 	// scaleSelectLabel := Label(`class=sel-label`, "Pattern")
 
 	// Key
 	var keys []interface{}
-	for _, k := range keyInfo {
-		value := fmt.Sprintf(`value="%s" aria-label="%s"`, k.fileName, k.uiAria)
-		keys = append(keys, Option(value, k.uiName))
+	for _, k := range valid.KeyInfo {
+		value := fmt.Sprintf(`value="%s" aria-label="%s"`, k.FileName, k.UiAria)
+		keys = append(keys, Option(value, k.UiName))
 	}
 	keySelect := Div(`class="Column" id="key-div"`, Label(``, "Tonal Center", Select("id=key-select", keys...)))
 	// Interval1 and Interval2
 	var intervals []interface{}
-	for _, v := range intervalInfo {
-		value := fmt.Sprintf(`value="%s" aria-label="%s"`, v.fileName, v.uiAria)
-		uival := fmt.Sprintf("%d (%s)", v.size, v.uiName)
+	for _, v := range valid.IntervalInfo {
+		value := fmt.Sprintf(`value="%s" aria-label="%s"`, v.FileName, v.UiAria)
+		uival := fmt.Sprintf("%d (%s)", v.Size, v.UiName)
 		intervals = append(intervals, Option(value, uival))
 	}
 	interval1Select := Div(`class="Column" id="interval1-div"`, Label(``, "Interval 1", Select("id=interval1-select", intervals...)))
@@ -96,9 +113,9 @@ func indexBody() (body *HtmlTree) {
 	interval3Select := Div(`class="Column" id="interval3-div"`, Label(``, "Interval 3", Select("id=interval3-select", intervals...)))
 	// Instrument sound
 	var sounds []interface{}
-	for _, iinfo := range supportedInstruments {
-		name := iinfo.displayName
-		value := fmt.Sprintf(`value="%s"`, iinfo.name)
+	for _, iinfo := range valid.Instruments {
+		name := iinfo.DisplayName
+		value := fmt.Sprintf(`value="%s"`, iinfo.Name)
 		sounds = append(sounds, Option(value, name))
 	}
 	soundSelect := Div(`class="Column" id="sound-div"`, Label(``, "Instrument", Select("id=sound-select", sounds...)))

@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+
+	"github.com/Michael-F-Ellis/infinite-etudes/internal/valid"
 )
 
 type midiPattern []int
@@ -219,11 +221,11 @@ func generateEqualIntervalSequence(midilo int, midihi int, tempo int, instrument
 	}
 
 	var interval int = -1
-	for _, iinfo := range intervalInfo {
-		if iinfo.fileName != req.interval1 {
+	for _, iinfo := range valid.IntervalInfo {
+		if iinfo.FileName != req.interval1 {
 			continue
 		}
-		interval = iinfo.size
+		interval = iinfo.Size
 		break
 	}
 	if interval == -1 {
