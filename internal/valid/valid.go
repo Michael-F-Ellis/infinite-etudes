@@ -2,8 +2,6 @@
 
 package valid
 
-import "strconv"
-
 type NameInfo struct {
 	FileName string
 	UiName   string
@@ -90,10 +88,6 @@ func MetronomePattern(name string) (ok bool) {
 	}
 	return
 }
-func Tempo(ts string) (ok bool) {
-	_, err := strconv.Atoi(ts)
-	if err == nil {
-		ok = true
-	}
-	return
+func Tempo(tBPM int) (ok bool) {
+	return tBPM >= 60 && tBPM <= 480 // our aribtrary limits
 }

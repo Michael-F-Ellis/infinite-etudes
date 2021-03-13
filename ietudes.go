@@ -46,26 +46,26 @@ var keySharps = map[string]int{
 
 // mkRequestedEtude creates the requested etude in the current directory. The
 // arguments are assumed to be previously vetted and are not checked.
-func mkRequestedEtude(midilo, midihi, tempo, instrument int, r etudeRequest) {
+func mkRequestedEtude(instrument int, r etudeRequest) {
 	iname := r.instrument
 	switch r.pattern {
 	case "allintervals":
-		s := generateIntervalSequence(midilo, midihi, tempo, instrument, r)
+		s := generateIntervalSequence(r.midiLo, r.midiHi, r.tempo, instrument, r)
 		mkMidi(&s, true)
 	case "interval":
-		s := generateEqualIntervalSequence(midilo, midihi, tempo, instrument, r)
+		s := generateEqualIntervalSequence(r.midiLo, r.midiHi, r.tempo, instrument, r)
 		mkMidi(&s, true)
 	case "intervalpair":
 		i1 := intervalSizeByName(r.interval1)
 		i2 := intervalSizeByName(r.interval2)
-		s := generateTwoIntervalSequence(midilo, midihi, tempo, instrument, iname, i1, i2)
+		s := generateTwoIntervalSequence(r.midiLo, r.midiHi, r.tempo, instrument, iname, i1, i2)
 		s.req = r
 		mkMidi(&s, true) // no tighten
 	case "intervaltriple":
 		i1 := intervalSizeByName(r.interval1)
 		i2 := intervalSizeByName(r.interval2)
 		i3 := intervalSizeByName(r.interval3)
-		s := generateThreeIntervalSequence(midilo, midihi, tempo, instrument, iname, i1, i2, i3)
+		s := generateThreeIntervalSequence(r.midiLo, r.midiHi, r.tempo, instrument, iname, i1, i2, i3)
 		s.req = r
 		mkMidi(&s, true) // no tighten
 	default:

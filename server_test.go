@@ -103,7 +103,7 @@ func TestVocalEtudeRequest(t *testing.T) {
 }
 func TestValidEtudeRequest(t *testing.T) {
 	badRequests := []etudeRequest{
-		{tonalCenter: "hsharp", pattern: "pentatonic", instrument: "trumpet", tempo: "120"},
+		{tonalCenter: "hsharp", pattern: "pentatonic", instrument: "trumpet", tempo: 120},
 	}
 	for _, req := range badRequests {
 		ok := validEtudeRequest(req)
@@ -112,8 +112,8 @@ func TestValidEtudeRequest(t *testing.T) {
 		}
 	}
 	goodRequests := []etudeRequest{
-		{tonalCenter: "", pattern: "intervalpair", interval1: "minor3", interval2: "major3", instrument: "trumpet", metronome: metronomeDownbeatOnly, tempo: "120"},
-		{tonalCenter: "", pattern: "intervaltriple", interval1: "minor3", interval2: "major3", interval3: "minor3", instrument: "trumpet", metronome: metronomeOff, tempo: "120"},
+		{tonalCenter: "", pattern: "intervalpair", interval1: "minor3", interval2: "major3", instrument: "trumpet", metronome: metronomeDownbeatOnly, tempo: 120},
+		{tonalCenter: "", pattern: "intervaltriple", interval1: "minor3", interval2: "major3", interval3: "minor3", instrument: "trumpet", metronome: metronomeOff, tempo: 120},
 	}
 	for _, req := range goodRequests {
 		ok := validEtudeRequest(req)
@@ -183,8 +183,8 @@ func TestMain(m *testing.M) {
 }
 
 func BenchmarkMkAllEtudes(b *testing.B) {
-	req := etudeRequest{instrument: "viola", pattern: "allintervals", tonalCenter: "c"}
+	req := etudeRequest{instrument: "viola", tempo: 120, pattern: "allintervals", tonalCenter: "c"}
 	for i := 0; i < b.N; i++ {
-		mkRequestedEtude(48, 84, 120, 15, req)
+		mkRequestedEtude(15, req)
 	}
 }

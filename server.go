@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Michael-F-Ellis/infinite-etudes/internal/valid"
+	"github.com/Michael-F-Ellis/mu"
 )
 
 // Bundle our static files with the app
@@ -80,11 +81,12 @@ type etudeRequest struct {
 	interval2   string
 	interval3   string
 	instrument  string
-	tempo       string // beats per minute
-	repeats     int    // number of repeats (0-3)
-	metronome   int    // On, DownbeatOnly, Off
-	silent      int    // true indicated the corresponding repeat should be silent
-
+	tempo       int // beats per minute
+	repeats     int // number of repeats (0-3)
+	metronome   int // On, DownbeatOnly, Off
+	silent      int // true indicated the corresponding repeat should be silent
+	midiLo      int // lowest midi pitch to be used
+	midiHi      int // highest midi pitch to be used
 }
 
 const (
@@ -111,16 +113,17 @@ func (r *etudeRequest) midiFilename() (f string) {
 	var parts []string
 	repeats := fmt.Sprintf("%d", r.repeats)
 	silence := fmt.Sprintf("%d", r.silent)
+	tempo := fmt.Sprintf("%d", r.tempo)
 
 	switch r.pattern {
 	case "interval":
-		parts = []string{r.pattern, r.interval1, r.instrument, metronomeString(r), r.tempo, repeats, silence}
+		parts = []string{r.pattern, r.interval1, r.instrument, metronomeString(r), tempo, repeats, silence}
 	case "intervalpair":
-		parts = []string{r.pattern, r.interval1, r.interval2, r.instrument, metronomeString(r), r.tempo, repeats, silence}
+		parts = []string{r.pattern, r.interval1, r.interval2, r.instrument, metronomeString(r), tempo, repeats, silence}
 	case "intervaltriple":
-		parts = []string{r.pattern, r.interval1, r.interval2, r.interval3, r.instrument, metronomeString(r), r.tempo, repeats, silence}
+		parts = []string{r.pattern, r.interval1, r.interval2, r.interval3, r.instrument, metronomeString(r), tempo, repeats, silence}
 	default:
-		parts = []string{r.tonalCenter, r.pattern, r.instrument, metronomeString(r), r.tempo, repeats, silence}
+		parts = []string{r.tonalCenter, r.pattern, r.instrument, metronomeString(r), tempo, repeats, silence}
 	}
 	f = strings.Join(parts, "_") + ".mid"
 	return
@@ -132,6 +135,7 @@ func (r *etudeRequest) midiFilename() (f string) {
 // maximum age imposed by this service. Otherwise the app will generate it so it
 // can be returned.
 func etudeHndlr(w http.ResponseWriter, r *http.Request) {
+	var err error
 	path := strings.Split(r.URL.Path, "/")
 	if len(path) != 12 {
 		w.WriteHeader(http.StatusBadRequest)
@@ -159,7 +163,12 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 	default:
 		req.metronome = 4 // invalid
 	}
-	req.tempo = path[9]
+	req.tempo, err = strconv.Atoi(path[9])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf(`can't convert "%s" to tempo: %v`, path[9], err)
+		return
+	}
 	repeats, err := strconv.Atoi(path[10])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -230,10 +239,18 @@ func makeEtudesIfNeeded(filename string, req etudeRequest) {
 	iInfo, _ := valid.InstrumentByName(req.instrument) // already validated. ignore err value
 	// fmt.Printf("%v %s\n", iInfo, filename)
 	instrument := iInfo.GMNumber - 1
-	midilo := iInfo.MidiLo
-	midihi := iInfo.MidiHi
-	tempo, _ := strconv.Atoi(req.tempo)
-	mkRequestedEtude(midilo, midihi, tempo, instrument, req)
+	// constrain the requested midi pitch ranges to the instrument limits in iInfo.
+	// midiLo must be >= instrument low limit, and
+	// midiLo must be at least 2 octaves below the instrument high limit
+	// midiHi must be <= instrument high limit, and
+	// midiHi must be at least 2 octaves above midiLo
+	req.midiLo = mu.Max(iInfo.MidiLo, req.midiLo)
+	req.midiLo = mu.Min(iInfo.MidiLo-24, req.midiLo)
+	req.midiHi = mu.Min(iInfo.MidiHi, req.midiHi)
+	req.midiHi = mu.Max(req.midiLo+24, req.midiHi)
+	log.Printf("req.midiLo=%d, req.midiHi=%d", req.midiLo, req.midiHi)
+
+	mkRequestedEtude(instrument, req)
 }
 
 // validEtudeRequest returns true if the request is correctly formed

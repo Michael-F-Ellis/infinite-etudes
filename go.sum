@@ -1,5 +1,7 @@
 github.com/Michael-F-Ellis/goht v1.1.1 h1:5R1KSSbWHBFkCw3f8H4LAaUInz4LLwvyig2ioEuqwMk=
 github.com/Michael-F-Ellis/goht v1.1.1/go.mod h1:ihZ6qOS584kNRyelpis+EN4LR6N0Ms1kqVsitKN0DDc=
+github.com/Michael-F-Ellis/mu v0.0.0-20210313181040-ed0305b6b4cf h1:HRMr9ehZnpNdlxIUmEUi2+U8D3eAIs7wD8pWg9Zw0vA=
+github.com/Michael-F-Ellis/mu v0.0.0-20210313181040-ed0305b6b4cf/go.mod h1:i/wE7V6l+ynE0IcyULPdPmVMLfkDvjOdRAN0+TtBSxw=
 github.com/go-test/deep v1.0.7 h1:/VSMRlnY/JSyqxQUzQLKVMAskpY/NZKFA5j2P+0pP2M=
 github.com/go-test/deep v1.0.7/go.mod h1:QV8Hv/iy04NyLBxAdO9njL0iVPN1S4d/A3NVv1V36o8=
 github.com/magefile/mage v1.11.0 h1:C/55Ywp9BpgVVclD3lRnSYCwXTYxmSppIgLeDYlNuls=

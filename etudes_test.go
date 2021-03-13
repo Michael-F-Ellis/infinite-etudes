@@ -116,7 +116,7 @@ func TestPermute4(t *testing.T) {
 func TestGenerateIntervalSequences(t *testing.T) {
 	req := etudeRequest{
 		instrument:  "acoustic_grand_piano",
-		tempo:       "120",
+		tempo:       120,
 		repeats:     3,
 		pattern:     "allintervals",
 		tonalCenter: "c",
@@ -129,7 +129,7 @@ func TestGenerateIntervalSequences(t *testing.T) {
 func TestGenerateEqualIntervalSequences(t *testing.T) {
 	req := etudeRequest{
 		instrument: "acoustic_grand_piano",
-		tempo:      "120",
+		tempo:      120,
 		interval1:  "unison",
 		pattern:    "interval",
 		repeats:    3,
@@ -213,7 +213,7 @@ func TestMkMidi(t *testing.T) {
 		tonalCenter: "c",
 		pattern:     "pentatonic",
 		instrument:  "trumpet",
-		tempo:       "120",
+		tempo:       120,
 	}
 	x.seq = []midiPattern{{1, 2, 3}, {4, 5, 6}}
 	mkMidi(&x, false)
