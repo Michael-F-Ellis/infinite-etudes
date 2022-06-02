@@ -17,8 +17,7 @@ import (
 const copyright = `
 Copyright 2019-2020 Ellis & Grant, Inc. All rights reserved.  Use of the source
 code is governed by an MIT-style license that can be found in the LICENSE
-file.
-`
+file.`
 const description = `
 Infinite-etudes generates ear training exercises for instrumentalists. The
 program contains a high-performance self-contained web server that provides a
@@ -29,8 +28,7 @@ in the web browser. A public instance is running at
 https://etudes.ellisandgrant.com
 
 See the file server.go for details including environment variables needed
-for https service.
-`
+for https service.`
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
