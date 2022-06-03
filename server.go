@@ -301,11 +301,11 @@ func validEtudeRequest(req etudeRequest) (ok bool) {
 		if !validIntervalName(req.interval1) {
 			return
 		}
-	case "intervalpair":
+	case "intervalpair", "intervalpair_ud":
 		if !validIntervalName(req.interval1) || !validIntervalName(req.interval2) {
 			return
 		}
-	case "intervaltriple":
+	case "intervaltriple", "intervaltriple_ud":
 		if !validIntervalName(req.interval1) ||
 			!validIntervalName(req.interval2) ||
 			!validIntervalName(req.interval3) {
@@ -435,7 +435,9 @@ var patternInfo = []nameInfo{
 	{"interval", "One Interval", "One Interval", 0},
 	{"allintervals", "Tonic Intervals", "Tonic Intervals", 0},
 	{"intervalpair", "Two Intervals", "Two Intervals", 0},
+	{"intervalpair_ud", "Two Intervals Up/Down", "Two Intervals", 0},
 	{"intervaltriple", "Three Intervals", "Three Intervals", 0},
+	{"intervaltriple_ud", "Three Intervals Up/Down", "Three Intervals", 0},
 }
 
 // validPattern returns true if the scale name is in the ones we support.

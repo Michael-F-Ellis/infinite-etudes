@@ -113,7 +113,9 @@ func TestValidEtudeRequest(t *testing.T) {
 	}
 	goodRequests := []etudeRequest{
 		{tonalCenter: "", pattern: "intervalpair", interval1: "minor3", interval2: "major3", instrument: "trumpet", metronome: metronomeDownbeatOnly, tempo: "120"},
+		{tonalCenter: "", pattern: "intervalpair_ud", interval1: "minor3", interval2: "major3", instrument: "trumpet", metronome: metronomeDownbeatOnly, tempo: "120"},
 		{tonalCenter: "", pattern: "intervaltriple", interval1: "minor3", interval2: "major3", interval3: "minor3", instrument: "trumpet", metronome: metronomeOff, tempo: "120"},
+		{tonalCenter: "", pattern: "intervaltriple_ud", interval1: "minor3", interval2: "major3", interval3: "minor3", instrument: "trumpet", metronome: metronomeOff, tempo: "120"},
 	}
 	for _, req := range goodRequests {
 		ok := validEtudeRequest(req)
