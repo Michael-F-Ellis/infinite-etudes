@@ -105,7 +105,7 @@ func indexBody() (body *HtmlTree) {
 
 	// Metronome
 	var metros []interface{}
-	for _, ptn := range []string{"on", "downbeat", "off"} {
+	for _, ptn := range []string{"off", "downbeat", "on"} {
 		attrs := fmt.Sprintf(`value="%s"`, ptn)
 		metros = append(metros, Option(attrs, ptn))
 	}
@@ -194,6 +194,11 @@ func quickStart() (div *HtmlTree) {
 			A(`href="#patterns"`, "Patterns."), `&nbsp;If you're new to your
 		instrument or to ear training, see `, A(`href="#beginners"`, `For
 		Beginners.`)),
+		H4("", "Browser Compatibility Note"),
+		P(``, `This app doesn't work correctly on the Brave Browser for reasons
+		I've not yet determined. I use it mostly with Chrome on Android and Mac
+		OS and test it occasionally with Safari and Firefox. So far no problems
+		with any of those.`),
 	)
 	return
 }
@@ -302,7 +307,7 @@ func forTheSerious() (div *HtmlTree) {
 	and 79,000 ways to play 4. And, remember, each 3 note sequence can be
 	played in 6 different orders and each 4 note sequence in 24 orders.`
 
-	p3 := `So here's the good news: while it's probably true that if you
+	p3 := `Now the good news: while it's probably true that if you
 	searched all the music ever written or recorded you'd find at least one
 	instance of each of those combinations, it's also certainly true that
 	most music uses a much smaller subset most of the time. In fact, getting
@@ -433,10 +438,9 @@ func userInterface() (div *HtmlTree) {
 	the first pitch of each sequence is "close" to the preceding pitch
 	without wandering outside the playable range of your instrument.`
 
-	p3 := `By default the metronome gives an initial 1 measure count-in and
-	continues to click on each beat of the etude.  You can control this with the
+	p3 := `By default the metronome is off after an initial 1 measure count-in.  You can change this behavior with the
 	Metronome selector. Choose "downbeat" to have it click only on beat 1 of each measure.
-	Choose "off" for silence after the count-in.`
+	Choose "on" to have it click on every beat.`
 
 	p4 := `Infinite Etudes generates MIDI files in 4/4 time with the tempo
 	defaulted to 120 beats per minute. If you need it slower or faster, use

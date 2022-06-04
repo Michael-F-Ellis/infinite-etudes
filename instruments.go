@@ -84,6 +84,13 @@ var supportedInstruments = []instrumentInfo{
 		midihi:      88,
 	},
 	{
+		displayName: "Melodica",
+		gmnumber:    21, // using the accordion sound
+		name:        "melodica",
+		midilo:      53, // F3
+		midihi:      89, // F6
+	},
+	{
 		displayName: "Oboe",
 		gmnumber:    69,
 		name:        "oboe",
@@ -94,8 +101,8 @@ var supportedInstruments = []instrumentInfo{
 		displayName: "Piano",
 		gmnumber:    1,
 		name:        "acoustic_grand_piano",
-		midilo:      36,
-		midihi:      96,
+		midilo:      36, // C2
+		midihi:      96, // C7
 	},
 	{
 		displayName: "Sax, Soprano",
