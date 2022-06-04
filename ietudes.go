@@ -305,9 +305,12 @@ func generateTwoIntervalSequence(midilo int, midihi int, tempo int, instrument i
 	patterns := []midiPattern{}
 	for p := range midiChromaticScaleNums {
 		t := tripleFrom2Intervals(p, i1, i2)
-		shufflePatternPitches(&t) // randomize the order
 		patterns = append(patterns, t)
 	}
+	// At this point, patterns contains 12 triples rooted at pitches 0-11 in that order.
+	// The pitches in each triple have been shuffled. For example, if the both intervals are M2, patterns
+	// be similar to {{0 4 2}, {3,1,5}, {2,4,6}, ... {13, 11, 15}}
+
 	indices := permute3([]int{0, 1, 2})   // 6 possible note orders
 	indices = append(indices, indices...) // double the list
 	shufflePatterns(indices)              // shuffle the note orders
