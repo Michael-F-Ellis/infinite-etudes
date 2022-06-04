@@ -56,14 +56,27 @@ func mkRequestedEtude(midilo, midihi, tempo, instrument int, r etudeRequest) {
 	case "intervalpair":
 		i1 := intervalSizeByName(r.interval1)
 		i2 := intervalSizeByName(r.interval2)
-		s := generateTwoIntervalSequence(midilo, midihi, tempo, instrument, iname, i1, i2)
+		s := generateTwoIntervalSequenceAllOrders(midilo, midihi, tempo, instrument, iname, i1, i2)
+		s.req = r
+		mkMidi(&s, true) // no tighten
+	case "intervalpair_ud":
+		i1 := intervalSizeByName(r.interval1)
+		i2 := intervalSizeByName(r.interval2)
+		s := generateTwoIntervalSequenceUpDown(midilo, midihi, tempo, instrument, iname, i1, i2)
 		s.req = r
 		mkMidi(&s, true) // no tighten
 	case "intervaltriple":
 		i1 := intervalSizeByName(r.interval1)
 		i2 := intervalSizeByName(r.interval2)
 		i3 := intervalSizeByName(r.interval3)
-		s := generateThreeIntervalSequence(midilo, midihi, tempo, instrument, iname, i1, i2, i3)
+		s := generateThreeIntervalSequenceAllOrders(midilo, midihi, tempo, instrument, iname, i1, i2, i3)
+		s.req = r
+		mkMidi(&s, true) // no tighten
+	case "intervaltriple_ud":
+		i1 := intervalSizeByName(r.interval1)
+		i2 := intervalSizeByName(r.interval2)
+		i3 := intervalSizeByName(r.interval3)
+		s := generateThreeIntervalSequenceUpDown(midilo, midihi, tempo, instrument, iname, i1, i2, i3)
 		s.req = r
 		mkMidi(&s, true) // no tighten
 	default:
@@ -296,9 +309,57 @@ func generateIntervalSequence(midilo int, midihi int, tempo int, instrument int,
 	return
 }
 
-// generateTwoIntervalSequence returns an etudeSequence with 12 triples of
+// generateTwoIntervalSequenceUpDown returns an etudeSequence with 12 triples of
 // equal interval sizes, one beginning on each pitch in the Chromatic scale.
-func generateTwoIntervalSequence(midilo int, midihi int, tempo int, instrument int, iname string, i1, i2 int) (sequence etudeSequence) {
+// The sequence only contains ascending and descending patterns.
+func generateTwoIntervalSequenceUpDown(midilo int, midihi int, tempo int, instrument int, iname string, i1, i2 int) (sequence etudeSequence) {
+	// Get the chromatic scale as midi numbers in the range 0 - 11
+	midiChromaticScaleNums := getChromaticScale()
+	// Generate all triples
+	patterns := []midiPattern{}
+	for p := range midiChromaticScaleNums {
+		t := tripleFrom2Intervals(p, i1, i2)
+		patterns = append(patterns, t)
+	}
+	// At this point, patterns contains 12 triples rooted at pitches 0-11 in that order.
+	// For example, if the both intervals are M2, the patterns
+	// will be {{0 2 4}, {1,3,5}, {2,4,6}, ... {11, 13, 15}}
+
+	indices := []midiPattern{
+		{0, 1, 2}, {2, 1, 0},
+		{0, 1, 2}, {2, 1, 0},
+		{0, 1, 2}, {2, 1, 0},
+		{0, 1, 2}, {2, 1, 0},
+		{0, 1, 2}, {2, 1, 0},
+		{0, 1, 2}, {2, 1, 0},
+	} // 6 each of ascending and descending order
+	shufflePatterns(indices) // shuffle the pattern order
+	// now rearrange the pattern pitches using the list of shuffled note orders to
+	// guarantee and equal number of ascending and descending patterns.
+	for i, p := range patterns {
+		ptn := make(midiPattern, 3)
+		copy(ptn, patterns[i])
+		idx := indices[i]
+		for j := range p {
+			ptn[j] = p[idx[j]]
+		}
+		patterns[i] = ptn
+	}
+
+	// construct the sequence
+	sequence = etudeSequence{
+		ptns:       patterns,
+		midilo:     midilo,
+		midihi:     midihi,
+		tempo:      tempo,
+		instrument: instrument,
+	}
+	return
+}
+
+// generateTwoIntervalSequenceAllOrders returns an etudeSequence with 12 triples of
+// equal interval sizes, one beginning on each pitch in the Chromatic scale.
+func generateTwoIntervalSequenceAllOrders(midilo int, midihi int, tempo int, instrument int, iname string, i1, i2 int) (sequence etudeSequence) {
 	// Get the chromatic scale as midi numbers in the range 0 - 11
 	midiChromaticScaleNums := getChromaticScale()
 	// Generate all triples
@@ -337,9 +398,50 @@ func generateTwoIntervalSequence(midilo int, midihi int, tempo int, instrument i
 	return
 }
 
-// generateThreeIntervalSequence returns an etudeSequence with 12 quads of
-// equal interval sizes, one beginning on each pitch in the Chromatic scale.
-func generateThreeIntervalSequence(midilo int, midihi int, tempo int, instrument int, iname string, i1, i2, i3 int) (sequence etudeSequence) {
+// generateThreeIntervalSequenceUpDown returns an etudeSequence with 12 quads of
+// equal interval sizes, one beginning on each pitch in the Chromatic scale and containing
+// each of 6 in ascending order and 6 in descending order.
+func generateThreeIntervalSequenceUpDown(midilo int, midihi int, tempo int, instrument int, iname string, i1, i2, i3 int) (sequence etudeSequence) {
+	// Get the chromatic scale as midi numbers in the range 0 - 11
+	midiChromaticScaleNums := getChromaticScale()
+	// Generate all triples
+	patterns := []midiPattern{}
+	for p := range midiChromaticScaleNums {
+		q := quadFrom3Intervals(p, i1, i2, i3)
+		patterns = append(patterns, q)
+	}
+	indices := []midiPattern{
+		{0, 1, 2, 3}, {3, 2, 1, 0}, {0, 1, 2, 3}, {3, 2, 1, 0}, {0, 1, 2, 3}, {3, 2, 1, 0},
+		{0, 1, 2, 3}, {3, 2, 1, 0}, {0, 1, 2, 3}, {3, 2, 1, 0}, {0, 1, 2, 3}, {3, 2, 1, 0},
+	}
+	shufflePatterns(indices) // shuffle the pattern order
+	// now rearrange the pattern pitches using the list of shuffled pattern orders to
+	// guarantee each possible note order will appear exactly 6 times.
+	for i, p := range patterns {
+		ptn := make(midiPattern, 4)
+		copy(ptn, patterns[i])
+		idx := indices[i]
+		for j := range p {
+			ptn[j] = p[idx[j]]
+		}
+		patterns[i] = ptn
+	}
+
+	// construct the sequence
+	sequence = etudeSequence{
+		ptns:       patterns,
+		midilo:     midilo,
+		midihi:     midihi,
+		tempo:      tempo,
+		instrument: instrument,
+	}
+	return
+}
+
+// generateThreeIntervalSequenceAllOrders returns an etudeSequence with 24 quads of
+// equal interval sizes, two beginning on each pitch in the Chromatic scale and containing
+// each of 24 possible orderings.
+func generateThreeIntervalSequenceAllOrders(midilo int, midihi int, tempo int, instrument int, iname string, i1, i2, i3 int) (sequence etudeSequence) {
 	// Get the chromatic scale as midi numbers in the range 0 - 11
 	midiChromaticScaleNums := getChromaticScale()
 	// Generate all triples

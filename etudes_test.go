@@ -142,14 +142,19 @@ func TestGenerateEqualIntervalSequences(t *testing.T) {
 	}
 }
 
-func TestGenerateTwoIntervalSequence(t *testing.T) {
-	s := generateTwoIntervalSequence(36, 84, 120, 0, "", 2, 2)
-	if len(s.ptns) != 12 {
-		t.Errorf("expected 12 triples, got %d", len(s.ptns))
+// checkPatternOrders verifies the expected number of patterns that are ordered
+// ascending, descending and unordered.
+func checkPatternOrders(t *testing.T, aexp, dexp, uexp int, seq etudeSequence) {
+	var dump bool
+	ptns := seq.ptns
+	nexp := aexp + dexp + uexp
+	if len(ptns) != nexp {
+		t.Errorf("expected %d patterns, got %d", nexp, len(ptns))
+		dump = true
 	}
-	// There should be exactly 2 ascending and 2 descending patterns and 8 unordered patterns.
+	// Count the number of each pattern type
 	var asc, desc, unord int
-	for _, p := range s.ptns {
+	for _, p := range ptns {
 		switch sliceOrder(p) {
 		case SliceUnordered:
 			unord++
@@ -159,25 +164,45 @@ func TestGenerateTwoIntervalSequence(t *testing.T) {
 			desc++
 		}
 	}
-	if unord != 8 {
-		t.Errorf("expected 8 unordered, got %d", unord)
+	if unord != uexp {
+		t.Errorf("expected %d unordered, got %d", uexp, unord)
+		dump = true
 	}
-	if asc != 2 {
-		t.Errorf("expected 2 ascending, got %d", asc)
+	if asc != aexp {
+		t.Errorf("expected %d ascending, got %d", aexp, asc)
+		dump = true
 	}
-	// no need to check desc but we'll do so just for confirmation
-	if desc != 2 {
-		t.Errorf("expected 2 descending, got %d", desc)
+	if desc != dexp {
+		t.Errorf("expected %d descending, got %d", dexp, desc)
+		dump = true
 	}
-	log.Println(s)
+	if dump {
+		log.Println(seq)
+	}
+
+}
+func TestGenerateTwoIntervalSequenceAllOrders(t *testing.T) {
+	s := generateTwoIntervalSequenceAllOrders(36, 84, 120, 0, "", 2, 2)
+	// There should be exactly 2 ascending and 2 descending patterns and 8 unordered patterns.
+	checkPatternOrders(t, 2, 2, 8, s)
 }
 
-func TestGenerateThreeIntervalSequence(t *testing.T) {
-	s := generateThreeIntervalSequence(36, 84, 120, 0, "", 2, 2, 2)
-	if len(s.ptns) != 24 {
-		t.Errorf("expected 24 quads, got %d", len(s.ptns))
-	}
-	log.Println(s)
+func TestGenerateTwoIntervalSequenceUpDown(t *testing.T) {
+	s := generateTwoIntervalSequenceUpDown(36, 84, 120, 0, "", 2, 2)
+	// There should be exactly 6 ascending and 6 descending patterns and 0 unordered patterns.
+	checkPatternOrders(t, 6, 6, 0, s)
+}
+
+func TestGenerateThreeIntervalSequenceAllOrders(t *testing.T) {
+	s := generateThreeIntervalSequenceAllOrders(36, 84, 120, 0, "", 2, 2, 2)
+	// There should be exactly 1 ascending and 1 descending patterns and 22 unordered patterns.
+	checkPatternOrders(t, 1, 1, 22, s)
+}
+
+func TestGenerateThreeIntervalSequenceUpDown(t *testing.T) {
+	s := generateThreeIntervalSequenceUpDown(36, 84, 120, 0, "", 2, 2, 2)
+	// There should be exactly 6 ascending and 6 descending patterns and 22 unordered patterns.
+	checkPatternOrders(t, 6, 6, 0, s)
 }
 
 func TestTighten(t *testing.T) {
@@ -488,7 +513,7 @@ SUCCESS:
 }
 func TestIntervalPairEtude(t *testing.T) {
 	// generate a midi file with root position major triads
-	s := generateTwoIntervalSequence(36, 84, 120, 0, "", 4, 3)
+	s := generateTwoIntervalSequenceAllOrders(36, 84, 120, 0, "", 4, 3)
 	mkMidi(&s, false) // steady rhythm, no tighten
 }
 func TestExtractIntervalPair(t *testing.T) {

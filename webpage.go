@@ -240,11 +240,14 @@ func forTheCurious() (div *HtmlTree) {
 	of three pitches specified by the interval1 and interval2 selectors. The
 	score example shows a typical etude produced by choosing 4 half steps (a
 	major third) for the lower interval and 3 half steps (a minor third) for
-	the upper interval, i.e. a a major triad in root position. It's important
+	the upper interval, i.e. a a major triad in root position. It's useful
 	to be able to recognize and play the notes of any interval pattern in any
 	order. For 3 notes, there are 6 possible orderings. The program
 	arranges for each ordering to occur twice among the 12 sequences
 	presented.`
+
+	p16a := `You can choose <strong>Two Intervals Up/Down<strong> for an easier challenge containing only notes in
+	ascending or descending order, e.g. either "C E G" or "G E C" but not "C G E", "E C G" etc.`
 
 	p17 := `<strong>Three Intervals</strong> is similar to the Two Interval
 	pattern but uses 3 intervals to produce 4-note sequence. There are 24
@@ -252,6 +255,9 @@ func forTheCurious() (div *HtmlTree) {
 	notes in 24 different orders. The example shows a typical etude
 	constructed with a 2-2-1 pattern of half steps, corresponding to the
 	first 4 notes of a major scale.`
+
+	p17a := `You can choose <strong>Three Intervals Up/Down<strong> for an easier challenge containing only notes in
+	ascending or descending order, e.g. either "C E G B" or "B G E C" but not "C G B E", "E C B G" etc.`
 
 	div = Div("",
 		H3("", heading),
@@ -270,9 +276,11 @@ func forTheCurious() (div *HtmlTree) {
 		H4("", "Two Intervals"),
 		P("", p16),
 		Img(`src="img/two_interval_excerpt.png" class="example"`),
+		P("", p16a),
 		H4("", "Three Intervals"),
 		P("", p17),
 		Img(`src="img/three_interval_excerpt.png" class="example"`),
+		P("", p17a),
 	)
 	return
 }
@@ -741,14 +749,14 @@ func indexJS() (script *HtmlTree) {
 				key.style.display="none"
 				return
 			}
-			if (scalePattern == "intervalpair") {
+			if (scalePattern == "intervalpair" || scalePattern == "intervalpair_ud") {
 				interval1.style.display=""
 				interval2.style.display=""
 				interval3.style.display="none"
 				key.style.display="none"
 				return
 			}
-			if (scalePattern == "intervaltriple") {
+			if (scalePattern == "intervaltriple" || scalePattern == "intervaltriple_ud") {
 				interval1.style.display=""
 				interval2.style.display=""
 				interval3.style.display=""
@@ -802,10 +810,10 @@ func indexJS() (script *HtmlTree) {
 		  if (scale=="interval"){
 			  return scale + "_" + interval1 + "_" + sound + "_" + metronome + "_" + tempo + "_" + repeats  + "_"+ silent + ".midi" 
 		  }
-		  if (scale=="intervalpair"){
+		  if (scale=="intervalpair" || scale=="intervalpair_ud"){
 			  return scale + "_" + interval1 + "_" + interval2 + "_" + sound + "_" + metronome + "_" + tempo + "_" + repeats  + "_" + silent + ".midi" 
 		  }
-		  if (scale=="intervaltriple"){
+		  if (scale=="intervaltriple" || scale=="intervaltriple_ud"){
 			  return scale + "_" + interval1 + "_" + interval2 + "_"  + interval3 + "_" + sound + "_" + metronome + "_" + tempo + "_" + repeats  + "_" + silent + ".midi" 
 		  }
 		  // any other scale 
