@@ -498,3 +498,85 @@ func TestExtractIntervalPair(t *testing.T) {
 
 	}
 }
+
+func TestReverse(t *testing.T) {
+	type testcase struct {
+		s   []int
+		exp []int
+	}
+	tcases := []testcase{
+		{[]int{1, 2, 3}, []int{3, 2, 1}},
+	}
+	for _, tc := range tcases {
+		Reverse(tc.s)
+		if diff := deep.Equal(tc.s, tc.exp); diff != nil {
+			t.Errorf("%v", diff)
+			continue
+		}
+	}
+}
+
+type SliceOrder int
+type Numeric interface {
+	int | uint |
+		uint8 | uint16 | uint32 | uint64 |
+		int8 | int16 | int32 | int64 |
+		float32 | float64
+}
+
+const (
+	SliceDescending = iota - 1
+	SliceUnordered
+	SliceAscending
+)
+
+// sliceOrder inspects a numeric slice and returns SliceOrder constant to
+// indicate whether it is ascending or descending or unordered.
+func sliceOrder[T ~[]E, E Numeric](s T) SliceOrder {
+	a := s[0]
+	// See if it is strictly ascending
+	for i, b := range s[1:] {
+		switch {
+		case a == b:
+			return SliceUnordered
+		case a > b:
+			if i == 0 {
+				goto checkDescending
+			} else {
+				return SliceUnordered
+			}
+		}
+		a = b
+	}
+	// if we get to here, it's ascending
+	return SliceAscending
+
+checkDescending:
+	for _, b := range s[1:] {
+		if a <= b {
+			return SliceUnordered
+		}
+		a = b
+	}
+	return SliceDescending
+
+}
+func TestSliceOrder(t *testing.T) {
+	type testcase struct {
+		s   []int
+		exp SliceOrder
+	}
+	tcases := []testcase{
+		{[]int{1, 2, 3}, SliceAscending},
+		{[]int{3, 2, 1}, SliceDescending},
+		{[]int{1, 2, 0}, SliceUnordered},
+		{[]int{1, 2, 2}, SliceUnordered},
+	}
+	for _, tc := range tcases {
+		got := sliceOrder(tc.s)
+		if diff := deep.Equal(got, tc.exp); diff != nil {
+			t.Errorf("%v", diff)
+			continue
+		}
+	}
+}
