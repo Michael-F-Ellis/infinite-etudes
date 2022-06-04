@@ -144,16 +144,38 @@ func TestGenerateEqualIntervalSequences(t *testing.T) {
 
 func TestGenerateTwoIntervalSequence(t *testing.T) {
 	s := generateTwoIntervalSequence(36, 84, 120, 0, "", 2, 2)
-	if len(s.seq) != 12 {
-		t.Errorf("expected 12 triples, got %d", len(s.seq))
+	if len(s.ptns) != 12 {
+		t.Errorf("expected 12 triples, got %d", len(s.ptns))
+	}
+	// There should be exactly 2 ascending and 2 descending patterns and 8 unordered patterns.
+	var asc, desc, unord int
+	for _, p := range s.ptns {
+		switch sliceOrder(p) {
+		case SliceUnordered:
+			unord++
+		case SliceAscending:
+			asc++
+		case SliceDescending:
+			desc++
+		}
+	}
+	if unord != 8 {
+		t.Errorf("expected 8 unordered, got %d", unord)
+	}
+	if asc != 2 {
+		t.Errorf("expected 2 ascending, got %d", asc)
+	}
+	// no need to check desc but we'll do so just for confirmation
+	if desc != 2 {
+		t.Errorf("expected 2 descending, got %d", desc)
 	}
 	log.Println(s)
 }
 
 func TestGenerateThreeIntervalSequence(t *testing.T) {
 	s := generateThreeIntervalSequence(36, 84, 120, 0, "", 2, 2, 2)
-	if len(s.seq) != 24 {
-		t.Errorf("expected 24 quads, got %d", len(s.seq))
+	if len(s.ptns) != 24 {
+		t.Errorf("expected 24 quads, got %d", len(s.ptns))
 	}
 	log.Println(s)
 }
@@ -215,11 +237,11 @@ func TestMkMidi(t *testing.T) {
 		instrument:  "trumpet",
 		tempo:       "120",
 	}
-	x.seq = []midiPattern{{1, 2, 3}, {4, 5, 6}}
+	x.ptns = []midiPattern{{1, 2, 3}, {4, 5, 6}}
 	mkMidi(&x, false)
 	// verify that the pitches in both sequences have been shifted
 	// modulo 12 and that they are between midihi and midilo.
-	modulus := x.seq[0][0] / 12
+	modulus := x.ptns[0][0] / 12
 	if modulus*12 < 36 {
 		t.Errorf("midi pitches too low: %v", x)
 	}
@@ -229,23 +251,23 @@ func TestMkMidi(t *testing.T) {
 	// now translate the values back to the original
 	// using the modulus we calculated
 	var y []midiPattern
-	for _, ptn := range x.seq {
+	for _, ptn := range x.ptns {
 		var yptn midiPattern
 		for _, v := range ptn {
 			yptn = append(yptn, v-modulus*12)
 		}
 		y = append(y, yptn)
 	}
-	exp.seq = []midiPattern{{1, 2, 3}, {4, 5, 6}}
-	exp2.seq = []midiPattern{{4, 5, 6}, {1, 2, 3}}
-	if !(reflect.DeepEqual(y, exp.seq) || reflect.DeepEqual(y, exp2.seq)) {
-		t.Errorf("expected %v or %v, got %v", exp.seq, exp2.seq, y)
+	exp.ptns = []midiPattern{{1, 2, 3}, {4, 5, 6}}
+	exp2.ptns = []midiPattern{{4, 5, 6}, {1, 2, 3}}
+	if !(reflect.DeepEqual(y, exp.ptns) || reflect.DeepEqual(y, exp2.ptns)) {
+		t.Errorf("expected %v or %v, got %v", exp.ptns, exp2.ptns, y)
 	}
-	x.seq = []midiPattern{{1, 2, 3, 4}, {4, 5, 6, 7}}
+	x.ptns = []midiPattern{{1, 2, 3, 4}, {4, 5, 6, 7}}
 	mkMidi(&x, false)
 	// verify that the pitches in both sequences have been shifted
 	// modulo 12 and that they are between midihi and midilo.
-	modulus = x.seq[0][0] / 12
+	modulus = x.ptns[0][0] / 12
 	if modulus*12 < 36 {
 		t.Errorf("midi pitches too low: %v", x)
 	}
@@ -255,17 +277,17 @@ func TestMkMidi(t *testing.T) {
 	// now translate the values back to the original
 	// using the modulus we calculated
 	y = []midiPattern{}
-	for _, ptn := range x.seq {
+	for _, ptn := range x.ptns {
 		var yptn midiPattern
 		for _, v := range ptn {
 			yptn = append(yptn, v-modulus*12)
 		}
 		y = append(y, yptn)
 	}
-	exp.seq = []midiPattern{{1, 2, 3, 4}, {4, 5, 6, 7}}
-	exp2.seq = []midiPattern{{4, 5, 6, 7}, {1, 2, 3, 4}}
-	if !(reflect.DeepEqual(y, exp.seq) || reflect.DeepEqual(y, exp2.seq)) {
-		t.Errorf("expected %v or %v, got %v", exp.seq, exp2.seq, y)
+	exp.ptns = []midiPattern{{1, 2, 3, 4}, {4, 5, 6, 7}}
+	exp2.ptns = []midiPattern{{4, 5, 6, 7}, {1, 2, 3, 4}}
+	if !(reflect.DeepEqual(y, exp.ptns) || reflect.DeepEqual(y, exp2.ptns)) {
+		t.Errorf("expected %v or %v, got %v", exp.ptns, exp2.ptns, y)
 	}
 
 }
@@ -273,10 +295,10 @@ func TestMkMidi(t *testing.T) {
 func TestShuffle(t *testing.T) {
 	var x etudeSequence
 	var y etudeSequence
-	x.seq = []midiPattern{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}, {13, 14, 15}}
-	y.seq = []midiPattern{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}, {13, 14, 15}}
-	shufflePatterns(x.seq)
-	if reflect.DeepEqual(x.seq, y.seq) {
+	x.ptns = []midiPattern{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}, {13, 14, 15}}
+	y.ptns = []midiPattern{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}, {13, 14, 15}}
+	shufflePatterns(x.ptns)
+	if reflect.DeepEqual(x.ptns, y.ptns) {
 		t.Errorf("shuffle did not change sequence, could be chance, so try again")
 	}
 }

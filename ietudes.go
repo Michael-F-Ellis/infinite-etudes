@@ -23,7 +23,7 @@ import (
 type midiPattern []int
 
 type etudeSequence struct {
-	seq        []midiPattern
+	ptns       []midiPattern
 	midilo     int
 	midihi     int
 	tempo      int
@@ -247,7 +247,7 @@ func generateEqualIntervalSequence(midilo int, midihi int, tempo int, instrument
 		if diff != interval {
 			continue
 		}
-		sequence.seq = append(sequence.seq, t)
+		sequence.ptns = append(sequence.ptns, t)
 	}
 	return
 }
@@ -291,7 +291,7 @@ func generateIntervalSequence(midilo int, midihi int, tempo int, instrument int,
 		if p != pitch {
 			continue
 		}
-		sequence.seq = append(sequence.seq, t)
+		sequence.ptns = append(sequence.ptns, t)
 	}
 	return
 }
@@ -328,7 +328,7 @@ func generateTwoIntervalSequence(midilo int, midihi int, tempo int, instrument i
 
 	// construct the sequence
 	sequence = etudeSequence{
-		seq:        patterns,
+		ptns:       patterns,
 		midilo:     midilo,
 		midihi:     midihi,
 		tempo:      tempo,
@@ -364,7 +364,7 @@ func generateThreeIntervalSequence(midilo int, midihi int, tempo int, instrument
 
 	// construct the sequence
 	sequence = etudeSequence{
-		seq:        patterns,
+		ptns:       patterns,
 		midilo:     midilo,
 		midihi:     midihi,
 		tempo:      tempo,
@@ -379,14 +379,14 @@ func generateThreeIntervalSequence(midilo int, midihi int, tempo int, instrument
 // disk.
 func mkMidi(sequence *etudeSequence, noTighten bool) {
 	// Shuffle the sequence
-	shufflePatterns(sequence.seq)
+	shufflePatterns(sequence.ptns)
 
 	// Constrain the sequence assuming random prior pitch within the
 	// instrumen's midi range.
 	prior := rand.Intn(1+sequence.midihi-sequence.midilo) + sequence.midilo
-	seqlen := len(sequence.seq)
+	seqlen := len(sequence.ptns)
 	for i := 0; i < seqlen; i++ {
-		t := &(sequence.seq[i])
+		t := &(sequence.ptns[i])
 		constrain(t, prior, sequence.midilo, sequence.midihi, noTighten)
 		prior = (*t)[2]
 		/*
@@ -514,7 +514,7 @@ func writeMidiFile(sequence *etudeSequence) {
 			panic(err)
 		}
 	}
-	for _, t := range sequence.seq {
+	for _, t := range sequence.ptns {
 		music := nBarsMusic(t, &sequence.req).Bytes()
 		err = binary.Write(buf, binary.BigEndian, music)
 		if err != nil {
@@ -556,7 +556,7 @@ func writeMidiFile(sequence *etudeSequence) {
 	bufferMusic(countin)
 	//
 	nbars := 1 + sequence.req.repeats
-	for i := 0; i < len(sequence.seq); i++ {
+	for i := 0; i < len(sequence.ptns); i++ {
 		music := metronomeBars(nbars, &sequence.req).Bytes()
 		bufferMusic(music)
 	}
