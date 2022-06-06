@@ -925,19 +925,17 @@ func Reverse[S ~[]E, E any](s S) {
 	}
 }
 
-// pitchName returns the standard pitch name of a midi number, e.g.
-// 61 --> "C♯" if sharps is true, otherwise "D♭"
+// pitchName returns the standard pitch name of a midi number, e.g.  61 --> "C♯"
+// if sharps is true, otherwise "D♭"
 func pitchName(p int, sharps bool) string {
-	pmap := map[int]string{0: "C", 1: "C♯D♭", 2: "D", 3: "D♯E♭", 4: "E", 5: "F",
-		6: "F♯G♭", 7: "G", 8: "G♯A♭", 9: "A", 10: "A♯B♭", 11: "B"}
+	sharpScale := [12]string{"C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"}
+	flatScale := [12]string{"C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"}
 	octave, semitones := (p/12)-1, p%12
-	name := pmap[int(semitones)]
-	if len([]rune(name)) == 4 {
-		if sharps {
-			name = name[0:2]
-		} else {
-			name = name[2:]
-		}
+	var name string
+	if sharps {
+		name = sharpScale[semitones]
+	} else {
+		name = flatScale[semitones]
 	}
 	return fmt.Sprintf("%s%d", name, octave)
 
