@@ -83,7 +83,7 @@ func indexBody() (body *HtmlTree) {
 		value := fmt.Sprintf(`value="%s" aria-label="%s"`, k.fileName, k.uiAria)
 		keys = append(keys, Option(value, k.uiName))
 	}
-	keySelect := Div(`class="Column" id="key-div"`, Label(``, "Tonal Center", Select("id=key-select", keys...)))
+	tonicSelect := Div(`class="Column" id="key-div"`, Label(``, "Tonal Center", Select("id=key-select", keys...)))
 	// Interval1 and Interval2
 	var intervals []interface{}
 	for _, v := range intervalInfo {
@@ -149,7 +149,8 @@ func indexBody() (body *HtmlTree) {
 
 	// Assemble everything into the body element.
 	body = Body("", header,
-		Div(`class="Row" id="scale-row"`, scaleSelect, keySelect, interval1Select, interval2Select, interval3Select),
+		Div(`class="Row" id="scale-row"`, scaleSelect, tonicSelect),
+		Div(`class="Row"`, interval1Select, interval2Select, interval3Select),
 		Div(`class="Row"`, soundSelect, metroSelect),
 		Div(`class="Row"`, tempoSelect, repeatSelect, silenceSelect),
 		Div(`style="padding-top:1vh;"`, playBtn, stopBtn, downloadBtn),
@@ -251,8 +252,9 @@ func forTheCurious() (div *HtmlTree) {
 	arranges for each ordering to occur twice among the 12 sequences
 	presented.`
 
-	p16a := `You can choose <strong>Two Intervals Up/Down<strong> for an easier challenge containing only notes in
-	ascending or descending order, e.g. either "C E G" or "G E C" but not "C G E", "E C G" etc.`
+	p16a := `You can choose <strong>Two Intervals Up/Down<strong> for an easier
+	challenge containing only notes in ascending or descending order, e.g.
+	either "C E G" or "G E C" but not "C G E", "E C G" etc.`
 
 	p17 := `<strong>Three Intervals</strong> is similar to the Two Interval
 	pattern but uses 3 intervals to produce 4-note sequence. There are 24
@@ -261,8 +263,25 @@ func forTheCurious() (div *HtmlTree) {
 	constructed with a 2-2-1 pattern of half steps, corresponding to the
 	first 4 notes of a major scale.`
 
-	p17a := `You can choose <strong>Three Intervals Up/Down<strong> for an easier challenge containing only notes in
-	ascending or descending order, e.g. either "C E G B" or "B G E C" but not "C G B E", "E C B G" etc.`
+	p17a := `You can choose <strong>Three Intervals Up/Down<strong> for an
+	easier challenge containing only notes in ascending or descending order,
+	e.g. either "C E G B" or "B G E C" but not "C G B E", "E C B G" etc.`
+
+	p18 := `Each instrument has an associated pitch range.  Generally, the range
+	goes from with the lowest note playable on the instrument up to the highest.
+	Infinite Etudes starts the first pattern example in an etude on a random
+	pitch within the range and then moves to the each subsequent pattern in a
+	random walk that keeps the first note of the pattern within a fifth of the
+	prior one.`
+
+	p18a := `The program tries to keep all the patterns completely within the
+	instrument's range but it can fail if you specify a large pattern for an
+	instrument with a small range.  In that case, the lowest notes of each
+	pattern are guaranteed to be placed within the instrument's lowest octave
+	but the higher notes may exceed the highest playable note.  The image below
+	illustrates the situation for a 3 octave pattern on an instrument with a 3
+	octave range (from F3 to F6).  The red note heads indicate the out-of-range
+	notes.`
 
 	div = Div("",
 		H3("", heading),
@@ -286,6 +305,10 @@ func forTheCurious() (div *HtmlTree) {
 		P("", p17),
 		Img(`src="img/three_interval_excerpt.png" class="example"`),
 		P("", p17a),
+		H4("", "Instrument Ranges"),
+		P("", p18),
+		P("", p18a),
+		Img(`src="img/large_pattern.png" class="example"`),
 	)
 	return
 }
@@ -666,7 +689,7 @@ func indexCSS() *HtmlTree {
         margin-left: 5%;
         margin-right: 10%;
         margin-top: 1%;
-        margin-bottom: 5%;
+        margin-bottom: 2%;
     }
     img.example {
         margin-left: 5%;

@@ -873,23 +873,7 @@ func constrain(t *midiPattern, prior int, midilo int, midihi int, noTighten bool
 	for i := 0; i < len(*t); i++ {
 		(*t)[i] += offset
 	}
-	// If needed, shift pitches by octaves until all are between midilo and midihi inclusive.
-	lo := int(midilo)
-	// anylow tests if any pitches are too low
-	anylow := func() bool {
-		for _, p := range *t {
-			if p < lo {
-				return true
-			}
-		}
-		return false
-	}
-	// adjust until none are too low
-	for anylow() {
-		for i := range *t {
-			(*t)[i] += 12
-		}
-	}
+	// Shift pitches by octaves until all are between midilo and midihi inclusive.
 	hi := int(midihi)
 	// anyhigh tests if any pitches are too high
 	anyhigh := func() bool {
@@ -904,6 +888,23 @@ func constrain(t *midiPattern, prior int, midilo int, midihi int, noTighten bool
 	for anyhigh() {
 		for i := range *t {
 			(*t)[i] -= 12
+		}
+	}
+	// As needed, shift pitches by octaves until none are beneath midilo.
+	lo := int(midilo)
+	// anylow tests if any pitches are too low
+	anylow := func() bool {
+		for _, p := range *t {
+			if p < lo {
+				return true
+			}
+		}
+		return false
+	}
+	// adjust until none are too low
+	for anylow() {
+		for i := range *t {
+			(*t)[i] += 12
 		}
 	}
 }
@@ -922,4 +923,22 @@ func Reverse[S ~[]E, E any](s S) {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]
 	}
+}
+
+// pitchName returns the standard pitch name of a midi number, e.g.
+// 61 --> "C♯" if sharps is true, otherwise "D♭"
+func pitchName(p int, sharps bool) string {
+	pmap := map[int]string{0: "C", 1: "C♯D♭", 2: "D", 3: "D♯E♭", 4: "E", 5: "F",
+		6: "F♯G♭", 7: "G", 8: "G♯A♭", 9: "A", 10: "A♯B♭", 11: "B"}
+	octave, semitones := (p/12)-1, p%12
+	name := pmap[int(semitones)]
+	if len([]rune(name)) == 4 {
+		if sharps {
+			name = name[0:2]
+		} else {
+			name = name[2:]
+		}
+	}
+	return fmt.Sprintf("%s%d", name, octave)
+
 }

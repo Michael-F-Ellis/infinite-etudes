@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"reflect"
@@ -621,6 +622,77 @@ func TestSliceOrder(t *testing.T) {
 	}
 	for _, tc := range tcases {
 		got := sliceOrder(tc.s)
+		if diff := deep.Equal(got, tc.exp); diff != nil {
+			t.Errorf("%v", diff)
+			continue
+		}
+	}
+}
+func TestRangeCheck(t *testing.T) {
+	type testcase struct {
+		req etudeRequest
+		exp bool
+		err error
+	}
+	tcases := []testcase{
+		// valid instrument, small pattern
+		{
+			req: etudeRequest{
+				instrument: "acoustic_grand_piano",
+				pattern:    "interval",
+				interval1:  "major3",
+			},
+			exp: true,
+			err: nil,
+		},
+		// invalid instrument should return an error
+		{
+			req: etudeRequest{
+				instrument: "bobonker",
+				pattern:    "interval",
+				interval1:  "major3",
+			},
+			exp: true,
+			err: fmt.Errorf(""),
+		},
+		// valid instrument, pattern too large
+		{
+			req: etudeRequest{
+				instrument: "melodica",
+				pattern:    "intervaltriple",
+				interval1:  "octave",
+				interval2:  "octave",
+				interval3:  "octave",
+			},
+			exp: false,
+			err: nil,
+		},
+	}
+	for _, tc := range tcases {
+		got, err := rangeCheck(tc.req)
+		if err != nil {
+			if tc.err == nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			continue
+		}
+		if diff := deep.Equal(got, tc.exp); diff != nil {
+			t.Errorf("%v", diff)
+		}
+	}
+}
+func TestPitchName(t *testing.T) {
+	type testcase struct {
+		p      int
+		sharps bool
+		exp    string
+	}
+	tcases := []testcase{
+		{61, true, "C♯4"},
+		{61, false, "D♭4"},
+	}
+	for _, tc := range tcases {
+		got := pitchName(tc.p, tc.sharps)
 		if diff := deep.Equal(got, tc.exp); diff != nil {
 			t.Errorf("%v", diff)
 			continue

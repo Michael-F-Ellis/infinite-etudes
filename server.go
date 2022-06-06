@@ -164,9 +164,9 @@ func (r *etudeRequest) midiFilename() (f string) {
 	switch r.pattern {
 	case "interval":
 		parts = []string{r.pattern, r.interval1, r.instrument, metronomeString(r), r.tempo, repeats, silence}
-	case "intervalpair":
+	case "intervalpair", "intervalpair_ud":
 		parts = []string{r.pattern, r.interval1, r.interval2, r.instrument, metronomeString(r), r.tempo, repeats, silence}
-	case "intervaltriple":
+	case "intervaltriple", "intervaltriple_ud":
 		parts = []string{r.pattern, r.interval1, r.interval2, r.interval3, r.instrument, metronomeString(r), r.tempo, repeats, silence}
 	default:
 		parts = []string{r.tonalCenter, r.pattern, r.instrument, metronomeString(r), r.tempo, repeats, silence}
@@ -326,7 +326,35 @@ func validEtudeRequest(req etudeRequest) (ok bool) {
 	if !validTempo(req.tempo) {
 		return
 	}
+
 	ok = true
+	return
+}
+func rangeCheck(req etudeRequest) (ok bool, err error) {
+	// Now check that the midi range is large enough to contain the etude.
+	var minsize int
+	switch req.pattern {
+	case "allintervals":
+		// need at least 2 octaves
+		minsize = 24
+	case "interval":
+		// need at least 1 octave plus the size of the interval
+		minsize = 12 + intervalSizeByName(req.interval1)
+	case "intervalpair", "intervalpair_ud":
+		// need at least 1 octave plus the sum of the intervals
+		minsize = 12 +
+			intervalSizeByName(req.interval1) +
+			intervalSizeByName(req.interval2)
+	case "intervaltriple", "intervaltriple_ud":
+		// need at least 1 octave plus the sum of the intervals
+		minsize = 12 +
+			intervalSizeByName(req.interval1) +
+			intervalSizeByName(req.interval2) +
+			intervalSizeByName(req.interval3)
+	}
+	iInfo, err := getSupportedInstrumentByName(req.instrument)
+	irange := iInfo.midihi - iInfo.midilo
+	ok = irange >= minsize
 	return
 }
 
