@@ -195,7 +195,7 @@ func quickStart() (div *HtmlTree) {
 			A(`href="#patterns"`, "Patterns."), `&nbsp;If you're new to your
 		instrument or to ear training, see `, A(`href="#beginners"`, `For
 		Beginners.`)),
-		H4("", "Browser Compatibility Note"),
+		H4("", "Browser Compatibility"),
 		P(``, `This app doesn't work correctly on the Brave Browser for reasons
 		I've not yet determined. I use it mostly with Chrome on Android and Mac
 		OS and test it occasionally with Safari and Firefox. So far no problems
@@ -206,7 +206,7 @@ func quickStart() (div *HtmlTree) {
 
 func forTheCurious() (div *HtmlTree) {
 	heading := "For the curious"
-	p0 := `Infinite Etudes generates ear/finger training etudes for
+	p0 := `Infinite Etudes generates ear/finger training exercises for
 	instrumentalists. The emphasis is on improving your ability to play what
 	you hear by thoroughly exploring combinations of 2, 3 and 4 pitches over
 	the full range of your instrument.`
@@ -215,7 +215,7 @@ func forTheCurious() (div *HtmlTree) {
 	structure or how to read and write notation and it's not necessary to
 	know these things to use the program, though it certainly doesn't hurt.`
 
-	p1 := `The etudes follow a simple four bar form: a sequence of different
+	p1 := `The exercises follow a simple form: a sequence of different
 	notes is played on beats 1, 2, and 3 and a rest on beat 4. By default,
 	each bar is played four times before moving on -- so you have 3 chances
 	to play the sequence after the first hearing. You can control the number
@@ -224,18 +224,19 @@ func forTheCurious() (div *HtmlTree) {
 
 	p2 := `The program is called 'Infinite Etudes' because the number of
 	possible orderings of the sequences is so large that you'll never play
-	the same etude twice. That's an important part of the design. It prevents
+	the same exercise twice. That's an important part of the design. It prevents
 	you from relying on the muscle memory that develops if you play the same
 	etude repeatedly.
     `
 	p3 := `Here are brief descriptions of the patterns currently supported by
 	Infinite Etudes accompanied by notated examples. For brevity, the score
-	examples shown here are captured with a repeat count of zero. `
+	examples shown here are captured with a repeat count of zero. 
+	<i>All of the score examples were created by importing MIDI files downloaded
+	from Infinite Etudes into MuseScore.</i>`
 
 	p14 := `<strong>One Interval</strong> presents 12 instances of the same
 	interval pair, i.e. 3 notes, in random order. Each instance begins on a
-	different pitch so that all 12 pitches are covered. <em>Note: For brevity, the
-	score examples shown here are captured with a repeat count of zero.</em>`
+	different pitch so that all 12 pitches are covered.`
 
 	p15 := `<strong>Tonic Intervals</strong> presents 13 different intervals,
 	i.e., all possible pitches relative to the chosen tonic pitch. Use this
@@ -252,8 +253,8 @@ func forTheCurious() (div *HtmlTree) {
 	arranges for each ordering to occur twice among the 12 sequences
 	presented.`
 
-	p16a := `You can choose <strong>Two Intervals Up/Down<strong> for an easier
-	challenge containing only notes in ascending or descending order, e.g.
+	p16a := `<strong>Two Intervals Up/Down</strong> offers an easier
+	alternative containing only notes in ascending or descending order, e.g.
 	either "C E G" or "G E C" but not "C G E", "E C G" etc.`
 
 	p17 := `<strong>Three Intervals</strong> is similar to the Two Interval
@@ -263,8 +264,8 @@ func forTheCurious() (div *HtmlTree) {
 	constructed with a 2-2-1 pattern of half steps, corresponding to the
 	first 4 notes of a major scale.`
 
-	p17a := `You can choose <strong>Three Intervals Up/Down<strong> for an
-	easier challenge containing only notes in ascending or descending order,
+	p17a := `<strong>Three Intervals Up/Down</strong> offers an
+	easier alternative containing only notes in ascending or descending order,
 	e.g. either "C E G B" or "B G E C" but not "C G B E", "E C B G" etc.`
 
 	p18 := `Each instrument has an associated pitch range.  Generally, the range
@@ -293,22 +294,38 @@ func forTheCurious() (div *HtmlTree) {
 		P(``, p3),
 		H4("", "One Interval"),
 		P("", p14),
-		Img(`src="img/one_interval_excerpt.png" class="example"`),
+		Figure("",
+			Img(`src="img/one_interval_excerpt.png" class="example"`),
+			Figcaption(`class="example"`, `One Interval Example`)),
 		H4("", "Tonic Intervals"),
 		P("", p15),
-		Img(`src="img/allintervals_excerpt.png" class="example"`),
+		Figure("",
+			Img(`src="img/allintervals_excerpt.png" class="example"`),
+			Figcaption(`class="example"`, `Tonic Intervals Example`)),
 		H4("", "Two Intervals"),
 		P("", p16),
-		Img(`src="img/two_interval_excerpt.png" class="example"`),
+		Figure("",
+			Img(`src="img/two_interval_excerpt.png" class="example"`),
+			Figcaption(`class="example"`, `Two Interval Example`)),
 		P("", p16a),
+		Figure("",
+			Img(`src="img/intervalpair_ud.png" class="example"`),
+			Figcaption(`class="example"`, `Two Interval Up/Down Example`)),
 		H4("", "Three Intervals"),
 		P("", p17),
-		Img(`src="img/three_interval_excerpt.png" class="example"`),
+		Figure("",
+			Img(`src="img/three_interval_excerpt.png" class="example"`),
+			Figcaption(`class="example"`, `Three Interval Example`)),
 		P("", p17a),
+		Figure("",
+			Img(`src="img/intervaltriple_ud.png" class="example"`),
+			Figcaption(`class="example"`, `Three Interval Up/Down Example`)),
 		H4("", "Instrument Ranges"),
 		P("", p18),
 		P("", p18a),
-		Img(`src="img/large_pattern.png" class="example"`),
+		Figure("",
+			Img(`src="img/large_pattern.png" class="example"`),
+			Figcaption(`class="example"`, `Large Pattern Example`)),
 	)
 	return
 }
@@ -695,6 +712,10 @@ func indexCSS() *HtmlTree {
         margin-left: 5%;
         margin-right: 10%;
         width: 85vw;
+	}
+	figcaption.example {
+		margin-left: 5%;
+		text-align: center;
 	}
 	label {
 		display: inline-block;
