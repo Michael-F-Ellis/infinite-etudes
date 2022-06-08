@@ -111,15 +111,13 @@ func indexBody() (body *HtmlTree) {
 	}
 	metroSelect := Div(`class="Column" id="metro-div"`, Label(``, "Metronome", Select("id=metro-select", metros...))) // Metronome control
 
+	// Populate tempo selector
 	var tempos []interface{}
-	var tempoValues []int
-	for i := 60; i < 484; i += 4 {
-		tempoValues = append(tempoValues, i)
-	}
+	tempoValues := standardTempii()
 	for _, bpm := range tempoValues {
 		name := fmt.Sprintf("%d", bpm)
 		value := fmt.Sprintf(`value="%d"`, bpm)
-		if bpm == 120 {
+		if bpm == 80 {
 			value += " selected" // use 120 as the default value
 		}
 		tempos = append(tempos, Option(value, name))
@@ -483,8 +481,8 @@ func userInterface() (div *HtmlTree) {
 	Choose "on" to have it click on every beat.`
 
 	p4 := `Infinite Etudes generates MIDI files in 4/4 time with the tempo
-	defaulted to 120 beats per minute. If you need it slower or faster, use
-	the Tempo selector to choose a value between 60 and 480 beats per
+	defaulted to 80 beats per minute. If you need it slower or faster, use
+	the Tempo selector to choose a value between 40 and 480 beats per
 	minute.`
 
 	p5 := `Use the Repeats selector to change the number of repeats for each sequence. The default is
@@ -904,5 +902,34 @@ func indexJS() (script *HtmlTree) {
 		// Run start when the doc is fully loaded.
 		document.addEventListener("DOMContentLoaded", start);
 	`)
+	return
+}
+
+// standardTempii returns a slice of int containing standard metronome tempii
+// values from 40 to 480 BPM.
+func standardTempii() (tempoValues []int) {
+
+	for i := 40; i <= 60; i += 2 {
+		tempoValues = append(tempoValues, i)
+	}
+	for i := 63; i <= 72; i += 3 {
+		tempoValues = append(tempoValues, i)
+	}
+	for i := 76; i <= 120; i += 4 {
+		tempoValues = append(tempoValues, i)
+	}
+	for i := 126; i <= 144; i += 6 {
+		tempoValues = append(tempoValues, i)
+	}
+	for i := 152; i <= 208; i += 8 {
+		tempoValues = append(tempoValues, i)
+	}
+	// Extra tempii beyond standard so we can simulate fast sixteenth notes
+	for i := 220; i <= 320; i += 12 {
+		tempoValues = append(tempoValues, i)
+	}
+	for i := 320; i <= 480; i += 16 {
+		tempoValues = append(tempoValues, i)
+	}
 	return
 }

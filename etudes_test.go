@@ -699,3 +699,27 @@ func TestPitchName(t *testing.T) {
 		}
 	}
 }
+func TestStandardTempii(t *testing.T) {
+	type testcase struct {
+		exp   int // value we expect to find at index
+		index int // position in tempii slice
+	}
+	tcases := []testcase{
+		{40, 0},
+		{63, 11},
+		{76, 15},
+		{126, 27},
+		{152, 31},
+		{220, 39},
+		{336, 49},
+		{480, 58},
+	}
+	tempii := standardTempii()
+	for _, tc := range tcases {
+		got := tempii[tc.index]
+		if diff := deep.Equal(got, tc.exp); diff != nil {
+			t.Errorf("index %d: %v", tc.index, diff)
+			continue
+		}
+	}
+}

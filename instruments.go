@@ -42,6 +42,13 @@ var supportedInstruments = []instrumentInfo{
 		midihi:      67,
 	},
 	{
+		displayName: "Bass Ukulele",
+		gmnumber:    33,
+		name:        "acoustic_bass",
+		midilo:      28,
+		midihi:      60,
+	},
+	{
 		displayName: "Bassoon",
 		gmnumber:    71,
 		name:        "bassoon",
