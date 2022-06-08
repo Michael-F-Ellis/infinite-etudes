@@ -45,10 +45,13 @@ func mkIndex() (err error) {
 		Meta(`name="keywords", content="music,notation,midi,tbon"`),
 		Link(`rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"`),
 		indexCSS(),
-		indexJS(), // js for this page
 		// js midi libraries
-		Script("src=/midijs/libtimidity.js charset=UTF-8"),
-		Script("src=/midijs/midi.js charset=UTF-8"),
+		Script(`src="https://cdn.jsdelivr.net/npm/web-midi-player@latest/index.js"`),
+		Script("", `const { 'web-midi-player': { default: MidiPlayer } } = window;`),
+		Script("", `const midiPlayer = new MidiPlayer({patchUrl: "/midijs/libtimidity.js", logging: true});`),
+		indexJS(), // js for this page
+		// Script("src=/midijs/libtimidity.js charset=UTF-8"),
+		// Script("src=/midijs/midi.js charset=UTF-8"),
 	)
 
 	// <html>
@@ -771,7 +774,7 @@ func indexJS() (script *HtmlTree) {
 		function start() {
 		  // Chrome and other browsers now disallow AudioContext until
 		  // after a user action.
-		  document.body.addEventListener("click", MIDIjs.resumeAudioContext);
+		  document.body.addEventListener("click", midiPlayer.resumeAudioContext);
 		  var scaleselect = document.getElementById("scale-select")
 		  scaleselect.addEventListener("change", manageInputs)
 		  manageInputs()
@@ -876,15 +879,15 @@ func indexJS() (script *HtmlTree) {
 		}
 
 		function playStart() {
-			MIDIjs.stop()
+			midiPlayer.stop()
 			var url = etudeURL()
 			if (url != "") {
-			  MIDIjs.play(url)
+			  midiPlayer.play(url)
 			}
 		}
 
 		function playStop() {
-		    MIDIjs.stop()
+		    midiPlayer.stop()
 		}
         
 		function downloadEtude() {
