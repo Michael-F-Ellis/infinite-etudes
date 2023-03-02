@@ -2,7 +2,7 @@ package miditempo
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 )
 
@@ -15,7 +15,7 @@ func getFileBytes(filepath string) (bytes []byte, err error) {
 	defer file.Close()
 
 	// midifiles are small, so read the whole thing into memory
-	bytes, err = ioutil.ReadAll(file)
+	bytes, err = io.ReadAll(file)
 	if err != nil {
 		err = fmt.Errorf("error reading %v: %v", file, err)
 		return
@@ -104,8 +104,8 @@ func SetTempo(filepath string, µs uint) (bytes []byte, err error) {
 		return
 	}
 	for i, b := range low3(µs) {
-		bytes[i + addr] = b
+		bytes[i+addr] = b
 	}
 
-    return
+	return
 }

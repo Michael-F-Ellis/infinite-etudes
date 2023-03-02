@@ -122,5 +122,6 @@ dmypy.json
 .pyre/
 
 # Generated files
-index.html
+/index.html
 launch.json
+.DS_Store

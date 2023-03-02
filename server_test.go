@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -20,7 +20,7 @@ func TestMidijsRequest(t *testing.T) {
 		t.Errorf("GET failed: %v", err)
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Errorf("Error reading response body: %v", err)
 	}
@@ -60,8 +60,8 @@ func TestGoodEtudeRequest(t *testing.T) {
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Expected status code %v, got %v", http.StatusOK, resp.StatusCode)
 		}
-		exp, _ := ioutil.ReadFile(tcase.filename)
-		got, _ := ioutil.ReadAll(resp.Body)
+		exp, _ := os.ReadFile(tcase.filename)
+		got, _ := io.ReadAll(resp.Body)
 		if !bytes.Equal(got, exp) {
 			t.Errorf("response didn't match the file content")
 		}
@@ -75,7 +75,7 @@ func TestGoodEtudeRequest(t *testing.T) {
 		if resp2.StatusCode != http.StatusOK {
 			t.Errorf("Expected status code %v, got %v", http.StatusOK, resp2.StatusCode)
 		}
-		got, _ = ioutil.ReadAll(resp2.Body)
+		got, _ = io.ReadAll(resp2.Body)
 		if bytes.Equal(got, exp) { // exp is unchanged and should not match got.
 			t.Errorf("file did not update")
 		}
@@ -95,8 +95,8 @@ func TestVocalEtudeRequest(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status code %v, got %v", http.StatusOK, resp.StatusCode)
 	}
-	exp, _ := ioutil.ReadFile("aflat_allintervals_choir_aahs_tenor_off_120_3_0.mid")
-	got, _ := ioutil.ReadAll(resp.Body)
+	exp, _ := os.ReadFile("aflat_allintervals_choir_aahs_tenor_off_120_3_0.mid")
+	got, _ := io.ReadAll(resp.Body)
 	if !bytes.Equal(got, exp) {
 		t.Errorf("response didn't match the file content")
 	}
@@ -167,15 +167,13 @@ func TestMain(m *testing.M) {
 
 	// Run all tests and clean up
 	wd, _ := os.Getwd()
-	midijspath := filepath.Join(wd, "midijs")
-	imgpath := filepath.Join(wd, "img")
 	err = os.Chdir(filepath.Join(wd, "test"))
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(-1)
 	}
 	expireSeconds = 1
-	go serveEtudes(testhost, midijspath, imgpath) // max etude age = 1 second so we don't wait forever while testing.
+	go serveEtudes(testhost) // max etude age = 1 second so we don't wait forever while testing.
 	exitcode := m.Run()
 	err = os.Chdir(wd)
 	if err != nil {

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -12,42 +14,24 @@ import (
 	"time"
 )
 
-// randString returns a random string of length n chosen from chars.
-/*
-func randString(chars []rune, n uint) (out string) {
-	var outslice []rune
-	for i := 0; i < int(n); i++ {
-		outslice = append(outslice, chars[rand.Intn(int(n))])
-	}
-	out = string(outslice)
-	return
-}
-*/
+// Embedded static assets.
+//
+//go:embed img midijs ytshed
+var Static embed.FS
+
 // serveEtudes serves etude midi files from the current working directory.
-func serveEtudes(hostport string, midijsPath string, imgPath string) {
+func serveEtudes(hostport string) {
 	err := mkWebPages()
 	if err != nil {
 		log.Fatalf("could not write web pages: %v", err)
 	}
-	err = validDirPath(midijsPath)
-	if err != nil {
-		log.Fatalf("invalid midijs path: %v", err)
-	}
-	os.Setenv("MIDIJS", midijsPath)
-	defer os.Unsetenv("MIDIJS")
 
-	err = validDirPath(imgPath)
-	if err != nil {
-		log.Fatalf("invalid image path: %v", err)
-	}
-	os.Setenv("IMG", imgPath)
-	defer os.Unsetenv("IMG")
-
-	http.Handle("/", http.HandlerFunc(indexHndlr))
 	http.Handle("/etude/", http.HandlerFunc(etudeHndlr))
+	http.Handle("/ytshed/", http.HandlerFunc(ytshedHndlr))
 	http.Handle("/img/", http.HandlerFunc(imgHndlr))
 	http.Handle("/midijs/", http.HandlerFunc(midijsHndlr))
 	log.Printf("midijs path is %s", os.Getenv("MIDIJS"))
+	http.Handle("/", http.HandlerFunc(indexHndlr))
 	var serveSecure bool
 	var certpath, certkeypath string
 	if hostport == ":443" {
@@ -93,33 +77,43 @@ func getCertPaths() (certpath string, keypath string, err error) {
 func indexHndlr(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "index.html")
 }
-
-// imgHndlr returns image files
 func imgHndlr(w http.ResponseWriter, r *http.Request) {
-	what := strings.Split(r.URL.Path, "/")
-	if what[1] != "img" {
-		log.Fatalf("programming error. got image request path that didn't start with 'img': %s", r.URL.Path)
+	urlPath := strings.Split(r.URL.Path, "/")
+	if urlPath[1] != "img" {
+		log.Fatalf("programming error. got img asset request path that didn't start with 'img': %s", r.URL.Path)
 	}
-
-	dir := os.Getenv("IMG")
-	pathelements := append([]string{dir}, what[2:]...)
-	path := filepath.Join(pathelements...)
-	http.ServeFile(w, r, path)
-
+	subpath := path.Join(urlPath[1:]...)
+	content, err := Static.ReadFile(subpath)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("%v", err)
+		return
+	}
+	_, err = w.Write(content)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("%v", err)
+	}
 }
 
 // midijsHndlr returns files from the MIDIJS directory.
 func midijsHndlr(w http.ResponseWriter, r *http.Request) {
-	what := strings.Split(r.URL.Path, "/")
-	if what[1] != "midijs" {
-		log.Fatalf("programming error. got request path that didn't start with 'midijs': %s", r.URL.Path)
+	urlPath := strings.Split(r.URL.Path, "/")
+	if urlPath[1] != "midijs" {
+		log.Fatalf("programming error. got midijs asset request path that didn't start with 'midijs': %s", r.URL.Path)
 	}
-
-	dir := os.Getenv("MIDIJS")
-	pathelements := append([]string{dir}, what[2:]...)
-	path := filepath.Join(pathelements...)
-	http.ServeFile(w, r, path)
-
+	subpath := path.Join(urlPath[1:]...)
+	content, err := Static.ReadFile(subpath)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("subpath %s: %v", subpath, err)
+		return
+	}
+	_, err = w.Write(content)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("%v", err)
+	}
 }
 
 type etudeRequest struct {
@@ -231,6 +225,19 @@ func etudeHndlr(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filename)
 	// log the request in format that's convenient for analysis
 	log.Printf("%s %s served\n", r.RemoteAddr, filename)
+}
+
+// ytshedHndlr returns ytshed/index.html
+func ytshedHndlr(w http.ResponseWriter, r *http.Request) {
+	var err error
+	log.Printf("about to serve %s", "ytshed/index.html")
+	bytes, err := Static.ReadFile("ytshed/index.html")
+	if err != nil {
+		log.Printf("Could not read index.html: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	_, _ = w.Write(bytes)
 }
 
 // removeExpiredMidiFiles deletes midi files in the current working

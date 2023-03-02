@@ -2,7 +2,6 @@ package miditempo
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -27,7 +26,7 @@ func TestSetTempo(t *testing.T) {
 		t.Errorf("%v", err)
 	}
 	outfile := "/tmp/test.mid"
-	err = ioutil.WriteFile(outfile, bytes, 0644)
+	err = os.WriteFile(outfile, bytes, 0644)
 	if err != nil {
 		t.Errorf("%v", err)
 		return

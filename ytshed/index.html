@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 
+  <script src="gohtx/htmx.min.js">
+  </script>
+  <script src="gohtx/hyperscript.js">
+  </script>
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js"></script>
+  <!--
+  <link rel="stylesheet" href="gohtx/bulma/css/bulma.min.css" type="text/css">
+  -->
+  <title>YTShed
+  </title>
+  <meta name="description" , content="YouTube WoodShed">
+  <style>
+    td.segments {
+      padding: 4px;
+    }
+  </style>
+</head>
+
+<body style="background-color:#f0f0f8;">
+  <div class="block is-medium">
+    <h2 class="title has-text-primary is-size-2">YouTube Woodshed
+    </h2>
+  </div>
+  <details style="margin-top:16px; margin-bottom:16px;">
+    <summary>
+      <b>Usage Instructions</b>
+    </summary>
+    <h4>About YTShed</h4>
+    <p><em>YTShed is alpha software. The features that are implemented work reasonably well in my testing, but
+        YMMV.</em> Please report problems and make suggestions on the issues page in the <a
+        href="https://github.com/Michael-F-Ellis/infinite-etudes/issues">Infinite Etudes</a> GitHub repository. Or
+      if you know me, just send an email or text :-)</p>
+    <p>I wrote YTShed to make it easy to apply a rehearsal method I've found extremely effective to any tune you can
+      find on YouTube. The instructions below may make it look harder to use than it actually is. In essence, you're
+      going to
+    <ul>
+      <li>Load a tune from YouTube,</li>
+      <li>Mark a segment to rehearse,</li>
+      <li>Systematically rehearse the segment starting with small pieces and working your way up to the full segment.
+      </li>
+    </ul>
+    </p>
+    <h4>Adding a tune</h4>
+    <ol>
+      <li>Start by visiting YouTube. Copy URL for the tune you want to work on. Return to YTShed, paste the URL in the
+        field at the bottom of the page.</li>
+      <li>Click the <b>Load</b> button. The video should load and start to play.</li>
+      <li>Choose a segment of the tune to work on. I find that a single verse of 30-60 seconds works well with this
+        rehearsal method.</li>
+      <li>Start the player and be ready to click the <b>Mark Start</b> button on the downbeat of the first measure of
+        your segment</li>
+      <li>After marking the start, let player continue to the end of your segment. Click <b>Mark End</b> on the downbeat
+        of the measure immediately following the end of your segment.</li>
+      <li>If you know the number of measures in your segment, enter the number in the <b>Measures</b> field</li>
+      <li>Click the <b>Update</b> button. You can ignore the <b>Beats</b> and <b>Notes</b> fields for now.</li>
+    </ol>
+    <h4>Refining and saving a segment</h4>
+    <p> Start the player observe the hand on the quadrant clock. There will be a
+      2 second pre-roll (so you can get your hands back onto your instrument). The
+      hand should reach the top of the clock precisely on the downbeat of the
+      first measure of your segment. If it's noticeably early or late, you can
+      adjust segment start by clicking <b>Mark Start</b> or by adjusting the
+      seconds value in the Start field. Click <b>Update</b> to apply the changes.
+    </p>
+    <p>Refine the segment end time similarly with the <b>Mark End</b> button
+      and/or the End field value. This is easiest if the your segment length is a
+      multiple of 4 measures (e.g. 8, 12, 16, ...) so the clock hand reaches the
+      top at the final downbeat. Note: there's a 1 second post-roll after the
+      marked segment end, so the clock hand will continue past the top after the
+      segment end. </p>
+    <p>Assuming your segment has a steady tempo and no meter changes, you should
+      see the clock hand reach each of the measure marks on the downbeat of each
+      measure. Note that live performances (and some studio performances) may have
+      slight tempo variations, so don't sweat it as long as the segment starts and
+      ends correctly.</p>
+    <p>When everything looks right, click the <b>Save</b> button to store your segment
+      for future use. You should see it appear immediately in the <b>History</b>
+      list above the entry fields.</p>
+    <h4>Rehearsing</h4>
+    <p>Now for the fun (and hard work!). At the right of the 4-measure quadrant clock are 16
+      circular icons. When you click one of them, the quadrant clock segments will be marked
+      with blue highlights that match the icon. For example, the icon at the top right will highlight
+      the clock segment at the top left, indicating that you should play only the last measure of each
+      group of 4 measures in the segment (and listen during the other three).</p>
+    <p>The remaining 3 icons in the top row highlight the 3rd, 2nd, and 1st
+      measures.</p>
+    <p>The second row highlights pairs of adjacent measures, e.g. 4 and 1, to be
+      played together.</p>
+    <p>The first two icons in the third row highlight alternate measures, i.e. 1 and
+      3 or 2 and 4.</p>
+    <p>The third and fourth icons in the third row ask you to play alternating groups
+      of 4 measures, e.g., 1-4, listen to 5-8, play 9-12 and so on. </p>
+    <p>The last row icons ask you to play all combinations of 3 measures and listen
+      during the remaining one.</p>
+    <p>If you go through all 16 icons playing a 1 minute segment once for each
+      you'll spend 16 minutes total playing 8 minutes and listening for 8 minutes
+      and concentrating furiously if the piece is at all challenging for you. I
+      recommend you finish by playing entire segment once to appreciate the progress you've made
+      and then putting the piece (or at least that segment) aside until the next
+      day and moving on to another piece after a short break. </p>
+    </p>
+    <h4>Why?</h4>
+    <p>One of the conclusions from studies of human learning is frequent low-stakes testing turns
+      out to be the strongest way to improve learning performance. YTShed provides that by testing your
+      ability accurately start and stop at any point in the music.
+    </p>
+    <p>Think of it as bullet-proofing. We're human; mistakes happen in
+      performance. Knowing you can recover smoothly provides considerable peace of
+      mind.</p>
+
+
+  </details>
+  <div class="block is-medium">
+    <div id="player">
+    </div>
+  </div>
+  <div class="block">
+    <progress id="progress" , value="0" max="100" style="width:640px"></progress>
+  </div>
+  <div style="display:flex;">
+    <div id="clock"></div>
+    <div style="margin-left: 24px; margin-top:auto; margin-bottom:auto">
+      <table>
+        <tr>
+          <td class="segments" id="p4" onclick="changeClock('p4')">4</td>
+          <td class="segments" id="p3" onclick="changeClock('p3')">3</td>
+          <td class="segments" id="p2" onclick="changeClock('p2')">2</td>
+          <td class="segments" id="p1" onclick="changeClock('p1')">1</td>
+        </tr>
+        <tr>
+          <td class="segments" id="p41" onclick="changeClock('p41')">41</td>
+          <td class="segments" id="p34" onclick="changeClock('p34')">34</td>
+          <td class="segments" id="p23" onclick="changeClock('p23')">23</td>
+          <td class="segments" id="p12" onclick="changeClock('p12')">12</td>
+        </tr>
+        <tr>
+          <td class="segments" id="p24" onclick="changeClock('p24')">24</td>
+          <td class="segments" id="p13" onclick="changeClock('p13')">13</td>
+          <td class="segments" id="p1_4" onclick="changeClock('p1_4', 'p5_8')">1-4</td>
+          <td class="segments" id="p5_8" onclick="changeClock('p5_8','p1_4')">5-8</td>
+        </tr>
+        <tr>
+          <td class="segments" id="p412" onclick="changeClock('p412')">412</td>
+          <td class="segments" id="p341" onclick="changeClock('p341')">341</td>
+          <td class="segments" id="p234" onclick="changeClock('p234')">234</td>
+          <td class="segments" id="p123" onclick="changeClock('p123')">123</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="block">
+    <details open>
+      <summary>
+        <b>History</b> (click items to load)
+      </summary>
+      <div id="history">
+      </div>
+    </details>
+  </div>
+  <div class="block">
+    <div class="columns">
+      <div class="control">
+        <span>
+          <input type="number" class="number" id="ytstart">
+          <button id="mark-start" onclick="markStart()">Mark Start</button>
+        </span>
+      </div>
+      <div class="control">
+        <span>
+          <input type="number" class="number" id="ytend">
+          <button id="mark-end" onclick="markEnd()">Mark End</button>
+        </span>
+      </div>
+      <div class="control">
+        <span>
+          <input type="number" class="number" id="ytnbars">
+          Measures
+        </span>
+      </div>
+      <div class="control">
+        <span>
+          <input type="number" class="number" id="ytbeats">
+          Beats per measure (optional)
+        </span>
+        <div>
+          <p style="margin-top:8px; margin-bottom:8px;">Notes (optional)</p>
+          <textarea id="ytnotes" class="textarea"></textarea>
+        </div>
+      </div>
+      <div class="control" style="margin-top:8px; margin-bottom:8px;">
+        <span>
+          <button id="ytupdate" class="button">Update
+          </button>
+          <button id="ytstore" class="button" style="margin-left:16px;">Store
+          </button>
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="control">
+      <span>
+        URL
+        <input class="text" id="yturl" style="width:600px;" name="video" , value=https://youtu.be/_J9NpHKrKMw>
+        <button id="cue-url" class="button is-link">Load</button>
+      </span>
+    </div>
+  </div>
+
+  <!-- The script -->
+  <script type="text/javascript">
+    // Order of operations
+    // 0 - define principal data objects (ytSeg, ...)
+    // 1 - put default video url into the yturl input field
+    // 2 - call cueFromUser input to fetch the video
+    // 3 - set initial start and end values to 0, end of video
+    // 4 - allow user to define segment start and end markers
+    // 5 - prompt user to enter number of bars within the segment
+    // 6 - default to 'every 4th bar' schema (user may change it before playing the video)
+    // 7 - when user hits the play button, pre-roll for 2 seconds, then start the animation
+    // 8 - play to end of segment, fade out for 1 second, then seek back to segment start, advance to next schema.
+    // 9 - user may loop back to step 2 (new video), step 4 (define segment), step 6 (select schema) or step 7 (play)
+    // 10 - later, add capability to download and upload saved sessions in JSON format.
+
+
+    // 0. ytSeg holds the values we need for fetching and playing a segment of a video.
+    let ytSeg = {
+      videoId: 'Szoezn3As74', // the identifier from the YouTube video's URL ("There ain't no ash will burn", by default)
+      start: 5, // start time in seconds
+      end: 10, // end time in seconds
+      title: "", // as returned by player.getVideoData().title 
+      nbars: 32, // number of bars in the segment
+      beats: 0, // number of beats in each bar. Optional.  0 means don't display any beat ticks.
+      notes: "", // pre-formatted text entered by user (chords, lyrics, etc). Optional.
+    }
+
+    // 2. This code loads the IFrame Player API code asynchronously.
+    let tag = document.createElement('script');
+
+    tag.src = "https://www.youtube.com/iframe_api";
+    let firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    // 3. onYouTubeIframeAPIReady creates an <iframe> (and YouTube player)
+    //    after the API code downloads.
+    var player;
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('player', {
+        height: '390',
+        width: '640',
+        // videoId: 'M7lc1UVf-VE',
+        videoId: ytSeg.videoId,
+        playerVars: {
+          'playsinline': 1
+        },
+        events: {
+          'onReady': playerReady,
+          'onStateChange': onPlayerStateChange
+        }
+      });
+    }
+
+    // setSegmentStart assigns a new segment start time.
+    function setSegmentStart(s) {
+      ytSeg.start = Math.min(Math.max(0, s), player.getDuration())
+    }
+    // setSegmentEnd assigns a new segment end time.
+    function setSegmentEnd(s) {
+      ytSeg.end = Math.min(Math.max(0, s), player.getDuration())
+    }
+    // setSegmentMeasures updates the number of bars in the segment.
+    function setSegmentMeasures(s) {
+      ytSeg.nbars = Math.max(1, s)
+    }
+    // setSegmentBeats updates the number of beats in the bars in the segment.
+    function setSegmentBeats(s) {
+      ytSeg.beats = Math.max(1, s)
+    }
+    // setSegmentNotes updates the ytSeg.notes with the text of s.
+    function setSegmentNotes(s) {
+      if (s === undefined || s == null) {
+        s = ""
+      }
+      ytSeg.notes = s + "" // force s to be a string
+    }
+
+    // markStart loads the current player time into 'ytstart' input field.
+    function markStart() {
+      el = document.getElementById('ytstart')
+      el.value = Math.round((player.getCurrentTime() * 100 + Number.EPSILON)) / 100
+    }
+    // markEnd loads the current player time into 'ytend' input field.
+    function markEnd() {
+      el = document.getElementById('ytend')
+      el.value = Math.round((player.getCurrentTime() * 100 + Number.EPSILON)) / 100
+    }
+    const appStorageKey = 'ytwoodshed'
+    // storeSegment adds the current ytSeq to the front of the array in
+    // localStorage object 'ytwoodshed' 
+    function storeSegment() {
+      let s = localStorage.getItem(appStorageKey)
+      if (s == null || s == '') {
+        s = JSON.stringify([])
+      }
+      let obj = JSON.parse(s)
+      if (ytSeg.nbars === undefined) { ytSeg.nbars = 0 }
+      if (ytSeg.notes === undefined) { ytSeg.notes = "" }
+      obj.unshift(JSON.stringify(ytSeg))
+      localStorage.setItem(appStorageKey, JSON.stringify(obj))
+      updateHistory()
+    }
+    // deleteSegment removes segment at the given index from localStorage
+    // and updates the history display.
+    function deleteSegment(index) {
+      let s = localStorage.getItem(appStorageKey)
+      if (s == null || s == '') {
+        s = JSON.stringify([])
+      }
+      let obj = JSON.parse(s)
+      obj.splice(index, 1)
+      localStorage.setItem(appStorageKey, JSON.stringify(obj))
+      updateHistory()
+    }
+
+    // getStoredSegments returns an array containing all segments stored in
+    // localStorage object 'ytwoodshed'.
+    function getStoredSegments() {
+      let s = localStorage.getItem('ytwoodshed')
+      let a = JSON.parse(s)
+      let list = []
+      for (str of a) {
+        list.push(JSON.parse(str))
+      }
+      return list
+    }
+    // loadSegment loads and cues a segment from localStorage
+    function loadSegment(seg) {
+      if (player.getPlayerState() == YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+      }
+      ytSeg = seg
+      fromStorage = true // set flag to prevent cue event handler from overwriting ytSeg
+      player.cueVideoById(seg.videoId)
+      console.log('cued video id: ' + seg.videoId)
+      // update controls
+      document.getElementById('ytstart').value = ytSeg.start
+      document.getElementById('ytend').value = ytSeg.end
+      document.getElementById('ytnbars').value = ytSeg.nbars
+      document.getElementById('yturl').value = "" // clear it, since we don't save urls
+      if (ytSeg.beats === undefined) { ytSeg.beats = 0 }
+      document.getElementById('ytbeats').value = ytSeg.beats
+      if (ytSeg.notes === undefined) {
+        ytSeg.notes = ""
+      }
+      document.getElementById('ytnotes').value = ytSeg.notes
+    }
+    // loadSegmentByIndex looks up the given index in seglist and loads the
+    // corresponding segment.
+    function loadSegmentByIndex(index, segList) {
+      loadSegment(segList[index])
+    }
+
+    let segmentHistory = [];
+    // updateHistory loads the History div with segment information saved in localStorage
+    // as clickable elements that load a segment into the player.
+    function updateHistory() {
+      let el = document.getElementById('history')
+      el.replaceChildren('')
+      segmentHistory = getStoredSegments()
+      for (let i = 0; i < segmentHistory.length; i++) {
+        const seg = segmentHistory[i]
+        const itemText = document.createTextNode(seg.title + ', ' + seg.start + ' - ' + seg.end + ', ' + seg.nbars + ' bars')
+        const item = document.createElement('p')
+        item.setAttribute('onclick', 'loadSegmentByIndex(' + i + ', ' + 'segmentHistory' + ')')
+        item.appendChild(itemText)
+        const btn = document.createElement('button')
+        btn.setAttribute('onclick', 'deleteSegment(' + i + ')')
+        const btnText = document.createTextNode("Delete")
+        btn.appendChild(btnText)
+        item.appendChild(btn)
+        el.appendChild(item)
+      }
+    }
+    // pauseVideo pauses the current video
+    pauseVideo = function () {
+      console.log("pausing video")
+      player.pauseVideo()
+    }
+
+    const preRollSecs = 2
+    const postRollSecs = 1
+    let fromStorage = false
+    let segmentTimeoutNumber = 0
+    // onPlayerStateChange is called by the API when the player's state changes.
+    // The function indicates that when playing a video (state=1), the player
+    // should play until the value of ytSeg.end is reached or stop immediately
+    // if it's in the past.
+    function onPlayerStateChange(event) {
+      if (event.data == YT.PlayerState.CUED) { // User chose a new video.
+        // Update the segment data if this video was not cued from storage.
+        if (fromStorage == false) {
+          ytSeg.videoId = player.getVideoData().video_id
+          ytSeg.start = 0
+          ytSeg.end = player.getDuration()
+          ytSeg.title = player.videoTitle
+        }
+        player.seekTo(Math.max(0, ytSeg.start - preRollSecs), true)
+      }
+      else if (event.data == YT.PlayerState.PLAYING) {
+        let rate = player.getPlaybackRate()
+        let end = Math.min(ytSeg.end + postRollSecs, player.getDuration())
+        // Set a timer that will pause the player at the end of the segment
+        // taking playback rate into account.
+        clearTimeout(segmentTimeoutNumber) // in case one is still active.
+        segmentTimeoutNumber = setTimeout(pauseVideo, 1000 * Math.max(0, (end - player.getCurrentTime()) / rate));
+        // update the progress bar every 100 milliseconds
+        let interval = setInterval(function () {
+          const duration = ytSeg.end - ytSeg.start
+          if (player.getPlayerState() != YT.PlayerState.PLAYING) {
+            clearInterval(interval);
+            return;
+          }
+          percentComplete = 100 * (player.getCurrentTime() - ytSeg.start) / duration
+          // console.log(percentComplete)
+          document.getElementById("progress").value = percentComplete
+        }, 100)
+      } else if (event.data == YT.PlayerState.PAUSED) {
+        clearTimeout(segmentTimeoutNumber) // in case one is still active.
+        player.seekTo(Math.max(0, ytSeg.start - preRollSecs), true)
+      }
+    }
+
+    // getYouTubeVideoIdByUrl returns the YouTube video Id from the supplied URL
+    // or null if matching fails.
+    // Credit: https://gist.github.com/rodrigoborgesdeoliveira/987683cfbfcc8d800192da1e73adc486?permalink_comment_id=3876771#gistcomment-3876771
+    function getYouTubeVideoIdByUrl(url) {
+      const reg = /^(https?:)?(\/\/)?((www\.|m\.)?youtube(-nocookie)?\.com\/((watch)?\?(feature=\w*&)?vi?=|embed\/|vi?\/|e\/)|youtu.be\/)([\w\-]{10,20})/i
+      const match = url.match(reg);
+      if (match) {
+        return match[9];
+      } else {
+        return null;
+      }
+    }
+    // cueFromUserInput attempts to cue the video specified in the URL field
+    function cueFromUserInput() {
+      if (player.getPlayerState() == YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+      }
+      let input = document.getElementById('yturl')
+      let videoId = getYouTubeVideoIdByUrl(input.value)
+      fromStorage = false // clear flag so segment info will be read in from player.
+      if (videoId != null) {
+        player.cueVideoById(videoId);
+        // TODO: save ytSeg to local storage before initializing it for the new video.
+      } else {
+        alert('Unable cue video: could not extract id from ' + input.value);
+      }
+    }
+
+
+    // setSegment reads the values from the input fields and updates start, end and nbars members of ytSeg.
+    function setSegment() {
+      let start = document.getElementById('ytstart').value;
+      setSegmentStart(start);
+      let end = document.getElementById('ytend').value;
+      setSegmentEnd(end);
+      let nbars = document.getElementById('ytnbars').value;
+      setSegmentMeasures(nbars);
+      let nbeats = document.getElementById('ytbeats').value;
+      setSegmentBeats(nbeats);
+      let notes = document.getElementById('ytnotes').value;
+      setSegmentNotes(notes);
+      player.seekTo(Math.max(0, ytSeg.start - preRollSecs), true)
+    }
+
+    document.getElementById('cue-url').addEventListener("click", cueFromUserInput)
+    document.getElementById('ytupdate').addEventListener("click", setSegment)
+    document.getElementById('ytstore').addEventListener("click", storeSegment)
+
+
+    /************************************
+    Adapted starting from the clock example in the svg.js
+    advent calendar. https://codepen.io/collection/XpwMLO/
+  *************************************/
+
+    // arcColorSets defines quadrant colors displayed on the clock circle for different
+    // rehearsal patterns. The order in each set is from the noon position clockwise.
+    // The measure(s) to be played are alway "dodgerblue".
+    const arcColorSets = {
+      p1_4: ['dodgerblue', 'dodgerblue', 'dodgerblue', 'dodgerblue'],
+      p1: ['dodgerblue', 'lightgrey', 'lightgrey', 'lightgrey'],
+      p2: ['lightgrey', 'dodgerblue', 'lightgrey', 'lightgrey'],
+      p3: ['lightgrey', 'lightgrey', 'dodgerblue', 'lightgrey'],
+      p4: ['lightgrey', 'lightgrey', 'lightgrey', 'dodgerblue'],
+      p12: ['dodgerblue', 'dodgerblue', 'lightgrey', 'lightgrey'],
+      p23: ['lightgrey', 'dodgerblue', 'dodgerblue', 'lightgrey'],
+      p34: ['lightgrey', 'lightgrey', 'dodgerblue', 'dodgerblue'],
+      p41: ['dodgerblue', 'lightgrey', 'lightgrey', 'dodgerblue'],
+      p13: ['dodgerblue', 'lightgrey', 'dodgerblue', 'lightgrey'],
+      p24: ['lightgrey', 'dodgerblue', 'lightgrey', 'dodgerblue'],
+      p123: ['dodgerblue', 'dodgerblue', 'dodgerblue', 'lightgrey'],
+      p234: ['lightgrey', 'dodgerblue', 'dodgerblue', 'dodgerblue'],
+      p341: ['dodgerblue', 'lightgrey', 'dodgerblue', 'dodgerblue'],
+      p412: ['dodgerblue', 'dodgerblue', 'lightgrey', 'dodgerblue'],
+      p5_8: ['lightgrey', 'lightgrey', 'lightgrey', 'lightgrey'],
+    }
+
+    let sweepHand = null // i.e the "second" hand of the clock that indicates position within a 4 bar segment
+    let currentKeys = null // holds 2 arcColor keys (the second of which is usually null)
+    let activeKey = null // the arcColor key that is currently being displayed.
+
+    // drawClock replaces the current clock a new one drawn with pattern specified
+    // by arcColorKey.
+    function drawClock(arcColorKey) {
+      arcColor = arcColorSets[arcColorKey]
+      activeKey = arcColorKey
+      document.getElementById('clock').replaceChildren(''); // clear any prior content
+      // canvas dimensions in pixels
+      const width = 340
+      const height = 340
+
+      // Create SVG canvas and set viewbox so that we zoom into the center
+      const canvas = SVG()
+        .addTo('#clock')
+        .size(width, height)
+        .viewbox(-width / 8, -height / 8, width / 4, height / 4)
+
+      function canvasPath(path, color, width) {
+        canvas.path(path).fill('none ').stroke({ width: width, color: color })
+      }
+      // See https://www.w3.org/TR/SVG/paths.html#PathDataEllipticalArcCommands
+      // to decipher SVG arc path commands.
+      // 90° arc from noon to 3 
+      canvasPath("M0,-40 A40,40 0 0 1 40,0", arcColor[0], 1) // path: move to (0,-r) then arc CW to (r,0)
+      // 90° arc from 3 to 6
+      canvasPath("M40, 0 A40,40 0 0 1 0,40", arcColor[1], 1)
+      // 90° arc from 6 to 9
+      canvasPath("M0, 40 A40,40 0 0 1 -40, 0", arcColor[2], 1)
+      // 90° arc from 9 to noon
+      canvasPath("M-40, 0 A40,40 0 0 1 0, -40", arcColor[3], 1)
+
+      // quadrant ticks
+      canvas.line(0, -39, 0, -42).stroke({ color: 'black' })
+      canvas.line(39, 0, 42, 0).stroke({ color: 'black' })
+      canvas.line(0, 39, 0, 42).stroke({ color: 'black' })
+      canvas.line(-39, 0, -42, 0).stroke({ color: 'black' })
+
+      // Seconds line
+      sweepHand = canvas.line(0, 0, 0, -38)
+        .stroke({ color: 'dodgerblue' })
+    }
+    // changeClock draws a new clock with the color sets specified by its arguments.
+    function changeClock(arcColorKey, altKey = null) {
+      currentKeys = [arcColorKey, altKey]
+      drawClock(arcColorKey)
+    }
+
+    // Draw the first clock (all 4 quadrants un-hilighted)
+    changeClock('p5_8');
+
+    // update clock reads the current time from the player and moves the sweep
+    // hand to the corresponding angle
+    const updateClock = () => {
+      if (player.getPlayerState() != YT.PlayerState.PLAYING) return; // wait for player to start
+
+      // To track 4-bar sections, we need to know:
+      // 1. ytSeg start and end times and number of bars in segment.
+      // 2. player current time
+
+      if (ytSeg.nbars < 4) {
+        console.log("update: expected nbars >= 4, got " + ytSeg.nbars)
+        return
+      }
+      // A "cycle" is once around the clock
+      const barsecs = (ytSeg.end - ytSeg.start) / ytSeg.nbars
+      const cycleSecs = 4 * barsecs
+      if (cycleSecs <= 0) {
+        console.log("update: expected segment length >= 0, got " + (ytSeg.end - ytSeg.start))
+      }
+      const played = player.getCurrentTime() - ytSeg.start
+      const cyclesPlayed = Math.floor(played / cycleSecs)
+      // Calculate angle
+      const sAngle = 360 * (played - (cyclesPlayed * cycleSecs)) / cycleSecs
+
+      // Rotate the sweep hand
+      sweepHand.transform({ rotate: sAngle, origin: [0, 0] })
+
+      // If we're using an alternating pattern, redraw the clock at the top of each cycle.
+      if (currentKeys[1] == null) return; // Not alternating
+      // If we get to here, we're alternating. index will be either 0 or 1
+      // depending on the number of 4-bar cycles we've played.  Note that
+      // cyclesPlayed is negative during the pre-roll so we need to clamp the
+      // index to 0 during that time.
+      const index = Math.max(0, Math.floor(cyclesPlayed % 2))
+      if (activeKey != currentKeys[index]) {
+        drawClock(currentKeys[index]);
+      }
+    }
+    // drawSegmentIcons() replaces the contents of the segment choice table with svg icons
+    // representing the segments to be played.
+    function drawSegmentIcon(id) {
+      arcColor = arcColorSets[id]
+      // canvas dimensions in pixels
+      const width = 8
+      const height = 8
+      document.getElementById(id).replaceChildren('')
+      // Create SVG canvas and set viewbox so that we zoom into the center
+      const canvas = SVG()
+        .addTo('#' + id)
+        .size(32, 32)
+        .viewbox(-9, -9, 18, 18)
+
+      function canvasPath(path, color) {
+        let width = 1
+        if (color == "dodgerblue") { width = 2 }
+        canvas.path(path).fill('none ').stroke({ width: width, color: color })
+      }
+
+      // 90° arc from noon to 3 
+      canvasPath("M0,-8 A8,8 0 0 1 8,0", arcColor[0]) // path: move to (0,-r) then arc CW to (r,0)
+      // 90° arc from 3 to 6
+      canvasPath("M8, 0 A8,8 0 0 1 0,8", arcColor[1])
+      // 90° arc from 6 to 9
+      canvasPath("M0, 8 A8,8 0 0 1 -8, 0", arcColor[2])
+      // 90° arc from 9 to noon
+      canvasPath("M-8, 0 A8,8 0 0 1 0, -8", arcColor[3])
+    }
+    // playerReady is called when the player has been created.
+    function playerReady() {
+      for (const id in arcColorSets) {
+        drawSegmentIcon(id)
+      }
+      updateHistory()
+      cueFromUserInput() // cue the default video
+      setInterval(updateClock, 50) // enable updates at 50 msec intervals
+      updateClock() // fire the first update
+    }
+  </script>
+
+</body>
+
+</html>

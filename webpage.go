@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	. "github.com/Michael-F-Ellis/goht" // dot import makes sense here
 )
@@ -45,10 +45,10 @@ func mkIndex() (err error) {
 		Meta(`name="keywords", content="music,notation,midi,tbon"`),
 		Link(`rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"`),
 		indexCSS(),
-		indexJS(), // js for this page
 		// js midi libraries
 		Script("src=/midijs/libtimidity.js charset=UTF-8"),
 		Script("src=/midijs/midi.js charset=UTF-8"),
+		indexJS(), // js for this page
 	)
 
 	// <html>
@@ -57,7 +57,7 @@ func mkIndex() (err error) {
 	if err != nil {
 		return
 	}
-	err = ioutil.WriteFile("index.html", buf.Bytes(), 0644)
+	err = os.WriteFile("index.html", buf.Bytes(), 0644)
 	return
 }
 
@@ -584,35 +584,35 @@ func variations() (div *HtmlTree) {
 }
 
 /*
-func faq() (div *HtmlTree) {
-	qa := func(q string, a ...string) (div *HtmlTree) {
-		var item []interface{}
-		item = append(item, P("", Strong("", Em("", q))))
-		for _, s := range a {
-			item = append(item, P("", s))
+	func faq() (div *HtmlTree) {
+		qa := func(q string, a ...string) (div *HtmlTree) {
+			var item []interface{}
+			item = append(item, P("", Strong("", Em("", q))))
+			for _, s := range a {
+				item = append(item, P("", s))
+			}
+			div = Div("", item...)
+			return
 		}
-		div = Div("", item...)
+		q1 := qa(`Why 3 notes rather than 4 or 5 ...?`,
+			`The math is less friendly for longer sequences. There are 11880 possible sequences of 4 notes and
+		95040 sequences of 5 notes. You can get through all 1320 3-note sequences every 12 days in 15 minutes/day playing the
+		Chromatic Final etudes. To do that with 4-notes sequences would take over 3 months (108 days).`,
+			`With 5-note sequences it would take more than 2 years.`)
+
+		q2 := qa(`Are 3 notes enough to be of benefit?`,
+			`My own experience says 'yes'. At the piano, I've experienced
+		very noticeable improvement in my ability to play by ear as well as in my sight-reading. I attribute both
+		to having to devote less mental effort to fingering.`,
+			`As a singer, I use the etudes as a daily exercise to work on intonation through my full vocal range.`)
+
+		div = Div("",
+			H3("", `FAQ`),
+			q1,
+			q2,
+		)
 		return
 	}
-	q1 := qa(`Why 3 notes rather than 4 or 5 ...?`,
-		`The math is less friendly for longer sequences. There are 11880 possible sequences of 4 notes and
-	95040 sequences of 5 notes. You can get through all 1320 3-note sequences every 12 days in 15 minutes/day playing the
-	Chromatic Final etudes. To do that with 4-notes sequences would take over 3 months (108 days).`,
-		`With 5-note sequences it would take more than 2 years.`)
-
-	q2 := qa(`Are 3 notes enough to be of benefit?`,
-		`My own experience says 'yes'. At the piano, I've experienced
-	very noticeable improvement in my ability to play by ear as well as in my sight-reading. I attribute both
-	to having to devote less mental effort to fingering.`,
-		`As a singer, I use the etudes as a daily exercise to work on intonation through my full vocal range.`)
-
-	div = Div("",
-		H3("", `FAQ`),
-		q1,
-		q2,
-	)
-	return
-}
 */
 func coda() (div *HtmlTree) {
 	p1 := `I wrote Infinite Etudes for two reasons: First, as a tool for my
