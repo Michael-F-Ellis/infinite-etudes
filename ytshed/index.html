@@ -334,10 +334,12 @@
     // localStorage object 'ytwoodshed'.
     function getStoredSegments() {
       let s = localStorage.getItem('ytwoodshed')
-      let a = JSON.parse(s)
       let list = []
-      for (str of a) {
-        list.push(JSON.parse(str))
+      let a = JSON.parse(s)
+      if (a != null) { // avoid type error if ytwoodshed not created yet
+        for (str of a) {
+          list.push(JSON.parse(str))
+        }
       }
       return list
     }
