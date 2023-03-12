@@ -409,10 +409,22 @@
       if (event.data == YT.PlayerState.CUED) { // User chose a new video.
         // Update the segment data if this video was not cued from storage.
         if (fromStorage == false) {
+          // initialize ytSeg and the corresponding input elements
           ytSeg.videoId = player.getVideoData().video_id
+          ytSeg.title = player.videoTitle
           ytSeg.start = 0
           ytSeg.end = player.getDuration()
-          ytSeg.title = player.videoTitle
+          // start with a crude estimate of the number of bars based on the duration
+          // and assuming 120 bpm and 4/4 meter (=> 2 s/bar)
+          ytSeg.nbars = Math.floor(ytSeg.end / 2)
+          ytSeg.beats = ""
+          ytSeg.notes = ""
+          // set the widget values
+          document.getElementById('ytstart').value = ytSeg.start
+          document.getElementById('ytend').value = ytSeg.end
+          document.getElementById('ytnbars').value = ytSeg.nbars
+          document.getElementById('ytbeats').value = ytSeg.beats
+          document.getElementById('ytnotes').value = ytSeg.notes
         }
         player.seekTo(Math.max(0, ytSeg.start - preRollSecs), true)
       }
@@ -462,7 +474,6 @@
       fromStorage = false // clear flag so segment info will be read in from player.
       if (videoId != null) {
         player.cueVideoById(videoId);
-        // TODO: save ytSeg to local storage before initializing it for the new video.
       } else {
         alert('Unable cue video: could not extract id from ' + input.value);
       }
@@ -550,12 +561,29 @@
       // 90° arc from 9 to noon
       canvasPath("M-40, 0 A40,40 0 0 1 0, -40", arcColor[3], 1)
 
+      const r = 40 // clock radius in pixels
       // quadrant ticks
-      canvas.line(0, -39, 0, -42).stroke({ color: 'black' })
-      canvas.line(39, 0, 42, 0).stroke({ color: 'black' })
-      canvas.line(0, 39, 0, 42).stroke({ color: 'black' })
-      canvas.line(-39, 0, -42, 0).stroke({ color: 'black' })
+      canvas.line(0, -(r - 2), 0, -(r + 2)).stroke({ color: 'black' })
+      canvas.line((r - 2), 0, (r + 2), 0).stroke({ color: 'black' })
+      canvas.line(0, (r - 2), 0, (r + 2)).stroke({ color: 'black' })
+      canvas.line(-(r - 2), 0, -(r + 2), 0).stroke({ color: 'black' })
 
+      // bar ticks
+      if (ytSeg.beats > 1) {
+        // draw ticks around the clock between quadrant ticks.
+        const nbeats = ytSeg.beats
+        const nticks = 4 * nbeats
+        const dtheta = 360 / nticks
+        for (let i = 0; i < nticks; i++) {
+          if (i % nbeats == 0) continue; // skip quadrant ticks
+          let theta = i * dtheta * (Math.PI / 180)
+          let x0 = (r - 1) * Math.sin(theta)
+          let y0 = (r - 1) * Math.cos(theta)
+          let x1 = (r + 1) * Math.sin(theta)
+          let y1 = (r + 1) * Math.cos(theta)
+          canvas.line(x0, y0, x1, y1).stroke({ color: 'black' })
+        }
+      }
       // Seconds line
       sweepHand = canvas.line(0, 0, 0, -38)
         .stroke({ color: 'dodgerblue' })
