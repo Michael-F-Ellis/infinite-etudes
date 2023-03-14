@@ -201,6 +201,8 @@
           </button>
           <button id="ytstore" class="button" style="margin-left:16px;">Store
           </button>
+          <button id="uploadButton" style="margin-left:16px;">Upload</button>
+          <button id="downloadButton" style="margin-left:16px;">Download</button>
         </span>
       </div>
     </div>
@@ -232,7 +234,7 @@
 
 
     // 0. ytSeg holds the values we need for fetching and playing a segment of a video.
-    let ytSeg = {
+    let ytSegment = {
       videoId: '_J9NpHKrKMw', // the identifier from the YouTube video's URL ("Ob-la-di Ob-la-da", by default)
       start: 5, // start time in seconds
       end: 10, // end time in seconds
@@ -257,7 +259,7 @@
         height: '390',
         width: '640',
         // videoId: 'M7lc1UVf-VE',
-        videoId: ytSeg.videoId,
+        videoId: ytSegment.videoId,
         playerVars: {
           'playsinline': 1
         },
@@ -270,26 +272,26 @@
 
     // setSegmentStart assigns a new segment start time.
     function setSegmentStart(s) {
-      ytSeg.start = Math.min(Math.max(0, s), player.getDuration())
+      ytSegment.start = Math.min(Math.max(0, s), player.getDuration())
     }
     // setSegmentEnd assigns a new segment end time.
     function setSegmentEnd(s) {
-      ytSeg.end = Math.min(Math.max(0, s), player.getDuration())
+      ytSegment.end = Math.min(Math.max(0, s), player.getDuration())
     }
     // setSegmentMeasures updates the number of bars in the segment.
     function setSegmentMeasures(s) {
-      ytSeg.nbars = Math.max(1, s)
+      ytSegment.nbars = Math.max(1, s)
     }
     // setSegmentBeats updates the number of beats in the bars in the segment.
     function setSegmentBeats(s) {
-      ytSeg.beats = Math.max(1, s)
+      ytSegment.beats = Math.max(1, s)
     }
     // setSegmentNotes updates the ytSeg.notes with the text of s.
     function setSegmentNotes(s) {
       if (s === undefined || s == null) {
         s = ""
       }
-      ytSeg.notes = s + "" // force s to be a string
+      ytSegment.notes = s + "" // force s to be a string
     }
 
     // markStart loads the current player time into 'ytstart' input field.
@@ -311,9 +313,9 @@
         s = JSON.stringify([])
       }
       let obj = JSON.parse(s)
-      if (ytSeg.nbars === undefined) { ytSeg.nbars = 0 }
-      if (ytSeg.notes === undefined) { ytSeg.notes = "" }
-      obj.unshift(JSON.stringify(ytSeg))
+      if (ytSegment.nbars === undefined) { ytSegment.nbars = 0 }
+      if (ytSegment.notes === undefined) { ytSegment.notes = "" }
+      obj.unshift(JSON.stringify(ytSegment))
       localStorage.setItem(appStorageKey, JSON.stringify(obj))
       updateHistory()
     }
@@ -348,21 +350,21 @@
       if (player.getPlayerState() == YT.PlayerState.PLAYING) {
         player.pauseVideo();
       }
-      ytSeg = seg
+      ytSegment = seg
       fromStorage = true // set flag to prevent cue event handler from overwriting ytSeg
       player.cueVideoById(seg.videoId)
       console.log('cued video id: ' + seg.videoId)
       // update controls
-      document.getElementById('ytstart').value = ytSeg.start
-      document.getElementById('ytend').value = ytSeg.end
-      document.getElementById('ytnbars').value = ytSeg.nbars
+      document.getElementById('ytstart').value = ytSegment.start
+      document.getElementById('ytend').value = ytSegment.end
+      document.getElementById('ytnbars').value = ytSegment.nbars
       document.getElementById('yturl').value = "" // clear it, since we don't save urls
-      if (ytSeg.beats === undefined) { ytSeg.beats = 0 }
-      document.getElementById('ytbeats').value = ytSeg.beats
-      if (ytSeg.notes === undefined) {
-        ytSeg.notes = ""
+      if (ytSegment.beats === undefined) { ytSegment.beats = 0 }
+      document.getElementById('ytbeats').value = ytSegment.beats
+      if (ytSegment.notes === undefined) {
+        ytSegment.notes = ""
       }
-      document.getElementById('ytnotes').value = ytSeg.notes
+      document.getElementById('ytnotes').value = ytSegment.notes
     }
     // loadSegmentByIndex looks up the given index in seglist and loads the
     // corresponding segment.
@@ -410,45 +412,45 @@
         // Update the segment data if this video was not cued from storage.
         if (fromStorage == false) {
           // initialize ytSeg and the corresponding input elements
-          ytSeg.videoId = player.getVideoData().video_id
-          ytSeg.title = player.videoTitle
-          ytSeg.start = 0
-          ytSeg.end = player.getDuration()
+          ytSegment.videoId = player.getVideoData().video_id
+          ytSegment.title = player.videoTitle
+          ytSegment.start = 0
+          ytSegment.end = player.getDuration()
           // start with a crude estimate of the number of bars based on the duration
           // and assuming 120 bpm and 4/4 meter (=> 2 s/bar)
-          ytSeg.nbars = Math.floor(ytSeg.end / 2)
-          ytSeg.beats = ""
-          ytSeg.notes = ""
+          ytSegment.nbars = Math.floor(ytSegment.end / 2)
+          ytSegment.beats = ""
+          ytSegment.notes = ""
           // set the widget values
-          document.getElementById('ytstart').value = ytSeg.start
-          document.getElementById('ytend').value = ytSeg.end
-          document.getElementById('ytnbars').value = ytSeg.nbars
-          document.getElementById('ytbeats').value = ytSeg.beats
-          document.getElementById('ytnotes').value = ytSeg.notes
+          document.getElementById('ytstart').value = ytSegment.start
+          document.getElementById('ytend').value = ytSegment.end
+          document.getElementById('ytnbars').value = ytSegment.nbars
+          document.getElementById('ytbeats').value = ytSegment.beats
+          document.getElementById('ytnotes').value = ytSegment.notes
         }
-        player.seekTo(Math.max(0, ytSeg.start - preRollSecs), true)
+        player.seekTo(Math.max(0, ytSegment.start - preRollSecs), true)
       }
       else if (event.data == YT.PlayerState.PLAYING) {
         let rate = player.getPlaybackRate()
-        let end = Math.min(ytSeg.end + postRollSecs, player.getDuration())
+        let end = Math.min(ytSegment.end + postRollSecs, player.getDuration())
         // Set a timer that will pause the player at the end of the segment
         // taking playback rate into account.
         clearTimeout(segmentTimeoutNumber) // in case one is still active.
         segmentTimeoutNumber = setTimeout(pauseVideo, 1000 * Math.max(0, (end - player.getCurrentTime()) / rate));
         // update the progress bar every 100 milliseconds
         let interval = setInterval(function () {
-          const duration = ytSeg.end - ytSeg.start
+          const duration = ytSegment.end - ytSegment.start
           if (player.getPlayerState() != YT.PlayerState.PLAYING) {
             clearInterval(interval);
             return;
           }
-          percentComplete = 100 * (player.getCurrentTime() - ytSeg.start) / duration
+          percentComplete = 100 * (player.getCurrentTime() - ytSegment.start) / duration
           // console.log(percentComplete)
           document.getElementById("progress").value = percentComplete
         }, 100)
       } else if (event.data == YT.PlayerState.PAUSED) {
         clearTimeout(segmentTimeoutNumber) // in case one is still active.
-        player.seekTo(Math.max(0, ytSeg.start - preRollSecs), true)
+        player.seekTo(Math.max(0, ytSegment.start - preRollSecs), true)
       }
     }
 
@@ -492,7 +494,7 @@
       setSegmentBeats(nbeats);
       let notes = document.getElementById('ytnotes').value;
       setSegmentNotes(notes);
-      player.seekTo(Math.max(0, ytSeg.start - preRollSecs), true)
+      player.seekTo(Math.max(0, ytSegment.start - preRollSecs), true)
     }
 
     document.getElementById('cue-url').addEventListener("click", cueFromUserInput)
@@ -534,60 +536,120 @@
     // drawClock replaces the current clock a new one drawn with pattern specified
     // by arcColorKey.
     function drawClock(arcColorKey) {
-      arcColor = arcColorSets[arcColorKey]
-      activeKey = arcColorKey
+      const arcColor = arcColorSets[arcColorKey];
+      const activeKey = arcColorKey;
       document.getElementById('clock').replaceChildren(''); // clear any prior content
-      // canvas dimensions in pixels
-      const width = 340
-      const height = 340
 
-      // Create SVG canvas and set viewbox so that we zoom into the center
+      // canvas dimensions in pixels
+      const width = 340;
+      const height = 340;
+
+      // create SVG canvas and set viewbox so that we zoom into the center
       const canvas = SVG()
         .addTo('#clock')
         .size(width, height)
-        .viewbox(-width / 8, -height / 8, width / 4, height / 4)
+        .viewbox(-width / 8, -height / 8, width / 4, height / 4);
 
       function canvasPath(path, color, width) {
-        canvas.path(path).fill('none ').stroke({ width: width, color: color })
+        canvas.path(path).fill('none ').stroke({ width: width, color: color });
       }
+
+      // create arcs
       // See https://www.w3.org/TR/SVG/paths.html#PathDataEllipticalArcCommands
       // to decipher SVG arc path commands.
       // 90° arc from noon to 3 
-      canvasPath("M0,-40 A40,40 0 0 1 40,0", arcColor[0], 1) // path: move to (0,-r) then arc CW to (r,0)
+      canvasPath("M0,-40 A40,40 0 0 1 40,0", arcColor[0], 1);
       // 90° arc from 3 to 6
-      canvasPath("M40, 0 A40,40 0 0 1 0,40", arcColor[1], 1)
+      canvasPath("M40, 0 A40,40 0 0 1 0,40", arcColor[1], 1);
       // 90° arc from 6 to 9
-      canvasPath("M0, 40 A40,40 0 0 1 -40, 0", arcColor[2], 1)
+      canvasPath("M0, 40 A40,40 0 0 1 -40, 0", arcColor[2], 1);
       // 90° arc from 9 to noon
-      canvasPath("M-40, 0 A40,40 0 0 1 0, -40", arcColor[3], 1)
+      canvasPath("M-40, 0 A40,40 0 0 1 0, -40", arcColor[3], 1);
 
-      const r = 40 // clock radius in pixels
-      // quadrant ticks
-      canvas.line(0, -(r - 2), 0, -(r + 2)).stroke({ color: 'black' })
-      canvas.line((r - 2), 0, (r + 2), 0).stroke({ color: 'black' })
-      canvas.line(0, (r - 2), 0, (r + 2)).stroke({ color: 'black' })
-      canvas.line(-(r - 2), 0, -(r + 2), 0).stroke({ color: 'black' })
+      const radius = 40; // clock radius in pixels
 
-      // bar ticks
-      if (ytSeg.beats > 1) {
+      // create quadrant ticks
+      canvas.line(0, -(radius - 2), 0, -(radius + 2)).stroke({ color: 'black' });
+      canvas.line((radius - 2), 0, (radius + 2), 0).stroke({ color: 'black' });
+      canvas.line(0, (radius - 2), 0, (radius + 2)).stroke({ color: 'black' });
+      canvas.line(-(radius - 2), 0, -(radius + 2), 0).stroke({ color: 'black' });
+
+      // create bar ticks
+      if (ytSegment.beats > 1) {
         // draw ticks around the clock between quadrant ticks.
-        const nbeats = ytSeg.beats
-        const nticks = 4 * nbeats
-        const dtheta = 360 / nticks
-        for (let i = 0; i < nticks; i++) {
-          if (i % nbeats == 0) continue; // skip quadrant ticks
-          let theta = i * dtheta * (Math.PI / 180)
-          let x0 = (r - 1) * Math.sin(theta)
-          let y0 = (r - 1) * Math.cos(theta)
-          let x1 = (r + 1) * Math.sin(theta)
-          let y1 = (r + 1) * Math.cos(theta)
-          canvas.line(x0, y0, x1, y1).stroke({ color: 'black' })
+        const numBeats = ytSegment.beats;
+        const numTicks = 4 * numBeats;
+        const angleIncrement = 360 / numTicks;
+        for (let i = 0; i < numTicks; i++) {
+          if (i % numBeats == 0) continue; // skip quadrant ticks
+          const angle = i * angleIncrement * (Math.PI / 180);
+          const startX = (radius - 1) * Math.sin(angle);
+          const startY = (radius - 1) * Math.cos(angle);
+          const endX = (radius + 1) * Math.sin(angle);
+          const endY = (radius + 1) * Math.cos(angle);
+          canvas.line(startX, startY, endX, endY).stroke({ color: 'black' });
         }
       }
-      // Seconds line
-      sweepHand = canvas.line(0, 0, 0, -38)
-        .stroke({ color: 'dodgerblue' })
+
+      // Initialize sweep hand to point to "noon"
+      sweepHand = canvas.line(0, 0, 0, -38).stroke({ color: 'dodgerblue' });
     }
+
+    //function drawClock(arcColorKey) {
+    //  arcColor = arcColorSets[arcColorKey]
+    //  activeKey = arcColorKey
+    //  document.getElementById('clock').replaceChildren(''); // clear any prior content
+    //  // canvas dimensions in pixels
+    //  const width = 340
+    //  const height = 340
+
+    //  // Create SVG canvas and set viewbox so that we zoom into the center
+    //  const canvas = SVG()
+    //    .addTo('#clock')
+    //    .size(width, height)
+    //    .viewbox(-width / 8, -height / 8, width / 4, height / 4)
+
+    //  function canvasPath(path, color, width) {
+    //    canvas.path(path).fill('none ').stroke({ width: width, color: color })
+    //  }
+    //  // See https://www.w3.org/TR/SVG/paths.html#PathDataEllipticalArcCommands
+    //  // to decipher SVG arc path commands.
+    //  // 90° arc from noon to 3 
+    //  canvasPath("M0,-40 A40,40 0 0 1 40,0", arcColor[0], 1) // path: move to (0,-r) then arc CW to (r,0)
+    //  // 90° arc from 3 to 6
+    //  canvasPath("M40, 0 A40,40 0 0 1 0,40", arcColor[1], 1)
+    //  // 90° arc from 6 to 9
+    //  canvasPath("M0, 40 A40,40 0 0 1 -40, 0", arcColor[2], 1)
+    //  // 90° arc from 9 to noon
+    //  canvasPath("M-40, 0 A40,40 0 0 1 0, -40", arcColor[3], 1)
+
+    //  const r = 40 // clock radius in pixels
+    //  // quadrant ticks
+    //  canvas.line(0, -(r - 2), 0, -(r + 2)).stroke({ color: 'black' })
+    //  canvas.line((r - 2), 0, (r + 2), 0).stroke({ color: 'black' })
+    //  canvas.line(0, (r - 2), 0, (r + 2)).stroke({ color: 'black' })
+    //  canvas.line(-(r - 2), 0, -(r + 2), 0).stroke({ color: 'black' })
+
+    //  // bar ticks
+    //  if (ytSegment.beats > 1) {
+    //    // draw ticks around the clock between quadrant ticks.
+    //    const nbeats = ytSegment.beats
+    //    const nticks = 4 * nbeats
+    //    const dtheta = 360 / nticks
+    //    for (let i = 0; i < nticks; i++) {
+    //      if (i % nbeats == 0) continue; // skip quadrant ticks
+    //      let theta = i * dtheta * (Math.PI / 180)
+    //      let x0 = (r - 1) * Math.sin(theta)
+    //      let y0 = (r - 1) * Math.cos(theta)
+    //      let x1 = (r + 1) * Math.sin(theta)
+    //      let y1 = (r + 1) * Math.cos(theta)
+    //      canvas.line(x0, y0, x1, y1).stroke({ color: 'black' })
+    //    }
+    //  }
+    //  // Seconds line
+    //  sweepHand = canvas.line(0, 0, 0, -38)
+    //    .stroke({ color: 'dodgerblue' })
+    //}
     // changeClock draws a new clock with the color sets specified by its arguments.
     function changeClock(arcColorKey, altKey = null) {
       currentKeys = [arcColorKey, altKey]
@@ -606,17 +668,17 @@
       // 1. ytSeg start and end times and number of bars in segment.
       // 2. player current time
 
-      if (ytSeg.nbars < 4) {
-        console.log("update: expected nbars >= 4, got " + ytSeg.nbars)
+      if (ytSegment.nbars < 4) {
+        console.log("update: expected nbars >= 4, got " + ytSegment.nbars)
         return
       }
       // A "cycle" is once around the clock
-      const barsecs = (ytSeg.end - ytSeg.start) / ytSeg.nbars
+      const barsecs = (ytSegment.end - ytSegment.start) / ytSegment.nbars
       const cycleSecs = 4 * barsecs
       if (cycleSecs <= 0) {
-        console.log("update: expected segment length >= 0, got " + (ytSeg.end - ytSeg.start))
+        console.log("update: expected segment length >= 0, got " + (ytSegment.end - ytSegment.start))
       }
-      const played = player.getCurrentTime() - ytSeg.start
+      const played = player.getCurrentTime() - ytSegment.start
       const cyclesPlayed = Math.floor(played / cycleSecs)
       // Calculate angle
       const sAngle = 360 * (played - (cyclesPlayed * cycleSecs)) / cycleSecs
@@ -674,8 +736,75 @@
       setInterval(updateClock, 50) // enable updates at 50 msec intervals
       updateClock() // fire the first update
     }
-  </script>
+    // Event listeners for Upload and Download buttons
+    const uploadButton = document.getElementById("uploadButton");
+    const downloadButton = document.getElementById("downloadButton");
 
+    uploadButton.addEventListener("click", () => {
+      const input = document.createElement("input");
+      input.type = "file";
+
+      input.onchange = (event) => {
+        const file = event.target.files[0];
+
+        const reader = new FileReader();
+        reader.readAsText(file);
+
+        reader.onload = (event) => {
+          try {
+            const segments = JSON.parse(event.target.result);
+            if (!Array.isArray(segments)) {
+              throw new Error("File does not contain a JSON array");
+            }
+            for (let i = 0; i < segments.length; i++) {
+              const segment = JSON.parse(segments[i]);
+              if (typeof segment !== "object" || segment === null) {
+                throw new Error(`Segment ${i + 1} is not an object`);
+              }
+              if (typeof segment.videoId !== "string" || segment.videoId === "") {
+                throw new Error(`Invalid videoId for segment ${i + 1}`);
+              }
+              if (typeof segment.start !== "number" || isNaN(segment.start)) {
+                throw new Error(`Invalid start time for segment ${i + 1}`);
+              }
+              if (typeof segment.end !== "number" || isNaN(segment.end)) {
+                throw new Error(`Invalid end time for segment ${i + 1}`);
+              }
+              if (typeof segment.title !== "string" || segment.title === "") {
+                throw new Error(`Invalid title for segment ${i + 1}`);
+              }
+              if (typeof segment.nbars !== "number" || isNaN(segment.nbars)) {
+                throw new Error(`Invalid number of bars for segment ${i + 1}`);
+              }
+              // Since the beats and notes members are optional, we don't throw
+              // an exception.  Instead, we set them to safe defaults.
+              if (typeof segment.beats !== "number" || isNaN(segment.beats)) {
+                segment.beats = 1; // no beat ticks will be displayed
+              }
+              if (typeof segment.notes !== "string") {
+                segment.notes = "";
+              }
+            }
+            localStorage.setItem("ytwoodshed", event.target.result);
+            alert("File uploaded successfully");
+          } catch (error) {
+            alert(`Error uploading file: ${error.message}`);
+          }
+        };
+      };
+
+      input.click();
+    });
+
+    downloadButton.addEventListener("click", () => {
+      const data = localStorage.getItem("ytwoodshed");
+
+      const link = document.createElement("a");
+      link.download = "ytwoodshed.json";
+      link.href = URL.createObjectURL(new Blob([data], { type: "application/json" }));
+      link.click();
+    });
+  </script>
 </body>
 
 </html>
