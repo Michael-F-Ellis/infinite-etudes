@@ -321,7 +321,9 @@
     }
     // deleteSegment removes segment at the given index from localStorage
     // and updates the history display.
-    function deleteSegment(index) {
+    function deleteSegment(index, event) {
+      // Prevent event propagation
+      event.stopPropagation();
       let s = localStorage.getItem(appStorageKey)
       if (s == null || s == '') {
         s = JSON.stringify([])
@@ -386,7 +388,7 @@
         item.setAttribute('onclick', 'loadSegmentByIndex(' + i + ', ' + 'segmentHistory' + ')')
         item.appendChild(itemText)
         const btn = document.createElement('button')
-        btn.setAttribute('onclick', 'deleteSegment(' + i + ')')
+        btn.setAttribute('onclick', 'deleteSegment(' + i + ', event)')
         const btnText = document.createTextNode("Delete")
         btn.appendChild(btnText)
         item.appendChild(btn)
