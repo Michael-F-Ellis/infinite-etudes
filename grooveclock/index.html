@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="midiwriter.js"></script>
+  <!-- midijs libraries -->
+  <script src="/midijs/libtimidity.js"></script>
+  <script src="/midijs/midi.js"></script>
+  <script src="segmentParser.js"></script>
+  <script src="svg.js"></script>
+  <link rel="stylesheet" type="text/css" href="bulma.css">
+  <title>Groove Clock</title>
+  </title>
+  <meta name="description" , content="Programmable Metronome Clock">
+  <style>
+    td.segments {
+      padding: 4px;
+    }
+  </style>
+</head>
+
+<body style="background-color:#f0f0f8; padding: 20px;">
+  <div class="block is-medium">
+    <h2 class="title has-text-primary is-size-2">Groove Clock v0.7.0</h2>
+    </h2>
+  </div>
+  <!-- A flex box that holds the parameters entry fields and the clock -->
+  <div class="is-flex is-justify-content-space-between is-flex-direction-row">
+    <!-- spacer -->
+    <div></div>
+    <!-- The parameters entry fields -->
+    <form id="midiParams">
+      <div class="is-flex">
+        <!-- tempo and repeat count -->
+        <div class="field">
+          <label class="form-label" for="qpm">BPM:</label>
+          <div class="control">
+            <input class="form-input" type="text" id="qpm" name="qpm" value="90">
+          </div>
+        </div>
+        <div class="field">
+          <label class="form-label" for="nrepeats">Repeats:</label>
+          <div class="control">
+            <input class=" form-input" type="text" id="nrepeats" name="nrepeats" value="1">
+          </div>
+        </div>
+      </div>
+      <div class="is-flex">
+        <!-- channel and pre-roll -->
+        <div class="field">
+          <label class="form-label" for="channel">Channel:</label>
+          <div class="control">
+            <input class="form-input" type="text" id="channel" name="channel" value="10">
+          </div>
+        </div>
+        <div class="field">
+          <label class="form-label" for="preroll">Pre-roll</label>
+          <div class="control">
+            <input class="form-input" id=preroll value="p p p p"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="is-flex">
+        <!-- forte MIDI note and velocity parameters -->
+        <div class="field">
+          <label class="form-label" for="fNote">fNote:</label>
+          <div class="control">
+            <div id="fNote" class="select"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="form-label" for="fVelocity">fVelocity:</label>
+          <div class="control">
+            <input class="form-input" type="text" id="fVelocity" name="fVelocity" value="110">
+          </div>
+        </div>
+      </div>
+      <div class="is-flex">
+        <!-- mezzo MIDI note and velocity parameters -->
+        <div class="field">
+          <label class="form-label" for="mNote">mNote:</label>
+          <div class="control">
+            <div id="mNote" class="select"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="form-label" for="mVelocity">mVelocity:</label>
+          <div class="control">
+            <input class="form-input" type="text" id="mVelocity" name="mVelocity" value="80">
+          </div>
+        </div>
+      </div>
+      <div class="is-flex">
+        <!-- soft (piano) MIDI note and velocity parameters -->
+        <div class="field">
+          <label class="form-label" for="pNote">pNote:</label>
+          <div class="control">
+            <div id="pNote" class="select"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="form-label" for="pVelocity">pVelocity:</label>
+          <div class="control">
+            <input class="form-input" type="text" id="pVelocity" name="pVelocity" value="50">
+          </div>
+        </div>
+      </div>
+      <div class="is-flex">
+        <!-- rest MIDI note and velocity parameters -->
+        <div class="field">
+          <label class="form-label" for="rNote">rNote:</label>
+          <div class="control">
+            <div id="rNote" class="select"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="form-label" for="rVelocity">rVelocity:</label>
+          <div class="control">
+            <input class="form-input" type="text" id="rVelocity" name="rVelocity" value="1">
+          </div>
+        </div>
+      </div>
+    </form>
+    <!-- The clock div -->
+    <div id="clockctl">
+      <div id="clock"></div>
+      <div id="controls">
+        <!-- Play, Stop and Save buttons -->
+        <button id="midiParamsSubmit" class="button is-primary">Play</button>
+        <button id="stop" class="button is-danger" onclick="stopPlayer()">Stop</button>
+        <button id="save" class="button is-success" onclick="savecb()">Save</button>
+      </div>
+    </div>
+    <!-- spacer -->
+    <div></div>
+  </div>
+
+  <!-- 
+    The pattern entry textare. The user enters a pattern of notes and rests in
+    the form of a string.
+  -->
+  <div class="field">
+    <label class="label" for="pattern">Pattern</label>
+    <div class="control">
+      <textarea id=pattern rows=4 class="textarea"
+        value="f-p m-p m-p m-p | f-p m-p m-p m-p | f-p m-p m-p m-p | f-p m-p m-p m-p | "></textarea>
+    </div>
+  </div>
+
+  <!-- Textare for Description of the pattern entry -->
+  <div class="field">
+    <label class="label" for="description">Description</label>
+    <div class="control">
+      <textarea id=description rows=2 class="textarea" value="Describe me!"></textarea>
+    </div>
+  </div>
+
+
+
+  <!-- The library of saved segment definitions -->
+  <div class="block">
+    <details open>
+      <summary>
+        <b>My Grooves</b> (click Use to load, Del to delete)
+      </summary>
+      <div id="history">
+      </div>
+    </details>
+  </div> <!-- end of body html content -->
+
+  <!-- The script -->
+  <script type="text/javascript">
+    // askValue prompts the user for a value and returns it.
+    function askValue(prompt, defaultVal) {
+      let val = window.prompt(prompt, defaultVal)
+      if (val == null) {
+        return defaultVal
+      }
+      return val
+    }
+    // percussionSelect replaces the innerHTML of the element with a given id.
+    // It uses the map the General MIDI percussion instruments
+    // available in gmPercussion, which is a TwoWayMap object defined in
+    // segmentParser.js, to create a select element with options for each
+    // percussion instrument.
+    function percussionSelect(id) {
+      names = gmPercussion.alphaSortedNames()
+      let el = document.getElementById(id)
+      let html = '<select id="' + id + '-select">'
+      for (let i = 0; i < names.length; i++) {
+        v = gmPercussion.getValue(names[i])
+        html += "\n<option value=" + v + ">" + names[i] + "</option>"
+      }
+      html += "</select>"
+      el.innerHTML = html
+      // console.log(html)
+    }
+
+    // Create the percussion select elements.
+    percussionSelect('fNote')
+    percussionSelect('mNote')
+    percussionSelect('pNote')
+    percussionSelect('rNote')
+
+
+    // callbacks for the library item buttons. The usecb callback takes a
+    // library item name and load the item definitions into the entry fields.
+    function usecb(name) {
+      let item = Grooves.getByName(name)
+      document.getElementById('pattern').value = item.pattern
+      document.getElementById('description').value = item.description
+      document.getElementById('qpm').value = item.midiparms.qpm
+      document.getElementById('nrepeats').value = item.nrepeats
+      document.getElementById('preroll').value = item.preroll
+      document.getElementById('channel').value = item.midiparms.channel
+      document.getElementById('fNote-select').value = item.midiparms.fNote
+      document.getElementById('fVelocity').value = item.midiparms.fVelocity
+      document.getElementById('mNote-select').value = item.midiparms.mNote
+      document.getElementById('mVelocity').value = item.midiparms.mVelocity
+      document.getElementById('pNote-select').value = item.midiparms.pNote
+      document.getElementById('pVelocity').value = item.midiparms.pVelocity
+      document.getElementById('rNote-select').value = item.midiparms.rNote
+      document.getElementById('rVelocity').value = item.midiparms.rVelocity
+    }
+    // delcb removes an from the segmentHistory library and updates
+    // the history div.
+    function delcb(name) {
+      if (window.confirm("Permanently delete " + name + " from your groove library?")) {
+        Grooves.remove(name)
+        updateGrooves()
+      }
+    }
+    // savecb saves the current pattern and parameters to the segmentHistory
+    function savecb() {
+      let name = askValue("Name this groove", null)
+      if (name == null) {
+        return
+      }
+
+      let pattern = document.getElementById('pattern').value
+      let description = document.getElementById('description').value
+      let preroll = document.getElementById('preroll').value
+      let nrepeats = document.getElementById('nrepeats').value
+      let qpm = document.getElementById('qpm').value
+      let channel = document.getElementById('channel').value
+      let fNote = document.getElementById('fNote-select').value
+      let fVelocity = document.getElementById('fVelocity').value
+      let mNote = document.getElementById('mNote-select').value
+      let mVelocity = document.getElementById('mVelocity').value
+      let pNote = document.getElementById('pNote-select').value
+      let pVelocity = document.getElementById('pVelocity').value
+      let rNote = document.getElementById('rNote-select').value
+      let rVelocity = document.getElementById('rVelocity').value
+      let midiParams = new MIDIParameters(
+        qpm = qpm,
+        channel = channel,
+        fNote = fNote,
+        mNote = mNote,
+        pNote = pNote,
+        rNote = rNote,
+        fVelocity = fVelocity,
+        mVelocity = mVelocity,
+        pVelocity = pVelocity,
+        rVelocity = rVelocity,
+      );
+      let item = new ParsingStages(pattern, midiParams, nrepeats, preroll, description)
+      if (Grooves.has(name)) {
+        if (window.confirm("Overwrite " + name + "?")) {
+          Grooves.replace(name, item)
+          return
+        }
+      } else {
+        Grooves.add(name, item)
+        updateGrooves()
+      }
+    }
+    let Grooves = new Library()
+    // updateHistory loads the History div with segment information saved in
+    // localStorage as clickable elements that load a segment into the player. 
+    // TODO: Revise to use Library class.
+    function updateGrooves() {
+      let el = document.getElementById('history')
+      el.replaceChildren('')
+      el.innerHTML = Grooves.fields('usecb', 'delcb')
+    }
+    // Load the history div and show use the Default pattern.
+    document.addEventListener('DOMContentLoaded', () => {
+      updateGrooves();
+      usecb('Default');
+      drawClock();
+    })
+
+    /************************************
+    Adapted starting from the clock example in the svg.js
+    advent calendar. https://codepen.io/collection/XpwMLO/
+  *************************************/
+
+    // sweepHand is "second" hand of the clock that indicates
+    // position within a pattern.
+    let sweepHand = null
+
+    // drawClock replaces the current clock a new one drawn with with beat ticks
+    // and bar ticks at the angles specified by the beatAngles and barAngles
+    // arrays supplied as arguments.
+    function drawClock(
+      barAngles = [0, 90, 180, 270], // default bar angles
+      beatAngles = [45, 135, 225, 315], // default beat angles
+      attackAngles = []) {
+
+      // clear the clock div.
+      document.getElementById('clock').replaceChildren('');
+
+      // canvas dimensions in pixels
+      const width = 360
+      const height = 360
+
+      // Create an SVG canvas and set viewbox so that we zoom into the center
+      const canvas = SVG()
+        .addTo('#clock')
+        .size(width, height)
+        .viewbox(-width / 8, -height / 8, width / 4, height / 4)
+
+      // draw the clock rim
+      const r = 40 // the radius of the clock rim in svg viewbox units
+      canvas.circle(r * 2).
+        fill('none').
+        stroke({ width: 1, color: 'dodgerblue' }).
+        center(0, 0)
+
+      // draw the sweep hand axle
+      canvas.circle(2).
+        fill('dodgerblue').
+        stroke({ width: 1, color: 'black' })
+        .center(0, 0)
+
+      // draw bar ticks (black circles with red fill at the rim of the clock)
+      for (let i = 0; i < barAngles.length; i++) {
+        let theta = barAngles[i] * Math.PI / 180
+        let x0 = r * Math.sin(theta)
+        let y0 = r * Math.cos(theta)
+        canvas.circle(3).
+          fill('red').
+          stroke({ width: .5, color: 'black' })
+          .center(x0, y0)
+      }
+
+      // draw beat ticks (small black circles at the rim of the clock)
+      for (let i = 0; i < beatAngles.length; i++) {
+        let theta = beatAngles[i] * Math.PI / 180
+        let x0 = r * Math.sin(theta)
+        let y0 = r * Math.cos(theta)
+        canvas.circle(1).
+          fill('black').
+          stroke({ width: 1, color: 'black' })
+          .center(x0, y0)
+
+        // draw attack ticks (very small black circles just outside the rim of the clock)
+        /* out for now, as it looks cluttered
+        for (let i = 0; i < attackAngles.length; i++) {
+          let theta = attackAngles[i] * Math.PI / 180
+          let x1 = (r + 3) * Math.sin(theta)
+          let y1 = (r + 3) * Math.cos(theta)
+          canvas.circle(.75).
+            fill('black').
+            stroke({ width: .5, color: 'black' })
+            .center(x1, y1)
+        }
+        */
+      }
+      // Seconds line
+      sweepHand = canvas.line(0, 0, 0, -38)
+        .stroke({ color: 'dodgerblue' })
+    } // end of drawClock()
+
+    // Draw it once to start
+    drawClock();
+
+    // Chrome and other browsers now disallow AudioContext until
+    // after a user action, so set click handler on the entire body
+    // to resume the audio context.
+    document.body.addEventListener("click", MIDIjs.resumeAudioContext);
+
+    // playerTimeout is a global variable that holds the timeout id for the
+    // MIDI player. 
+    var playerTimeout = null;
+
+    // stopPlayer stops the MIDI player and clears the playerTimeout.
+    function stopPlayer() {
+      MIDIjs.stop();
+      if (playerTimeout != null) {
+        clearTimeout(playerTimeout);
+      }
+    }
+
+    // When the user clicks the Play button, the values of the entry fields
+    // are used to create a ParsingStages instance, which is then used to
+    // create a MIDI file.
+    document.getElementById("midiParamsSubmit").addEventListener("click", function () {
+      event.preventDefault(); // prevent the form from submitting to the server
+      var pattern = document.getElementById("pattern").value;
+      var description = document.getElementById("description").value;
+      var preroll = document.getElementById("preroll").value;
+      var nrepeats = document.getElementById("nrepeats").value;
+      var qpm = document.getElementById("qpm").value;
+      var channel = document.getElementById("channel").value;
+      var fNote = document.getElementById("fNote-select").value;
+      var fVelocity = document.getElementById("fVelocity").value;
+      var mNote = document.getElementById("mNote-select").value;
+      var mVelocity = document.getElementById("mVelocity").value;
+      var pNote = document.getElementById("pNote-select").value;
+      var pVelocity = document.getElementById("pVelocity").value;
+      var rNote = gmPercussion.getValue(document.getElementById("rNote").value);
+      var rVelocity = document.getElementById("rVelocity").value;
+      var midiParams = new MIDIParameters(
+        qpm = qpm,
+        channel = channel,
+        fNote = fNote,
+        mNote = mNote,
+        pNote = pNote,
+        rNote = rNote,
+        fVelocity = fVelocity,
+        mVelocity = mVelocity,
+        pVelocity = pVelocity,
+        rVelocity = rVelocity,
+      );
+      // Initialize the ParsingStages object and parse the pattern.
+      let stages = new ParsingStages(pattern, midiParams, nrepeats, preroll, description = "A pattern")
+      let midiURI = stages.parse()
+      if (stages.ErrorMessages.length > 0) {
+        alert(stages.ErrorMessages.join("\n"))
+        stages.log()
+        return
+      }
+      if (midiURI == null) {
+        alert("No MIDI file was created.")
+        stages.log()
+        return
+      }
+
+      // Success. A MIDI file was created. Play it and animate the clock.
+      stopPlayer; // stop any currently playing MIDI file
+
+      // Compute the angular positions of the beat and bar ticks.
+      // Use them redraw the clock. There's a complication because the
+      // the pattern may be repeated so we need to look at the pattern
+      // and not the preroll or expanded segments. So let's start by
+      // making a copy of stages and setting nrepeats to 1 and preroll to
+      // an empty string.
+      let stagesCopy = new ParsingStages(stages.pattern, stages.midiparms, 1, "")
+      _ = stagesCopy.parse()
+      // loop through the subBeats.
+      let beatAngles = []
+      let barAngles = []
+      let attackAngles = []
+      // The angle of any subBeat tick is proportional to its Start divided by
+      // stagesCopy.qlength.  If a subBeat is a downbeat, we compute the angle
+      // and push it onto barAngles. Otherwise is the subBeat has a subBeat
+      // number equal to 1, then it starts a beat and we push it onto
+      // beatAngles. (Note: the angles are negative and incremented by 180°
+      // because the SVG coordinate system has the y-axis pointing down. We want
+      // the first barline  to be at the 12 o'clock position.)
+      for (let i = 0; i < stagesCopy.subBeats.length; i++) {
+        let sb = stagesCopy.subBeats[i]
+        let theta = 180 + 360 * sb.Start / stagesCopy.qlength
+        if (sb.isDownbeat == true) {
+          barAngles.push(-theta)
+        } else if (sb.subBeatNumber == 1) {
+          beatAngles.push(-theta)
+        }
+        if (sb.isAttack == true) {
+          attackAngles.push(-theta)
+        }
+      }
+      console.log("barAngles: " + barAngles)
+      console.log("beatAngles: " + beatAngles)
+
+      // redraw the clock with the new beat and bar angles 
+      drawClock(barAngles, beatAngles, attackAngles)
+
+      // Compute parameters for the sweepHand animation.
+      let qps = stages.midiparms.qpm / 60; // qps=quarter notes per second
+
+      // duration of entire repeated pattern minus pre-roll in seconds 
+      let sec_duration = (stages.qlength - stages.qpreroll) / qps
+
+      // sweepHand rotation rate in degrees per second 
+      let degrees_per_sec = 360 * (stages.nrepeats / sec_duration);
+
+      let prerollSecs = stages.qpreroll / qps; // pre-roll time in seconds 
+      let preroll_theta = degrees_per_sec * prerollSecs // initial sweep hand offset angle in degrees
+
+      // Set up the callback function for the MIDI player. This function will be
+      // called approximately every 30 milliseconds while the MIDI file is 
+      // playing. 
+      MIDIjs.player_callback = function (event) {
+        // compute the angle of the sweep hand using the elapsed time and the
+        // rotation rate. We subract pre_theta to account for the pre- roll so 
+        // that the sweep hand starts at the 12 o'clock position. 
+        let theta = event.time * degrees_per_sec - preroll_theta
+        sweepHand.transform({ rotate: theta, origin: [0, 0] })
+        // console.log(theta);
+      };
+      console.log("duration: " + sec_duration);
+
+      // Set a timer to stop the MIDI player after the duration of the entire
+      // segment including the pre-roll and repeats plus a little extra time.
+      playerTimeout = setTimeout(function () {
+        MIDIjs.stop(midiURI);
+      }, 1000 * (prerollSecs + sec_duration) + 200);
+
+      // Play it, Sam.
+      MIDIjs.play(midiURI);
+      stages.midiparms.log() // log the parameters for debugging
+    });
+  </script>
+</body>
+
+</html>

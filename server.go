@@ -16,7 +16,7 @@ import (
 
 // Embedded static assets.
 //
-//go:embed img midijs ytshed
+//go:embed img grooveclock midijs ytshed
 var Static embed.FS
 
 // serveEtudes serves etude midi files from the current working directory.
@@ -27,6 +27,7 @@ func serveEtudes(hostport string) {
 	}
 
 	http.Handle("/etude/", http.HandlerFunc(etudeHndlr))
+	http.Handle("/grooveclock/", http.HandlerFunc(grooveclockHndlr))
 	http.Handle("/ytshed/", http.HandlerFunc(ytshedHndlr))
 	http.Handle("/img/", http.HandlerFunc(imgHndlr))
 	http.Handle("/midijs/", http.HandlerFunc(midijsHndlr))
@@ -89,6 +90,48 @@ func imgHndlr(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%v", err)
 		return
 	}
+	setContentType(w, subpath)
+	_, err = w.Write(content)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("%v", err)
+	}
+}
+
+// setContentType sets the content type of the response based on the filename.
+func setContentType(w http.ResponseWriter, filename string) {
+	switch {
+	case strings.HasSuffix(filename, ".html"):
+		w.Header().Set("Content-Type", "text/html")
+	case strings.HasSuffix(filename, ".css"):
+		w.Header().Set("Content-Type", "text/css")
+	case strings.HasSuffix(filename, ".js"):
+		w.Header().Set("Content-Type", "application/javascript")
+	case strings.HasSuffix(filename, ".mid"):
+		w.Header().Set("Content-Type", "audio/midi")
+	case strings.HasSuffix(filename, ".png"):
+		w.Header().Set("Content-Type", "image/png")
+	case strings.HasSuffix(filename, ".ico"):
+		w.Header().Set("Content-Type", "image/x-icon")
+	default:
+		w.Header().Set("Content-Type", "text/plain")
+	}
+}
+
+// grooveclockHndlr returns files from the MIDIJS directory.
+func grooveclockHndlr(w http.ResponseWriter, r *http.Request) {
+	urlPath := strings.Split(r.URL.Path, "/")
+	if urlPath[1] != "grooveclock" {
+		log.Fatalf("programming error. got grooveclock asset request path that didn't start with 'grooveclock': %s", r.URL.Path)
+	}
+	subpath := path.Join(urlPath[1:]...)
+	content, err := Static.ReadFile(subpath)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("subpath %s: %v", subpath, err)
+		return
+	}
+	setContentType(w, subpath)
 	_, err = w.Write(content)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -109,6 +152,7 @@ func midijsHndlr(w http.ResponseWriter, r *http.Request) {
 		log.Printf("subpath %s: %v", subpath, err)
 		return
 	}
+	setContentType(w, subpath)
 	_, err = w.Write(content)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -237,6 +281,7 @@ func ytshedHndlr(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "text/html")
 	_, _ = w.Write(bytes)
 }
 
